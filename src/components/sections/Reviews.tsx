@@ -157,47 +157,42 @@ function Note({ review: r, tilt }: { review: Review; tilt: number }) {
   );
 }
 
+/** A smooth curtain of drips (viewBox 1000×300): a thin rim with rounded drips of different lengths. */
+const DRIPS = (() => {
+  const drops = [
+    [40, 70, 34], [130, 150, 26], [215, 95, 40], [320, 190, 30], [410, 110, 44], [505, 160, 28],
+    [590, 85, 38], [690, 205, 32], [790, 120, 42], [880, 175, 28], [960, 90, 30],
+  ];
+  let d = "M0 0 H1000 V36 ";
+  // walk right → left along the rim, dipping into each drip with smooth curves
+  for (const [x, depth, w] of [...drops].reverse()) {
+    const r = w / 2;
+    d += `L${x + r + 14} 36 C${x + r + 4} 36 ${x + r} 46 ${x + r} ${36 + depth * 0.45} `;
+    d += `L${x + r} ${depth} C${x + r} ${depth + r * 1.1} ${x - r} ${depth + r * 1.1} ${x - r} ${depth} `;
+    d += `L${x - r} ${36 + depth * 0.45} C${x - r} 46 ${x - r - 4} 36 ${x - r - 14} 36 `;
+  }
+  return d + "L0 36 Z";
+})();
+
 /**
- * The page "melts" into the comments: a strawberry-cream backdrop whose top edge is dripping cream —
- * the drips stretch down as the section scrolls in, and keep wobbling slowly, like gelato in the sun.
+ * The page "melts" into the comments: the strawberry-cream backdrop fades in from nothing (no hard edge), and a
+ * curtain of soft drips hangs over it, stretching slowly like gelato in the sun. One SVG, GPU-cheap.
  */
 function Melt() {
-  const drips = [
-    { x: 4, w: 7, h: 70 },
-    { x: 13, w: 5, h: 120 },
-    { x: 21, w: 9, h: 85 },
-    { x: 33, w: 6, h: 150 },
-    { x: 42, w: 8, h: 95 },
-    { x: 53, w: 5, h: 130 },
-    { x: 61, w: 10, h: 80 },
-    { x: 74, w: 6, h: 140 },
-    { x: 83, w: 8, h: 100 },
-    { x: 93, w: 6, h: 125 },
-  ];
   return (
-    <div className="pointer-events-none absolute inset-0 -z-0 overflow-hidden" aria-hidden>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,#FFD3E2_0%,#FFC0D4_45%,#FFD9C2_100%)]" />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#FFD3E2_0%,#FFC0D4_45%,#FFD9C2_100%)] [mask-image:linear-gradient(to_bottom,transparent_0,#000_320px)]" />
       <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_60%,rgba(255,255,255,0.55),transparent_70%),radial-gradient(50%_40%_at_85%_80%,rgba(255,244,189,0.6),transparent_70%)]" />
-      {/* the cream band and its drips */}
-      <div className="absolute inset-x-0 top-0 h-16 bg-[#FFF7EE]" />
-      {drips.map((d, i) => (
-        <motion.span
-          key={i}
-          className="absolute top-12 block origin-top rounded-b-full bg-[#FFF7EE]"
-          style={{ left: `${d.x}%`, width: `${d.w}%`, height: d.h }}
-          initial={{ scaleY: 0.15 }}
-          whileInView={{ scaleY: [0.15, 1, 0.9, 1] }}
-          viewport={{ once: true, margin: "0px 0px -20% 0px" }}
-          transition={{ duration: 2.4 + (i % 3) * 0.5, ease: [0.22, 1, 0.36, 1], times: [0, 0.6, 0.8, 1] }}
-        >
-          {/* a drop about to fall */}
-          <motion.span
-            className="absolute -bottom-3 left-1/2 block size-[46%] -translate-x-1/2 rounded-full bg-[#FFF7EE]"
-            animate={{ y: [0, 10, 0], scaleY: [1, 1.25, 1] }}
-            transition={{ duration: 3 + (i % 4) * 0.6, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
-          />
-        </motion.span>
-      ))}
+      <svg viewBox="0 0 1000 300" preserveAspectRatio="none" className="melt-drips absolute inset-x-0 top-0 h-[clamp(180px,22vw,300px)] w-full">
+        <defs>
+          <linearGradient id="melt-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#FFB3CB" stopOpacity="0" />
+            <stop offset="0.25" stopColor="#FFB3CB" stopOpacity="0.85" />
+            <stop offset="1" stopColor="#FFA9C4" />
+          </linearGradient>
+        </defs>
+        <path d={DRIPS} fill="url(#melt-fill)" />
+      </svg>
     </div>
   );
 }

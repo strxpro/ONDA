@@ -479,3 +479,37 @@ section.min-h-svh > .mx-auto {
   .print-card, .print-card * { visibility: visible; }
   .print-card { position: absolute; inset: 0; margin: 0; }
 }
+
+/* the logo: the real cone turning (72 frames of the filmed turntable in one sprite) */
+.logo-spin {
+  background: url("/img/logo-turntable.webp") 0 0 / 7200% 100% no-repeat;
+  animation: logo-turn 4.8s steps(71) infinite;
+}
+@keyframes logo-turn {
+  to { background-position: 100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-spin { animation: none; }
+}
+
+/* candy scrollbars: thin, rounded, a pastel rainbow thumb */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ff8fb8 transparent;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff8fb8, #ffaa5c, #ffe066, #6fe0c4, #9b8cff) border-box;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { border-width: 2px; }
+
+/* the melting edge above the comments: the drips stretch and settle, slowly */
+@keyframes melt {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.08); }
+}
+.melt-drips { transform-origin: 50% 0; animation: melt 7s ease-in-out infinite; }

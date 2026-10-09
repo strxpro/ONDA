@@ -70,6 +70,11 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
       ["flavor"],
     ),
   },
+  {
+    name: "set_signature_flavor",
+    description: "Make a flavor the shop's signature flavor ('gusto firma'): the big section of the website (now Yellow Submarine) switches to it — name, colors, scoop, ingredients.",
+    input_schema: obj({ flavor: s("flavor name") }, ["flavor"]),
+  },
   { name: "remove_flavor", description: "Remove a flavor from the website (soft delete; can be undone).", input_schema: obj({ flavor: s("flavor name") }, ["flavor"]) },
   {
     name: "replace_today_flavors",
@@ -183,6 +188,7 @@ export const TOOL_INPUT = {
   moderate_comment: z.object({ comment: z.string().min(1), approve: z.boolean() }),
   set_text: z.object({ key: z.enum(TEXT_KEYS), text: z.string().min(1).max(600) }),
   remove_flavor: z.object({ flavor: z.string().min(1) }),
+  set_signature_flavor: z.object({ flavor: z.string().min(1) }),
   replace_today_flavors: z.object({ flavors: z.array(z.string().min(1)).min(1).max(40) }),
   update_price: z.object({ item: z.string().min(1), price_eur: z.number().min(0).max(500) }),
   set_hours: z

@@ -30,7 +30,7 @@ export function Nav() {
         className={`mx-auto flex max-w-6xl items-center justify-between gap-2 rounded-full py-1.5 pr-1.5 pl-2 transition-all duration-500 ${scrolled ? "glass shadow-float" : "bg-transparent"}`}
       >
         <a href="#top" className="group shrink-0" aria-label={data.settings.name}>
-          <Logo tagline="gelateria artigianale" />
+          <Logo tagline="gelateria artigianale" spin />
         </a>
         <OpenBadge hours={data.hours} specialDays={data.specialDays} timeZone={data.settings.timezone} />
         <div className="flex items-center gap-1.5">

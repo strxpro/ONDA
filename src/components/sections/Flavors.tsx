@@ -1,8 +1,8 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { ArrowRight, Sparkle, X } from "@phosphor-icons/react";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { ArrowRight, Check, FunnelSimple, Sparkle, X } from "@phosphor-icons/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -10,8 +10,7 @@ import { darken, lighten } from "@/lib/color";
 import { ingredientPhoto } from "@/lib/ingredients";
 import { sfx } from "@/lib/sound";
 import { t, type Flavor, type Locale } from "@/lib/shared";
-import { Cup } from "../ice/Cup";
-import { PHOTO, PhotoCone, photoGeometry, ScoopImg, scoopPhoto, thumb } from "../ice/PhotoStack";
+import { PHOTO, PhotoCone, ScoopImg, scoopPhoto, thumb } from "../ice/PhotoStack";
 import { useSite } from "../providers/SiteData";
 import { FrameSequence, type FrameSequenceHandle } from "../ui/FrameSequence";
 import { RollingPrice } from "../ui/RollingPrice";
@@ -19,6 +18,7 @@ import { ScoopFrame } from "../ui/ScoopFrame";
 import { TagIcon } from "../ui/TagIcon";
 import { Title } from "../ui/Title";
 import { FlavorWheel } from "./FlavorWheel";
+import { useScrollLock } from "../ui/useScrollLock";
 
 /** The flavor that gets the "Novità" ribbon / first place: a new one, else the featured one. */
 function badgeOf(f: Flavor, ui: (k: string) => string) {
@@ -96,26 +96,28 @@ export function Flavors() {
 
         {/* can't choose? spin the wheel · or build your own */}
         <div className="mt-10 grid gap-4 lg:grid-cols-[1.35fr_1fr]">
-          <FlavorWheel flavors={all.filter((f) => f.is_available_today)} onResult={(f) => window.setTimeout(() => setActive(f), 900)} />
+          <FlavorWheel flavors={all.filter((f) => f.is_available_today)} onResult={setActive} />
           <BuildPromo />
         </div>
 
         {/* the menu, with a playful filter */}
         <FilterBar filters={filters} value={filter} onChange={setFilter} />
-        <LayoutGroup>
-          {filter === "all" ? (
-            <div className="mt-8 space-y-12 sm:space-y-16">
-              {groups.map((g) => (
-                <div key={g.cat}>
-                  <h3 className="flex items-baseline gap-3 border-b border-chocolate/10 pb-3 font-display text-3xl sm:text-5xl">{ui(`categories.${g.cat}`)}</h3>
-                  <TileGrid list={g.list} locale={locale} active={active} onPick={pick} isFresh={isFresh} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <TileGrid list={filtered} locale={locale} active={active} onPick={pick} isFresh={isFresh} />
-          )}
-        </LayoutGroup>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div key={filter} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}>
+            {filter === "all" ? (
+              <div className="mt-2 space-y-12 sm:space-y-16">
+                {groups.map((g) => (
+                  <div key={g.cat}>
+                    <h3 className="flex items-baseline gap-3 border-b border-chocolate/10 pb-3 font-display text-3xl sm:text-4xl">{ui(`categories.${g.cat}`)}</h3>
+                    <TileGrid list={g.list} locale={locale} active={active} onPick={pick} isFresh={isFresh} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <TileGrid list={filtered} locale={locale} active={active} onPick={pick} isFresh={isFresh} />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* the flavor card, over the page (portaled: sections are transformed while they glide in) */}
@@ -123,7 +125,7 @@ export function Flavors() {
         createPortal(
           <AnimatePresence>
             {active && (
-              <motion.div className="fixed inset-0 z-[90] grid place-items-center bg-chocolate/30 p-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActive(null)}>
+              <motion.div className="fixed inset-0 z-[98] grid place-items-center bg-chocolate/30 p-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActive(null)}>
                 <div onClick={(e) => e.stopPropagation()} className="w-full max-w-3xl">
                   <Detail key={active.id} flavor={active} locale={locale} onClose={() => setActive(null)} />
                 </div>
@@ -146,45 +148,80 @@ function matches(f: Flavor, k: FilterKey) {
   return f.tags.includes(k as Flavor["tags"][number]);
 }
 
-/** Filter chips: the active one is a sliding colored pill (shared layout), the scoops re-flow under it. */
+/**
+ * The filter: a small round button that MORPHS (shared layout) into a rounded panel listing every filter;
+ * the list scrolls inside the panel, picking one closes it again. The active filter shows as a chip next to it.
+ */
 function FilterBar({ filters, value, onChange }: { filters: readonly FilterKey[]; value: FilterKey; onChange: (k: FilterKey) => void }) {
   const ui = useTranslations("ui");
+  const [open, setOpen] = useState(false);
   const label = (k: FilterKey) => (CATS.includes(k) ? ui(`categories.${k}`) : ui(`filters.${k}`));
+  const spring = { type: "spring", stiffness: 380, damping: 32 } as const;
   return (
-    <div className="sticky top-3 z-30 mt-14 -mx-(--gutter) overflow-x-auto px-(--gutter) py-2 [scrollbar-width:none] sm:mt-20">
-      <div className="mx-auto flex w-max gap-1.5 rounded-full bg-white/85 p-1.5 shadow-soft backdrop-blur-md">
-        {filters.map((k) => {
-          const on = value === k;
-          return (
-            <motion.button
-              key={k}
-              type="button"
-              whileTap={{ scale: 0.9 }}
-              onClick={() => (sfx.pop(), onChange(k))}
-              aria-pressed={on}
-              className={`relative flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold whitespace-nowrap transition-colors sm:text-base ${on ? (k === "all" ? "text-cream" : "text-chocolate") : "text-chocolate/70 hover:text-chocolate"}`}
-            >
-              {on && <motion.span layoutId="flavor-filter" className="absolute inset-0 rounded-full" style={{ background: FILTER_COLOR[k] }} transition={{ type: "spring", stiffness: 420, damping: 32 }} />}
-              <span className="relative">{label(k)}</span>
+    <div className="sticky top-20 z-30 mt-12 flex items-start gap-2 sm:mt-16">
+      <div className="relative">
+        <AnimatePresence initial={false} mode="popLayout">
+          {open ? (
+            <motion.div key="panel" layoutId="filter-morph" transition={spring} className="w-60 overflow-hidden rounded-[1.75rem] bg-white/95 shadow-float backdrop-blur-md" style={{ borderRadius: 28 }}>
+              <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                <motion.span layout="position" className="font-display text-lg">{ui("filters.title")}</motion.span>
+                <button type="button" onClick={() => setOpen(false)} aria-label={ui("close")} className="grid size-8 place-items-center rounded-full bg-chocolate/5">
+                  <X weight="bold" className="size-4" />
+                </button>
+              </div>
+              <motion.ul data-lenis-prevent initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.12 } }} className="max-h-[50vh] space-y-1 overflow-y-auto overscroll-contain px-2 pb-2">
+                {filters.map((k, i) => (
+                  <motion.li key={k} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.03 }}>
+                    <button
+                      type="button"
+                      onClick={() => (sfx.pop(), onChange(k), setOpen(false))}
+                      className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left font-bold transition-colors ${value === k ? "bg-chocolate/8" : "hover:bg-chocolate/5"}`}
+                    >
+                      <span className="size-3.5 shrink-0 rounded-full" style={{ background: FILTER_COLOR[k] }} />
+                      <span className="flex-1">{label(k)}</span>
+                      {value === k && <Check weight="bold" className="size-4" />}
+                    </button>
+                  </motion.li>
+                ))}
+              </motion.ul>
+            </motion.div>
+          ) : (
+            <motion.button key="dot" layoutId="filter-morph" transition={spring} type="button" onClick={() => (sfx.pop(), setOpen(true))} aria-label={ui("filters.title")} className="grid size-14 place-items-center bg-chocolate text-cream shadow-float" style={{ borderRadius: 999 }} whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
+              <motion.span layout="position">
+                <FunnelSimple weight="bold" className="size-6" />
+              </motion.span>
             </motion.button>
-          );
-        })}
+          )}
+        </AnimatePresence>
       </div>
+      <AnimatePresence>
+        {value !== "all" && !open && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, x: -12, scale: 0.8 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: -12, scale: 0.8 }}
+            onClick={() => onChange("all")}
+            className="mt-2.5 flex items-center gap-2 rounded-full py-2 pr-3 pl-4 font-bold shadow-soft"
+            style={{ background: FILTER_COLOR[value] }}
+          >
+            {label(value)} <X weight="bold" className="size-4" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 function TileGrid({ list, locale, active, onPick, isFresh }: { list: Flavor[]; locale: Locale; active: Flavor | null; onPick: (f: Flavor) => void; isFresh: (f: Flavor) => boolean }) {
   return (
-    <motion.ul layout className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-4">
-      <AnimatePresence mode="popLayout" initial={false}>
-        {list.map((f, i) => (
-          <motion.li key={f.id} layout="position" initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.6 }} transition={{ type: "spring", stiffness: 260, damping: 24 }}>
-            <ScoopTile flavor={f} locale={locale} index={i} selected={active?.id === f.id} onPick={() => onPick(f)} puff={isFresh(f)} />
-          </motion.li>
-        ))}
-      </AnimatePresence>
-    </motion.ul>
+    <ul className="mt-6 grid grid-cols-3 gap-x-3 gap-y-7 sm:grid-cols-4 sm:gap-x-6 lg:grid-cols-5">
+      {list.map((f, i) => (
+        <li key={f.id}>
+          <ScoopTile flavor={f} locale={locale} index={i} selected={active?.id === f.id} onPick={() => onPick(f)} puff={isFresh(f)} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -192,18 +229,17 @@ function TileGrid({ list, locale, active, onPick, isFresh }: { list: Flavor[]; l
 function Novita({ flavors, locale, onPick, isFresh }: { flavors: Flavor[]; locale: Locale; onPick: (f: Flavor) => void; isFresh: (f: Flavor) => boolean }) {
   const ui = useTranslations("ui");
   return (
-    <div className="relative mt-12 overflow-hidden rounded-[2.5rem] bg-[linear-gradient(120deg,#FFF4BD,#FFD6E5_55%,#E0DBFF)] p-5 shadow-[0_30px_60px_-30px_rgba(240,82,127,0.55)] sm:p-8">
+    <div className="relative mt-10 overflow-hidden rounded-[2rem] bg-[linear-gradient(120deg,#FFF4BD,#FFD6E5_55%,#E0DBFF)] p-4 shadow-[0_24px_50px_-30px_rgba(240,82,127,0.55)] sm:p-5">
       <span className="pointer-events-none absolute -top-16 -left-10 size-56 rounded-full bg-white/50 blur-3xl" aria-hidden />
-      <p className="relative flex items-center gap-2 font-display text-2xl sm:text-4xl">
-        <Sparkle weight="fill" className="size-7 text-[#F0527F]" /> {ui("novita")}
+      <p className="relative flex items-center gap-2 font-display text-xl sm:text-2xl">
+        <Sparkle weight="fill" className="size-5 text-[#F0527F]" /> {ui("novita")}
       </p>
-      <ul className="relative mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] sm:gap-8">
+      <ul className="relative mt-3 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] sm:gap-5">
         <AnimatePresence initial={false}>
           {flavors.map((f) => (
-            <motion.li key={f.id} layout initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.4 }} transition={{ type: "spring", stiffness: 240, damping: 18 }} className="w-44 shrink-0 sm:w-56">
+            <motion.li key={f.id} initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.4 }} transition={{ type: "spring", stiffness: 240, damping: 18 }} className="w-28 shrink-0 sm:w-36">
               <ScoopTile flavor={f} locale={locale} index={0} selected={false} onPick={() => onPick(f)} puff={isFresh(f)} />
-              {t(f.description, locale) && <p className="mt-1 line-clamp-2 text-center text-sm font-semibold text-chocolate/70">{t(f.description, locale)}</p>}
-            </motion.li>
+                          </motion.li>
           ))}
         </AnimatePresence>
       </ul>
@@ -273,6 +309,7 @@ function BuildPromo() {
 
 /** The scoop held up on the paddle, with what's inside. */
 function Detail({ flavor: f, locale, onClose }: { flavor: Flavor; locale: Locale; onClose: () => void }) {
+  useScrollLock();
   const ui = useTranslations("ui");
   const photo = scoopPhoto(f);
   const ingredients = t(f.ingredients, locale)
@@ -344,54 +381,41 @@ function Detail({ flavor: f, locale, onClose }: { flavor: Flavor; locale: Locale
   );
 }
 
-/** Small / medium / large at a glance, big and clear — flip between cone and cup (each with its own price). */
+/** Small / medium / large at a glance, with BOTH prices right away: in a cone and in a cup. */
 function PriceStrip() {
   const { data, locale } = useSite();
   const ui = useTranslations("ui");
-  const [kind, setKind] = useState<"coni" | "coppette">("coni");
   const rows = (g: string) => data.prices.filter((p) => p.is_active && p.price_group === g && p.max_scoops).sort((a, b) => a.price_eur - b.price_eur);
-  const list = rows(kind).length ? rows(kind) : rows("coni");
+  const cones = rows("coni");
+  const cups = rows("coppette");
   const photos = [PHOTO.scoops.pistacchio, PHOTO.scoops.fragola, PHOTO.scoops["yellow-submarine"], PHOTO.scoops.cioccolato];
   const BG = ["#FFD6E5", "#FFF4BD", "#D2F8EE"];
-  if (!list.length) return null;
+  if (!cones.length) return null;
   return (
-    <div className="w-full sm:w-auto">
-      <div className="mb-2 flex w-max gap-1 rounded-full bg-white/80 p-1 shadow-soft">
-        {(["coni", "coppette"] as const).map((k) => (
-          <button key={k} type="button" onClick={() => (sfx.pop(), setKind(k))} aria-pressed={kind === k} className={`relative rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${kind === k ? "text-cream" : "text-chocolate/70"}`}>
-            {kind === k && <motion.span layoutId="price-kind" className="absolute inset-0 rounded-full bg-chocolate" transition={{ type: "spring", stiffness: 420, damping: 32 }} />}
-            <span className="relative">{k === "coni" ? ui("cone") : ui("cup")}</span>
-          </button>
-        ))}
-      </div>
-      <ul className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
-        {list.map((c, i) => {
-          const geo = photoGeometry(c.max_scoops ?? 1, { cup: kind === "coppette" });
-          const scoops = photos.slice(0, c.max_scoops ?? 1);
-          return (
-            <motion.li key={c.id} layout whileHover={{ y: -5 }} className="flex flex-col items-center gap-1 rounded-3xl px-3 pt-3 pb-3 sm:flex-row sm:items-end sm:gap-3 sm:pr-5" style={{ background: BG[i % 3] }}>
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.div key={kind} initial={{ y: 30, opacity: 0, rotate: -8 }} animate={{ y: 0, opacity: 1, rotate: 0 }} exit={{ y: -20, opacity: 0 }} transition={{ type: "spring", stiffness: 260, damping: 18 }} className="relative h-20 shrink-0 sm:h-24" style={{ aspectRatio: geo.aspect }}>
-                  <div className="absolute" style={geo.cone}>
-                    {kind === "coppette" ? <Cup className="block w-full" /> : <img src={thumb(PHOTO.cone)!} alt="" className="block w-full" draggable={false} />}
-                  </div>
-                  {scoops.map((src, k) => (
-                    <div key={k} className="absolute" style={geo.scoop(k)}>
-                      <ScoopImg src={thumb(src)!} />
-                    </div>
-                  ))}
-                </motion.div>
-              </AnimatePresence>
-              <div className="text-center sm:pb-1 sm:text-left">
-                <p className="font-display text-lg leading-none font-bold sm:text-xl">{ui(`sizes.${c.size ?? "medio"}`)}</p>
-                <p className="font-script text-base leading-tight text-chocolate/65">{ui("nFlavors", { n: c.max_scoops ?? 1 })}</p>
-                <RollingPrice value={c.price_eur} locale={locale} className="mt-0.5 block font-display text-3xl leading-none font-bold sm:text-4xl" />
-              </div>
-            </motion.li>
-          );
-        })}
-      </ul>
-    </div>
+    <ul className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:gap-3">
+      {cones.map((c, i) => {
+        const cup = cups.find((x) => x.size === c.size);
+        return (
+          <motion.li key={c.id} whileHover={{ y: -4 }} className="flex flex-col items-center gap-1 rounded-3xl px-3 py-3 sm:flex-row sm:items-end sm:gap-2.5 sm:pr-4" style={{ background: BG[i % 3] }}>
+            <PhotoCone small scoops={photos.slice(0, c.max_scoops ?? 1).reverse()} className="h-16 shrink-0 sm:h-20" />
+            <div className="text-center sm:text-left">
+              <p className="font-display text-lg leading-none font-bold">{ui(`sizes.${c.size ?? "medio"}`)}</p>
+              <p className="font-script text-base leading-tight text-chocolate/65">{ui("nFlavors", { n: c.max_scoops ?? 1 })}</p>
+              <p className="mt-1 flex items-baseline justify-center gap-1.5 sm:justify-start">
+                <span className="text-[11px] font-bold tracking-wide text-chocolate/55 uppercase">{ui("cone")}</span>
+                <RollingPrice value={c.price_eur} locale={locale} className="font-display text-2xl leading-none font-bold" />
+              </p>
+              {cup && (
+                <p className="flex items-baseline justify-center gap-1.5 sm:justify-start">
+                  <span className="text-[11px] font-bold tracking-wide text-chocolate/55 uppercase">{ui("cup")}</span>
+                  <RollingPrice value={cup.price_eur} locale={locale} className="font-display text-2xl leading-none font-bold" />
+                </p>
+              )}
+            </div>
+          </motion.li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -441,11 +465,26 @@ function ScoopClip({ color, photo }: { color: string; photo: string | null }) {
   );
 }
 
-/** One flavor in the menu: a big real scoop sitting on a soft plate in the flavor's color, the name under it. */
+/** One flavor in the menu: a real scoop on a soft plate in the flavor's color, its name in a pill underneath. */
 function ScoopTile({ flavor: f, locale, index, selected, onPick, puff = false }: { flavor: Flavor; locale: Locale; index: number; selected: boolean; onPick: () => void; puff?: boolean }) {
   const ui = useTranslations("ui");
   const soldOut = !f.is_available_today;
   const badge = badgeOf(f, ui);
+  const plate = (
+    <>
+      <span className="absolute inset-x-[6%] top-[8%] bottom-[4%] rounded-full transition-transform duration-500 ease-(--ease-gelato) group-hover:scale-105" style={{ background: `radial-gradient(circle at 50% 35%, #fff, ${lighten(f.color_primary, 0.45)})` }} aria-hidden />
+      <img src={thumb(scoopPhoto(f))!} alt="" loading="lazy" decoding="async" draggable={false} className="absolute bottom-[12%] left-1/2 w-[94%] -translate-x-1/2 transition-transform duration-500 ease-(--ease-gelato) group-hover:-translate-y-[6%]" />
+      {puff && <Puff color={f.color_primary} />}
+      {badge && (
+        <span className="absolute top-0 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-chocolate px-2.5 py-1 text-[10px] font-bold tracking-wider whitespace-nowrap text-cream uppercase">
+          <Sparkle weight="fill" className="size-3 text-lemon" /> {badge}
+        </span>
+      )}
+      <span className={`absolute bottom-0 left-1/2 max-w-[104%] -translate-x-1/2 translate-y-1/3 truncate rounded-full bg-white/95 px-3 py-1 font-display text-sm leading-tight whitespace-nowrap shadow-[0_6px_14px_-8px_rgba(75,42,32,0.45)] sm:px-4 sm:text-lg ${soldOut ? "line-through" : ""}`} style={{ boxShadow: selected ? `0 0 0 3px ${f.color_primary}` : undefined }}>
+        {t(f.name, locale)}
+      </span>
+    </>
+  );
   return (
     <motion.button
       type="button"
@@ -453,24 +492,20 @@ function ScoopTile({ flavor: f, locale, index, selected, onPick, puff = false }:
       aria-pressed={selected}
       aria-label={`${badge ? `${badge}: ` : ""}${t(f.name, locale)}${soldOut ? ` — ${ui("soldOut")}` : ""}`}
       whileTap={{ scale: 0.94 }}
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "0px 0px -8% 0px" }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: Math.min(index, 8) * 0.04 }}
-      className={`group relative block w-full text-center ${soldOut ? "opacity-60 saturate-50" : ""}`}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: Math.min(index, 5) * 0.04 }}
+      className={`group relative block w-full pb-3 text-center ${soldOut ? "opacity-60 saturate-50" : ""}`}
     >
-      <motion.span className="relative block aspect-square" initial={puff ? { scale: 0, rotate: -12 } : false} animate={{ scale: [null, 1.18, 0.94, 1], rotate: 0 }} transition={{ duration: 0.9, times: [0, 0.45, 0.75, 1], delay: puff ? 0.25 : 0 }}>
-        <span className="absolute inset-x-[6%] top-[10%] bottom-0 rounded-full transition-transform duration-500 ease-(--ease-gelato) group-hover:scale-105" style={{ background: `radial-gradient(circle at 50% 35%, #fff, ${lighten(f.color_primary, 0.45)})` }} aria-hidden />
-        <img src={thumb(scoopPhoto(f))!} alt="" loading="lazy" decoding="async" draggable={false} className="absolute bottom-[8%] left-1/2 w-[96%] -translate-x-1/2 transition-transform duration-500 ease-(--ease-gelato) group-hover:-translate-y-[6%]" />
-        {puff && <Puff color={f.color_primary} />}
-        {badge && (
-          <span className="absolute top-0 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-chocolate px-2.5 py-1 text-[10px] font-bold tracking-wider whitespace-nowrap text-cream uppercase">
-            <Sparkle weight="fill" className="size-3 text-lemon" /> {badge}
-          </span>
-        )}
-      </motion.span>
-      <span className={`mt-2 block font-display text-lg leading-tight sm:text-2xl ${soldOut ? "line-through" : ""}`}>{t(f.name, locale)}</span>
-      {soldOut && <span className="block text-xs font-bold tracking-wider text-cherry uppercase">{ui("soldOut")}</span>}
+      {puff ? (
+        <motion.span className="relative block aspect-square" initial={{ scale: 0, rotate: -12 }} animate={{ scale: [0, 1.18, 0.94, 1], rotate: 0 }} transition={{ duration: 0.9, times: [0, 0.45, 0.75, 1], delay: 0.25 }}>
+          {plate}
+        </motion.span>
+      ) : (
+        <span className="relative block aspect-square">{plate}</span>
+      )}
+      {soldOut && <span className="mt-2 block text-xs font-bold tracking-wider text-cherry uppercase">{ui("soldOut")}</span>}
     </motion.button>
   );
 }

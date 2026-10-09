@@ -10,6 +10,7 @@ import { sfx } from "@/lib/sound";
 import { t, type Comment } from "@/lib/shared";
 import { ScoopImg, scoopPhoto, thumb } from "../ice/PhotoStack";
 import { useSite } from "../providers/SiteData";
+import { useScrollLock } from "../ui/useScrollLock";
 
 const STICKERS = { heart: Heart, star: Star, smile: Smiley, yum: ChatCircleDots } as const;
 const NOTE_COLORS = ["#FFF4BD", "#FFD6E5", "#D2F8EE", "#E0DBFF", "#FFE2C6", "#E3F5D1"];
@@ -98,6 +99,7 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const openedAt = useRef(0);
+  useScrollLock(open);
   const googleUrl = data.settings.google_review_url || data.settings.rating_google_url;
   const happy = rating >= 4;
   useEffect(() => setMounted(true), []);
@@ -135,7 +137,8 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
         <motion.div className="fixed inset-0 z-[95] grid place-items-center bg-chocolate/40 p-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} role="dialog" aria-modal="true" aria-label={ui("title")}>
           <motion.div
             layout
-            className="relative max-h-[92svh] w-full max-w-md overflow-y-auto rounded-[2rem] bg-cream p-6 shadow-float"
+            data-lenis-prevent
+            className="relative max-h-[92svh] w-full max-w-md overflow-y-auto overscroll-contain rounded-[2rem] bg-cream p-6 shadow-float"
             initial={{ y: 120, scale: 0.85, rotate: -4 }}
             animate={{ y: 0, scale: 1, rotate: 0 }}
             exit={{ y: 120, scale: 0.85, opacity: 0 }}

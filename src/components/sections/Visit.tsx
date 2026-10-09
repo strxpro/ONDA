@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { Bicycle, MapTrifold, Storefront, NavigationArrow, Phone, ShoppingBag } from "@phosphor-icons/react";
+import { Bicycle, Storefront, NavigationArrow, Phone, ShoppingBag } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -50,7 +50,7 @@ export function Visit() {
             className="relative block rounded-md bg-[#fffdf8] p-3 pb-14 shadow-[0_30px_60px_-24px_rgba(20,60,50,0.55)]"
           >
             <div className="overflow-hidden rounded-sm">
-              <MapEmbed query={`${s.name}, ${s.address ?? ""}`} />
+              <MapEmbed />
             </div>
             {/* stamp */}
             <div className="absolute -top-5 -right-3 w-20 rotate-6 rounded-sm border-[3px] border-dotted border-pink bg-[#fffdf8] p-1.5 shadow-md">
@@ -151,103 +151,32 @@ export function Visit() {
   );
 }
 
-/** Stylized seaside map of Santa Teresa with a bouncing pin on the shop. */
-function StylizedMap() {
-  return (
-    <svg viewBox="0 0 400 260" className="block h-full w-full" role="img" aria-label="Santa Teresa Gallura">
-      <rect width="400" height="260" fill="#8fd8ef" />
-      {[30, 62, 94].map((y, i) => (
-        <path key={y} d={`M-20 ${y} C40 ${y - 10} 80 ${y + 10} 140 ${y} S260 ${y - 10} 320 ${y} S420 ${y + 10} 460 ${y}`} fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="3" strokeLinecap="round">
-          <animateTransform attributeName="transform" type="translate" values="0 0; -30 0; 0 0" dur={`${6 + i}s`} repeatCount="indefinite" />
-        </path>
-      ))}
-      <path d="M0 120 C60 100 100 130 150 110 C200 90 230 120 290 100 C340 82 370 110 400 98 V260 H0 Z" fill="#E3F5D1" />
-      <path d="M0 120 C60 100 100 130 150 110 C200 90 230 120 290 100 C340 82 370 110 400 98" fill="none" stroke="#FFF4BD" strokeWidth="10" opacity="0.9" />
-      <g stroke="#fff" strokeWidth="9" strokeLinecap="round" fill="none">
-        <path d="M60 260 L150 170 L330 140" />
-        <path d="M200 260 L210 170" />
-        <path d="M150 170 L120 130" />
-      </g>
-      <circle cx="205" cy="185" r="30" fill="#FFD6E5" />
-      <text x="205" y="232" textAnchor="middle" fontFamily="var(--font-script)" fontSize="20" fill="#4B2A20">
-        Via Amsicora 2
-      </text>
-      <ellipse cx="205" cy="184" rx="13" ry="4" fill="#4B2A20" opacity="0.2">
-        <animate attributeName="rx" values="13;8;13" dur="1.4s" repeatCount="indefinite" />
-      </ellipse>
-      <g>
-        <animateTransform attributeName="transform" type="translate" values="0 0; 0 -12; 0 0" dur="1.4s" repeatCount="indefinite" calcMode="spline" keySplines=".5 0 .5 1; .5 0 .5 1" />
-        <path d="M205 180 C186 156 180 144 180 132 C180 118 191 107 205 107 C219 107 230 118 230 132 C230 144 224 156 205 180 Z" fill="#E5243F" />
-        <circle cx="205" cy="132" r="9" fill="#fff" />
-      </g>
-      <text x="320" y="50" textAnchor="middle" fontFamily="var(--font-script)" fontSize="24" fill="#fff">
-        Mare
-      </text>
-    </svg>
-  );
-}
+const MAP_EMBED =
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000.0440579699657!2d9.1903055!3d41.242598199999996!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12d96002bfa30f25%3A0x58b4d3eb31b27ce9!2sGelateria%20Onda%20La%20Gelateria%20Artigianale!5e0!3m2!1sit!2sit!4v1791580943434!5m2!1sit!2sit";
 
-/**
- * The real Google map — loaded only when the visitor asks for it (no Google cookies before that, GDPR-friendly).
- * Until then the drawn map of the seaside sits there with a "show the map" button.
- */
-function MapEmbed({ query }: { query: string }) {
-  const ui = useTranslations("ui.map");
-  const [on, setOn] = useState(false);
+/** The real Google map of the shop (its Business Profile pin), loaded lazily when the section comes near. */
+function MapEmbed() {
   return (
-    <div className="relative aspect-[400/260] w-full">
-      {on ? (
-        <iframe title="Google Maps" src={`https://www.google.com/maps?q=${encodeURIComponent(query)}&z=17&output=embed`} className="absolute inset-0 h-full w-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
-      ) : (
-        <>
-          <div className="absolute inset-0">
-            <StylizedMap />
-          </div>
-          <button type="button" onClick={() => setOn(true)} className="absolute inset-0 grid place-items-center bg-chocolate/10 transition-colors hover:bg-chocolate/20">
-            <span className="flex items-center gap-2 rounded-full bg-white px-5 py-3 font-bold shadow-soft">
-              <MapTrifold weight="duotone" className="size-6 text-[#4285F4]" /> {ui("load")}
-            </span>
-          </button>
-        </>
-      )}
+    <div className="relative aspect-[4/3] w-full bg-[#e8f2ee]">
+      <iframe title="Gelateria Onda — Google Maps" src={MAP_EMBED} className="absolute inset-0 h-full w-full border-0" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
     </div>
   );
 }
 
-/** A polaroid of the shop: its Google Business photo (with the author credit), else the first photo of the gallery. */
+/** A polaroid of the shop front, the real photo. */
 function ShopPhoto() {
-  const { data, locale } = useSite();
   const ui = useTranslations("ui.map");
-  const [g, setG] = useState<{ url: string; author: string | null; authorUrl: string | null } | null>(null);
-  useEffect(() => {
-    fetch("/api/place-photo")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d?.url && setG(d))
-      .catch(() => {});
-  }, []);
-  const fallback = data.gallery[0];
-  const src = g?.url ?? fallback?.image_url;
-  if (!src) return null;
-  // without the Google photo, the caption is the gallery photo's own (it may not show the shop itself)
-  const caption = g ? ui("photo") : t(fallback?.alt ?? {}, locale);
   return (
     <motion.figure
       initial={{ y: 40, opacity: 0, rotate: 12 }}
-      whileInView={{ y: 0, opacity: 1, rotate: 5 }}
-      whileHover={{ rotate: 2, y: -6, scale: 1.03 }}
+      whileInView={{ y: 0, opacity: 1, rotate: 4 }}
+      whileHover={{ rotate: 1.5, y: -6, scale: 1.03 }}
       viewport={{ once: true }}
       transition={{ type: "spring", stiffness: 110, damping: 14, delay: 0.2 }}
-      className="relative z-10 mx-auto -mt-10 w-[62%] max-w-[300px] rounded-sm bg-[#fffdf8] p-2.5 pb-10 shadow-[0_30px_50px_-20px_rgba(20,60,50,0.55)] md:absolute md:-right-8 md:-bottom-32 md:mt-0 md:w-[38%]"
+      className="relative z-10 mx-auto -mt-8 w-[80%] max-w-[380px] rounded-sm bg-[#fffdf8] p-2.5 pb-10 shadow-[0_30px_50px_-20px_rgba(20,60,50,0.55)] md:absolute md:-right-12 md:-bottom-36 md:mt-0 md:w-[58%]"
     >
-      <img src={src} alt={caption} className="aspect-[4/5] w-full rounded-[2px] object-cover" loading="lazy" referrerPolicy="no-referrer" />
-      <figcaption className="absolute right-3 bottom-2 left-3 flex items-baseline justify-between gap-2 font-script text-xl text-chocolate/80">
-        <span className="truncate">{caption}</span>
-        {g?.author && (
-          <a href={g.authorUrl ?? undefined} target="_blank" rel="noopener" className="truncate font-sans text-[10px] font-semibold text-chocolate/50">
-            Google · {g.author}
-          </a>
-        )}
-      </figcaption>
+      <img src="/img/shop.webp" alt={ui("photo")} width={680} height={383} className="aspect-[16/10] w-full rounded-[2px] object-cover" loading="lazy" />
+      <figcaption className="absolute right-3 bottom-2 left-3 font-script text-xl text-chocolate/80">{ui("photo")} · Via Amsicora 2</figcaption>
     </motion.figure>
   );
 }

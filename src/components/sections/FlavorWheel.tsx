@@ -11,6 +11,7 @@ import { sfx } from "@/lib/sound";
 import { t, type Flavor } from "@/lib/shared";
 import { scoopPhoto, thumb } from "../ice/PhotoStack";
 import { useSite } from "../providers/SiteData";
+import { useScrollLock } from "../ui/useScrollLock";
 
 /** Hot buttons above the wheel: they decide which of today's flavors go on it. */
 const CHIPS = [
@@ -90,6 +91,7 @@ function MiniWheel() {
 }
 
 function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose: () => void; onResult: (f: Flavor) => void }) {
+  useScrollLock();
   const { locale } = useSite();
   const ui = useTranslations("ui.wheel");
   const [chip, setChip] = useState<ChipKey>("all");
@@ -149,7 +151,7 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
   };
 
   return (
-    <motion.div className="fixed inset-0 z-[96] grid place-items-center overflow-y-auto bg-chocolate/45 p-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !spinning && onClose()} role="dialog" aria-modal="true" aria-label={ui("title")}>
+    <motion.div data-lenis-prevent className="fixed inset-0 z-[96] grid place-items-center overflow-y-auto overscroll-contain bg-chocolate/45 p-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !spinning && onClose()} role="dialog" aria-modal="true" aria-label={ui("title")}>
       <motion.div
         className="relative w-full max-w-xl rounded-[2.5rem] bg-cream p-5 text-center shadow-float sm:p-8"
         initial={{ y: 120, scale: 0.85, rotate: -5 }}

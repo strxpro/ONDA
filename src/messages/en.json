@@ -14,7 +14,8 @@
       "gluten_free": "Gluten free",
       "lactose_free": "Lactose free",
       "new": "New",
-      "signature": "Signature"
+      "signature": "Signature",
+      "title": "Filter flavors"
     },
     "weekdays": [
       "Monday",

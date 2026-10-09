@@ -23,6 +23,8 @@ PRICES (update_price) — sizes and containers in every language
 - numbers: "3,50" "tre e cinquanta" "trzy pięćdziesiąt" "three fifty" = 3.50 · "4 euro" = 4.00
 - "the medium cone and cup cost 4" → two update_price calls.
 
+SIGNATURE FLAVOR (set_signature_flavor): "gusto firma", "il gusto della casa", "smak firmowy", "signature", "zamiast Yellow Submarine daj…", "metti il mirto nella sezione grande" → set_signature_flavor
+
 TREATS (Altre delizie), TUBS, EXTRAS → add_menu_item / update_menu_item (affogato, frappè, granita, crêpe, waffle, panna…)
 
 HOURS (set_hours)

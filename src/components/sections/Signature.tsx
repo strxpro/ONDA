@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 import { t } from "@/lib/shared";
 import { sfx } from "@/lib/sound";
 import { ingredientPhoto } from "@/lib/ingredients";
+import { lighten } from "@/lib/color";
 import { IceCream } from "../ice/IceCream";
 import { PhotoCone, scoopPhoto } from "../ice/PhotoStack";
 import { useSite } from "../providers/SiteData";
@@ -48,6 +49,11 @@ export function Signature() {
   const s = data.settings;
   const flavor = data.flavors.find((f) => f.tags.includes("signature"));
   const root = useRef<HTMLElement>(null);
+  const title = flavor ? t(flavor.name, locale) : t(s.texts.signature_title, locale);
+  // the owner's own line wins while the signature is the original one; a new signature speaks with its own description
+  const body = flavor && !flavor.slug.startsWith("yellow-submarine") ? t(flavor.description, locale) : t(s.texts.signature_body, locale);
+  const c1 = flavor?.color_primary ?? "#FFE066";
+  const c2 = flavor?.color_secondary ?? "#A8DB7A";
   const ingredients = flavor ? t(flavor.ingredients, locale).split(",").map((x) => x.trim()).filter(Boolean).slice(0, 3) : [];
 
   useEffect(() => {
@@ -73,17 +79,18 @@ export function Signature() {
   if (!flavor) return null;
 
   return (
-    <section ref={root} id="signature" className="relative overflow-x-clip">
+    <section ref={root} id="signature" className="relative overflow-x-clip" data-flavor={flavor?.slug}>
       <div className="sig-stage relative flex min-h-svh flex-col items-center justify-end overflow-hidden">
-        {/* soft sun */}
-        <div className="absolute top-[12%] left-1/2 size-[70vmin] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,#fff6cf,transparent_65%)] opacity-80" aria-hidden />
+        {/* the flavor's own light: its colors wash the stage, a soft sun behind the cone */}
+        <div className="absolute inset-0 transition-[background] duration-1000" style={{ background: `radial-gradient(80% 60% at 50% 30%, ${lighten(c1, 0.55)}, transparent 75%), radial-gradient(60% 50% at 80% 90%, ${lighten(c2, 0.6)}aa, transparent 70%)` }} aria-hidden />
+        <div className="absolute top-[12%] left-1/2 size-[70vmin] -translate-x-1/2 rounded-full opacity-80" style={{ background: `radial-gradient(circle, ${lighten(c1, 0.75)}, transparent 65%)` }} aria-hidden />
         {/* giant outline name drifting by */}
         <p
           className="sig-bigtext pointer-events-none absolute top-[10%] left-0 font-display text-[clamp(6rem,22vw,20rem)] leading-none font-bold whitespace-nowrap select-none"
-          style={{ color: "transparent", WebkitTextStroke: "2px rgba(255,255,255,0.85)" }}
+          style={{ backgroundImage: `linear-gradient(100deg, ${c1}, ${lighten(c2, 0.15)} 45%, ${c1} 90%)`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", opacity: 0.55 }}
           aria-hidden
         >
-          {t(s.texts.signature_title, locale)} · {t(s.texts.signature_title, locale)}
+          {title} · {title}
         </p>
 
         {/* the cone surfacing */}
@@ -97,7 +104,7 @@ export function Signature() {
               transition={{ type: "spring", stiffness: 400, damping: 8 }}
               onTap={() => sfx.plop()}
             >
-              <PhotoCone scoops={[scoopPhoto(flavor)!]} className="w-full" style={{ filter: "drop-shadow(0 30px 30px rgba(242,169,59,0.55))" }} />
+              <PhotoCone scoops={[scoopPhoto(flavor)!]} className="w-full" style={{ filter: `drop-shadow(0 30px 30px ${c1}99)` }} />
             </motion.div>
           ) : (
             <IceCream scoops={[{ color: flavor.color_primary, color2: flavor.color_secondary, texture: flavor.scoop_texture }]} drips className="w-full" />
@@ -134,8 +141,8 @@ export function Signature() {
 
 
         <div className="sig-title absolute inset-x-0 bottom-[7svh] z-30 px-(--gutter) text-center">
-          <h2 className="font-display text-display font-bold text-chocolate">{t(s.texts.signature_title, locale)}</h2>
-          <p className="mx-auto mt-1 max-w-md font-script text-2xl text-chocolate/80 sm:text-3xl">{t(s.texts.signature_body, locale)}</p>
+          <h2 className="font-display text-display font-bold text-chocolate">{title}</h2>
+          {body && <p className="mx-auto mt-1 max-w-md font-script text-2xl text-chocolate/80 sm:text-3xl">{body}</p>}
         </div>
       </div>
     </section>

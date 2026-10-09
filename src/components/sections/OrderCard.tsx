@@ -12,6 +12,7 @@ import { t } from "@/lib/shared";
 import { ScoopImg, scoopPhoto, thumb } from "../ice/PhotoStack";
 import { useSite } from "../providers/SiteData";
 import { RollingPrice } from "../ui/RollingPrice";
+import { useScrollLock } from "../ui/useScrollLock";
 
 const MAX_FLAVORS = 4;
 
@@ -68,6 +69,7 @@ export function OrderCard() {
 }
 
 function OrderForm({ onClose }: { onClose: () => void }) {
+  useScrollLock();
   const { data, locale } = useSite();
   const ui = useTranslations("ui.order");
   const items = data.prices.filter((p) => p.is_active && (p.price_group === "vaschette" || p.price_group === "delizie"));
@@ -123,7 +125,8 @@ function OrderForm({ onClose }: { onClose: () => void }) {
   return (
     <motion.div className="fixed inset-0 z-[96] grid place-items-center bg-chocolate/40 p-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} role="dialog" aria-modal="true" aria-label={ui("formTitle")}>
       <motion.div
-        className="relative max-h-[92svh] w-full max-w-lg overflow-y-auto rounded-[2rem] bg-cream p-6 shadow-float"
+        data-lenis-prevent
+        className="relative max-h-[92svh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-[2rem] bg-cream p-6 shadow-float"
         initial={{ y: 120, scale: 0.85, rotate: -4 }}
         animate={{ y: 0, scale: 1, rotate: 0 }}
         exit={{ y: 120, scale: 0.85, opacity: 0 }}

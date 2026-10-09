@@ -14,10 +14,15 @@ export function LogoMark({ className = "" }: { className?: string }) {
   );
 }
 
-export function Logo({ tagline, className = "", light = false }: { tagline?: string; className?: string; light?: boolean }) {
+export function Logo({ tagline, className = "", light = false, spin = false }: { tagline?: string; className?: string; light?: boolean; spin?: boolean }) {
   return (
     <span className={`flex items-center gap-2 ${className}`}>
-      <LogoMark className="h-10 w-auto shrink-0 transition-transform duration-500 ease-(--ease-gelato) group-hover:-rotate-12" />
+      {spin ? (
+        // the real cone, turning on its stand (frames of the filmed turntable)
+        <span className="logo-spin block size-11 shrink-0 rounded-full shadow-[inset_0_0_0_2px_rgba(255,255,255,0.8),0_6px_14px_-6px_rgba(75,42,32,0.45)] transition-transform duration-500 ease-(--ease-gelato) group-hover:scale-110" aria-hidden />
+      ) : (
+        <LogoMark className="h-10 w-auto shrink-0 transition-transform duration-500 ease-(--ease-gelato) group-hover:-rotate-12" />
+      )}
       <span className="flex flex-col leading-none">
         <span className={`font-display text-[1.7rem] leading-[0.85] font-bold tracking-tight ${light ? "text-cream" : "text-chocolate"}`}>
           onda<span className="text-pink">.</span>

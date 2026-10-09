@@ -16,12 +16,14 @@ export default function LoginPage() {
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     setState("sending");
+    // admins get their login account created on first use (sign-ups stay closed to everyone else)
+    await fetch("/api/admin-login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) }).catch(() => {});
     const { error } = await getBrowserSupabase()!.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${window.location.origin}/admin/auth/callback`, shouldCreateUser: false },
     });
     if (error) {
-      setError(error.message);
+      setError(/signups not allowed|not found/i.test(error.message) ? "Questa email non è tra gli amministratori." : error.message);
       setState("error");
     } else setState("sent");
   };

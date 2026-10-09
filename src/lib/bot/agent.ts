@@ -173,6 +173,7 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
   switch (tool) {
     case "set_flavor_availability":
     case "remove_flavor":
+    case "set_signature_flavor":
     case "update_flavor": {
       const r = await resolveFlavor(String(a.flavor), which);
       if ("choice" in r) return r;
@@ -183,6 +184,8 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
           ? `${f.name.it}: ${a.available ? "di nuovo disponibile" : "FINITO"}`
           : tool === "remove_flavor"
             ? `togliere ${f.name.it} dal sito`
+            : tool === "set_signature_flavor"
+              ? `${f.name.it} diventa il gusto firma (la grande sezione del sito)`
             : `modificare ${f.name.it} (${Object.keys(a)
                 .filter((k) => k !== "flavor")
                 .join(", ")})`;
@@ -368,6 +371,8 @@ export async function execute(s: Staged, actor: Actor) {
       return ops.setFlavorAvailability(a.id as string, a.available as boolean, actor);
     case "remove_flavor":
       return ops.removeFlavor(a.id as string, actor);
+    case "set_signature_flavor":
+      return ops.setSignatureFlavor(a.id as string, actor);
     case "update_flavor":
       return ops.updateFlavor(
         a.id as string,

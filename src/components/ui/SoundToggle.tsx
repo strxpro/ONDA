@@ -1,6 +1,5 @@
 "use client";
 
-import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -34,16 +33,25 @@ export function SoundToggle() {
       aria-pressed={on}
       aria-label={on ? ui("soundOff") : ui("soundOn")}
       title={on ? ui("soundOff") : ui("soundOn")}
-      className={`relative grid size-10 shrink-0 place-items-center rounded-full shadow-soft transition-colors ${on ? "bg-lemon" : "bg-white"}`}
+      className={`relative grid size-10 shrink-0 place-items-center rounded-full shadow-soft transition-colors duration-500 ${on ? "bg-lemon" : "bg-white"}`}
     >
-      {on ? <SpeakerHigh weight="duotone" className="size-5" /> : <SpeakerSlash weight="duotone" className="size-5 opacity-60" />}
-      {on && (
-        <span className="absolute -top-1 -right-1 flex gap-0.5" aria-hidden>
-          {[0, 1, 2].map((i) => (
-            <motion.span key={i} className="block w-0.5 rounded-full bg-chocolate" animate={{ height: [3, 8, 4, 7, 3] }} transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }} />
-          ))}
-        </span>
-      )}
+      {/* one speaker; its sound waves draw in (and breathe) when the sound is on, a soft slash when off */}
+      <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M4 9.5h3l4.5-4v13L7 14.5H4z" fill="currentColor" fillOpacity=".18" />
+        {[
+          "M15 9.2a4 4 0 0 1 0 5.6",
+          "M17.6 6.8a7.4 7.4 0 0 1 0 10.4",
+        ].map((d, i) => (
+          <motion.path
+            key={d}
+            d={d}
+            initial={false}
+            animate={on ? { pathLength: 1, opacity: [1, 0.45, 1] } : { pathLength: 0, opacity: 0 }}
+            transition={on ? { pathLength: { duration: 0.5, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }, opacity: { duration: 1.6, repeat: Infinity, delay: 0.6 + i * 0.3, ease: "easeInOut" } } : { duration: 0.3 }}
+          />
+        ))}
+        <motion.path d="M15.5 9.5l5 5M20.5 9.5l-5 5" initial={false} animate={on ? { pathLength: 0, opacity: 0 } : { pathLength: 1, opacity: 0.55 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} />
+      </svg>
     </motion.button>
   );
 }

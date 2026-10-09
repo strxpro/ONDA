@@ -99,6 +99,17 @@ export async function updateFlavor(id: string, fields: Partial<Flavor> & { name_
   return patchRow("flavors", id, patch, ctx(actor, "update_flavor"));
 }
 
+/** The "gusto firma" shown in the big Signature section: exactly one flavor carries the "signature" tag. */
+export async function setSignatureFlavor(id: string, actor: Actor) {
+  const batchId = newBatch();
+  const c = { ...actor, action: "set_signature_flavor", batchId };
+  for (const f of await allFlavors()) {
+    const has = f.tags.includes("signature");
+    if (f.id === id && !has) await patchRow("flavors", f.id, { tags: [...f.tags, "signature"], is_featured: true }, c);
+    if (f.id !== id && has) await patchRow("flavors", f.id, { tags: f.tags.filter((t) => t !== "signature") }, c);
+  }
+}
+
 export async function removeFlavor(id: string, actor: Actor) {
   return deleteRow("flavors", id, ctx(actor, "remove_flavor"));
 }
