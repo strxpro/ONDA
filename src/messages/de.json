@@ -128,7 +128,7 @@
       "cta": "Vorbestellen",
       "formTitle": "Eis vorbestellen",
       "what": "Was dürfen wir vorbereiten?",
-      "flavors": "Sorten wählen (bis zu 4)",
+      "flavors": "Sorten wählen (bis zu {n})",
       "when": "Wann holst du es ab?",
       "name": "Dein Name",
       "phone": "Telefon",
@@ -136,12 +136,19 @@
       "send": "Vorbestellen",
       "thanks": "Danke! Wir bestätigen gleich.",
       "error": "Hoppla, das hat nicht geklappt. Bitte Angaben prüfen und erneut senden.",
-      "perKg": "pro Kilo"
+      "perKg": "pro Kilo",
+      "custom": "Nach Gewicht",
+      "weight": "Gewicht",
+      "perKgNote": "in 50-g-Schritten"
     },
     "map": {
       "load": "Karte anzeigen",
       "note": "Öffnet Google Maps",
       "photo": "Der Laden"
+    },
+    "priceBoard": {
+      "cone": "Handgemachte Waffel",
+      "cup": "Becher"
     }
   }
 }

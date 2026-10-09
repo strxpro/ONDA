@@ -10,7 +10,7 @@ import type { ReactNode } from "react";
 export function Title({ children, color, note, align = "left", light = false }: { children: string; color: string; note?: ReactNode; align?: "left" | "center"; light?: boolean }) {
   const words = children.split(" ");
   return (
-    <div className={`relative ${align === "center" ? "text-center" : ""}`}>
+    <div className={`relative pb-5 sm:pb-7 ${align === "center" ? "text-center" : ""}`}>
       <h2 className={`relative inline-block font-display text-title font-bold ${light ? "text-cream" : "text-chocolate"}`} aria-label={children}>
         {words.map((w, wi) => (
           <span key={wi} className="inline-block whitespace-nowrap" aria-hidden>
@@ -29,12 +29,12 @@ export function Title({ children, color, note, align = "left", light = false }: 
             {wi < words.length - 1 && <span className="inline-block w-[0.26em]" />}
           </span>
         ))}
-        <svg viewBox="0 0 300 24" preserveAspectRatio="none" className="absolute -bottom-3 left-0 h-[0.32em] w-full overflow-visible" aria-hidden>
+        <svg viewBox="0 0 300 24" preserveAspectRatio="none" className="absolute -bottom-[0.42em] left-[2%] h-[0.26em] w-[96%] overflow-visible" aria-hidden>
           <motion.path
             d="M4 14 C40 4 70 22 108 12 C146 2 176 22 214 12 C244 5 270 16 296 10"
             fill="none"
             stroke={color}
-            strokeWidth="5"
+            strokeWidth="4.5"
             strokeLinecap="round"
             initial={{ pathLength: 0 }}
             whileInView={{ pathLength: 1 }}

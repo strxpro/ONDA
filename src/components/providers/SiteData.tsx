@@ -66,6 +66,14 @@ export function SiteDataProvider({ initial, locale, children }: { initial: SiteD
 
   useEffect(() => setData(initial), [initial]);
 
+  // language switched: the texts are already in the new language — let them re-form out of the blur
+  useEffect(() => {
+    const html = document.documentElement;
+    if (!html.dataset.langswap) return;
+    const id = window.setTimeout(() => delete html.dataset.langswap, 60);
+    return () => window.clearTimeout(id);
+  }, [locale]);
+
   useEffect(() => {
     const onChange = (table: string, key: string, row: Row | null) => setData((d) => applyChange(d, table, key, row));
 

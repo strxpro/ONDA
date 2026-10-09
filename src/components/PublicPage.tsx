@@ -5,6 +5,7 @@ import { Fragment, type ReactNode } from "react";
 import { t, type SectionKey } from "@/lib/shared";
 import { Marquee } from "./decor/Marquee";
 import { SceneFlow } from "./decor/SceneFlow";
+import { JumpLoader } from "./JumpLoader";
 import { Nav } from "./Nav";
 import { useSite } from "./providers/SiteData";
 import { Banner } from "./sections/Banner";
@@ -44,6 +45,7 @@ export function PublicPage() {
         {ui("skipToContent")}
       </a>
       <Nav />
+      <JumpLoader />
       <main id="main">
         {visible.some((s) => s.key === "announcement") && <Banner />}
         <SceneFlow keys={content.map((s) => s.key)}>

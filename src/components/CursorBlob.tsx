@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
 import gsap from "gsap";
 import { useEffect, useRef } from "react";
 
@@ -34,12 +35,12 @@ export function CursorBlob() {
         current = color;
         // over a flavor: a ring in its color (never a dark blot over the content)
         gsap.to(el, {
-          backgroundColor: color ? "rgba(255,255,255,0)" : "#FF8FB8",
           borderColor: color || "rgba(255,255,255,0)",
-          scale: color ? 2.4 : 1,
+          scale: color ? 1.8 : 1,
           duration: 0.45,
           ease: "elastic.out(1, 0.5)",
         });
+        gsap.to(el.firstElementChild, { opacity: color ? 0 : 1, scale: color ? 0.4 : 1, duration: 0.3 });
       }
       // sprinkles trail
       if (Math.hypot(e.clientX - lastX, e.clientY - lastY) > 46) {
@@ -68,7 +69,10 @@ export function CursorBlob() {
   return (
     <>
       <div ref={trail} className="pointer-events-none fixed inset-0 z-[80]" aria-hidden />
-      <div ref={blob} className="pointer-events-none fixed top-0 left-0 z-[81] size-6 rounded-full border-2 opacity-0" style={{ background: "#FF8FB8", borderColor: "rgba(255,255,255,0)" }} aria-hidden />
+      {/* the cursor is a tiny scoop of strawberry gelato; over a flavor it becomes a ring in that flavor's color */}
+      <div ref={blob} className="pointer-events-none fixed top-0 left-0 z-[81] grid size-8 place-items-center rounded-full border-2 opacity-0" style={{ borderColor: "rgba(255,255,255,0)" }} aria-hidden>
+        <img src="/img/ice/sm/fragola.webp" alt="" className="w-[130%] max-w-none drop-shadow-[0_3px_4px_rgba(75,42,32,0.35)]" />
+      </div>
     </>
   );
 }

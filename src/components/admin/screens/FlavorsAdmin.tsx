@@ -1,7 +1,7 @@
 "use client";
 
-import { PencilSimple, Plus, Sparkle, Star, Trash, UploadSimple } from "@phosphor-icons/react";
-import { useState } from "react";
+import { CheckSquare, MagnifyingGlass, PencilSimple, Plus, Sparkle, Square, Star, Trash, UploadSimple, X } from "@phosphor-icons/react";
+import { useMemo, useState } from "react";
 import { addFlavorAction, deleteRowAction, reorderAction, saveRow, uploadImageAction } from "@/app/admin/actions";
 import { FLAVOR_CATEGORIES, FLAVOR_TAGS, SCOOP_TEXTURES, type Flavor } from "@/lib/shared";
 import { IceCream } from "../../ice/IceCream";
@@ -14,10 +14,62 @@ import { Button, Card, ColorField, Field, I18nEditor, inputCls, PageTitle, Sheet
 const TAG_LABEL: Record<string, string> = { vegan: "Vegano", gluten_free: "Senza glutine", lactose_free: "Senza lattosio", new: "Novità", signature: "Firma" };
 const TEXTURE_LABEL: Record<string, string> = { smooth: "Liscio", chunks: "Con pezzi", swirl: "Variegato" };
 
+/** "pistàcchio" → "pistacchio": lowercase, no accents — so "tiramisu" finds "Tiramisù". */
+const norm = (v: string) => v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const VIEWS = { all: "Tutti", on: "Disponibili", off: "Finiti", new: "Novità" } as const;
+
+/**
+ * Smart search: every word must match somewhere — the name in any of the six languages, the ingredients,
+ * the description, the category or a tag (e.g. "vegano frutta", "pistac", "senza latt", "finito").
+ */
+function matchesQuery(f: Flavor, q: string) {
+  const hay = norm(
+    [
+      ...Object.values(f.name),
+      ...Object.values(f.ingredients ?? {}),
+      ...Object.values(f.description ?? {}),
+      f.slug,
+      f.category,
+      ...f.tags.map((t) => `${t} ${TAG_LABEL[t] ?? ""}`),
+      f.is_available_today ? "disponibile available" : "finito esaurito sold out",
+    ].join(" "),
+  );
+  return norm(q)
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((w) => hay.includes(w));
+}
+
 export function FlavorsAdmin({ flavors }: { flavors: Flavor[] }) {
   const { call } = useAction();
   const [edit, setEdit] = useState<Flavor | null>(null);
   const [adding, setAdding] = useState(false);
+  const [q, setQ] = useState("");
+  const [view, setView] = useState<keyof typeof VIEWS>("all");
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const filtering = q.trim() !== "" || view !== "all";
+  const shown = useMemo(
+    () =>
+      flavors.filter(
+        (f) => matchesQuery(f, q) && (view === "all" || (view === "on" && f.is_available_today) || (view === "off" && !f.is_available_today) || (view === "new" && f.tags.includes("new"))),
+      ),
+    [flavors, q, view],
+  );
+  const toggle = (id: string) => setPicked((p) => (p.has(id) ? new Set([...p].filter((x) => x !== id)) : new Set([...p, id])));
+  const removeOne = (f: Flavor) => confirm(`Eliminare «${f.name.it}» dal sito? (si può annullare da Cronologia)`) && call(() => deleteRowAction("flavors", f.id), `${f.name.it} eliminato`);
+  const bulk = async (kind: "delete" | "off" | "on") => {
+    const ids = [...picked];
+    if (!ids.length) return;
+    if (kind === "delete" && !confirm(`Eliminare ${ids.length} gusti dal sito?`)) return;
+    await call(async () => {
+      for (const id of ids) {
+        const r = kind === "delete" ? await deleteRowAction("flavors", id) : await saveRow("flavors", id, { is_available_today: kind === "on" });
+        if (!r.ok) return r;
+      }
+      return { ok: true as const };
+    }, kind === "delete" ? `${ids.length} gusti eliminati` : "Fatto");
+    setPicked(new Set());
+  };
 
   return (
     <>
@@ -30,14 +82,52 @@ export function FlavorsAdmin({ flavors }: { flavors: Flavor[] }) {
           </Button>
         }
       />
+      {/* smart search + quick views */}
+      <div className="sticky top-2 z-20 mb-3 space-y-2 rounded-2xl bg-cream/90 p-1 backdrop-blur">
+        <label className="flex items-center gap-2 rounded-2xl border-2 border-chocolate/10 bg-white px-3 focus-within:border-pink">
+          <MagnifyingGlass weight="bold" className="size-5 shrink-0 text-chocolate/50" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca: nome in ogni lingua, ingrediente, «vegano», «finito»…" className="min-h-12 w-full bg-transparent font-semibold outline-none" />
+          {q && (
+            <button type="button" onClick={() => setQ("")} aria-label="Cancella" className="grid size-8 place-items-center rounded-full bg-chocolate/5">
+              <X weight="bold" className="size-4" />
+            </button>
+          )}
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {(Object.keys(VIEWS) as (keyof typeof VIEWS)[]).map((k) => (
+            <button key={k} type="button" onClick={() => setView(k)} className={`rounded-full px-3 py-1.5 text-sm font-bold ${view === k ? "bg-chocolate text-cream" : "bg-white text-chocolate/70"}`}>
+              {VIEWS[k]}
+            </button>
+          ))}
+          <span className="ml-auto self-center text-sm font-bold text-chocolate/50">{shown.length} gusti</span>
+        </div>
+        {picked.size > 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-chocolate p-2 text-cream">
+            <span className="px-2 font-bold">{picked.size} selezionati</span>
+            <button type="button" onClick={() => bulk("off")} className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-bold">Finiti oggi</button>
+            <button type="button" onClick={() => bulk("on")} className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-bold">Disponibili</button>
+            <button type="button" onClick={() => bulk("delete")} className="rounded-full bg-cherry px-3 py-1.5 text-sm font-bold">
+              <Trash weight="bold" className="mr-1 inline size-4" />
+              Elimina
+            </button>
+            <button type="button" onClick={() => setPicked(new Set())} className="ml-auto grid size-8 place-items-center rounded-full bg-white/15" aria-label="Annulla selezione">
+              <X weight="bold" className="size-4" />
+            </button>
+          </div>
+        )}
+      </div>
+      {filtering && !shown.length && <Card><p className="text-chocolate/60">Nessun gusto trovato.</p></Card>}
       <SortableList
-        items={flavors}
+        items={shown}
         getId={(f) => f.id}
-        onReorder={(ids) => call(() => reorderAction("flavors", ids), "Ordine salvato")}
+        onReorder={(ids) => !filtering && call(() => reorderAction("flavors", ids), "Ordine salvato")}
         render={(f, handle) => (
           <Card className="!p-2">
             <div className="flex items-center gap-2">
-              {handle}
+              {filtering ? null : handle}
+              <button type="button" onClick={() => toggle(f.id)} aria-label="Seleziona" className="grid size-9 shrink-0 place-items-center rounded-lg text-chocolate/50">
+                {picked.has(f.id) ? <CheckSquare weight="fill" className="size-6 text-chocolate" /> : <Square weight="bold" className="size-6" />}
+              </button>
               {scoopPhoto(f) ? (
                 <span className={`block h-9 w-11 shrink-0 ${f.is_available_today ? "" : "grayscale"}`}>
                   <ScoopImg src={scoopPhoto(f)!} />
@@ -59,6 +149,9 @@ export function FlavorsAdmin({ flavors }: { flavors: Flavor[] }) {
               </button>
               <button type="button" onClick={() => setEdit(f)} className="grid size-11 place-items-center rounded-xl text-chocolate/60" aria-label="Modifica">
                 <PencilSimple weight="bold" className="size-5" />
+              </button>
+              <button type="button" onClick={() => removeOne(f)} className="grid size-11 place-items-center rounded-xl text-cherry/70 hover:bg-cherry/10" aria-label="Elimina">
+                <Trash weight="bold" className="size-5" />
               </button>
               <Toggle checked={f.is_available_today} label="Disponibile oggi" onChange={(v) => call(() => saveRow("flavors", f.id, { is_available_today: v }), v ? `${f.name.it}: disponibile` : `${f.name.it}: finito!`)} />
             </div>

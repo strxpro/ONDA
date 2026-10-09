@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
  
 import { CalendarCheck, Check, PaperPlaneTilt, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
@@ -14,7 +16,18 @@ import { useSite } from "../providers/SiteData";
 import { RollingPrice } from "../ui/RollingPrice";
 import { useScrollLock } from "../ui/useScrollLock";
 
-const MAX_FLAVORS = 4;
+const CUSTOM = "custom";
+const MIN_G = 250;
+const MAX_G = 3000;
+/** "Vaschetta 500 g" → 500, "Vaschetta 1 kg" → 1000. */
+function gramsOf(label: string) {
+  const kg = /(\d+(?:[.,]\d+)?)\s*kg/i.exec(label);
+  if (kg) return Math.round(parseFloat(kg[1].replace(",", ".")) * 1000);
+  const g = /(\d+)\s*g\b/i.exec(label);
+  return g ? Number(g[1]) : null;
+}
+/** How many flavors fit: up to 500 g → 4, up to 1 kg → 6, more → 8. */
+const maxFlavors = (grams: number | null) => (grams == null ? 4 : grams <= 500 ? 4 : grams <= 1000 ? 6 : 8);
 
 /** "YYYY-MM-DD" + "HH:MM" in Sardinia → ISO with the right offset (summer/winter time). */
 function romeISO(date: string, time: string) {
@@ -76,10 +89,20 @@ function OrderForm({ onClose }: { onClose: () => void }) {
   const flavors = data.flavors.filter((f) => f.is_available_today);
   const [item, setItem] = useState(items[0]?.id ?? "");
   const [picked, setPicked] = useState<string[]>([]);
+  const [grams, setGrams] = useState(750);
+  // price per kilo from the 1 kg tub (else the biggest tub), for "su misura"
+  const tubs = items.filter((p) => p.price_group === "vaschette").map((p) => ({ p, g: gramsOf(t(p.label, "it")) })).filter((x) => x.g);
+  const ref = tubs.sort((a, b) => Math.abs(1000 - a.g!) - Math.abs(1000 - b.g!))[0];
+  const perKg = ref ? (ref.p.price_eur / ref.g!) * 1000 : 0;
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const openedAt = useRef(Date.now());
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Rome" });
-  const isTub = items.find((p) => p.id === item)?.price_group === "vaschette";
+  const current = items.find((p) => p.id === item);
+  const isCustom = item === CUSTOM;
+  const isTub = isCustom || current?.price_group === "vaschette";
+  const tubGrams = isCustom ? grams : current ? gramsOf(t(current.label, "it")) : null;
+  const MAX_FLAVORS = maxFlavors(tubGrams);
+  const customPrice = Math.round(perKg * (grams / 1000) * 10) / 10;
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -95,7 +118,7 @@ function OrderForm({ onClose }: { onClose: () => void }) {
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const label = t(items.find((p) => p.id === item)?.label ?? { it: "" }, "it");
+    const label = isCustom ? `Vaschetta su misura ${grams} g (~${customPrice.toFixed(2)} €)` : t(current?.label ?? { it: "" }, "it");
     const names = picked.map((slug) => t(flavors.find((x) => x.slug === slug)?.name ?? { it: slug }, "it"));
     setState("sending");
     try {
@@ -150,22 +173,43 @@ function OrderForm({ onClose }: { onClose: () => void }) {
               <p className="font-script text-xl text-chocolate/70">{ui("what")}</p>
               <div className="mt-1 flex flex-wrap gap-2">
                 {items.map((p) => (
-                  <button key={p.id} type="button" onClick={() => (sfx.pop(), setItem(p.id))} aria-pressed={item === p.id} className={`rounded-full px-4 py-2 text-sm font-bold transition-colors ${item === p.id ? "bg-chocolate text-cream" : "bg-white text-chocolate/80"}`}>
+                  <button key={p.id} type="button" onClick={() => (sfx.pop(), setItem(p.id), setPicked((x) => x.slice(0, maxFlavors(gramsOf(t(p.label, "it"))))))} aria-pressed={item === p.id} className={`rounded-full px-4 py-2 text-sm font-bold transition-colors ${item === p.id ? "bg-chocolate text-cream" : "bg-white text-chocolate/80"}`}>
                     {t(p.label, locale)}
                     {p.price_eur > 0 && <span className="ml-1.5 opacity-70">{p.price_eur.toLocaleString(locale, { style: "currency", currency: "EUR" })}</span>}
                   </button>
                 ))}
+                {perKg > 0 && (
+                  <button type="button" onClick={() => (sfx.pop(), setItem(CUSTOM))} aria-pressed={isCustom} className={`rounded-full px-4 py-2 text-sm font-bold transition-colors ${isCustom ? "bg-chocolate text-cream" : "bg-white text-chocolate/80"}`}>
+                    {ui("custom")}
+                  </button>
+                )}
               </div>
+              <AnimatePresence initial={false}>
+                {isCustom && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", stiffness: 260, damping: 30 }} className="overflow-hidden">
+                    <WeightPicker grams={grams} onChange={(g) => (setGrams(g), setPicked((x) => x.slice(0, maxFlavors(g))))} price={customPrice} locale={locale} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             {isTub && (
               <div>
-                <p className="font-script text-xl text-chocolate/70">{ui("flavors")}</p>
-                <div className="mt-1 flex flex-wrap gap-2">
+                <p className="flex items-baseline justify-between font-script text-xl text-chocolate/70">
+                  {ui("flavors", { n: MAX_FLAVORS })}
+                  <span className="font-sans text-sm font-bold">
+                    {picked.length}/{MAX_FLAVORS}
+                  </span>
+                </p>
+                <div className="mt-2 grid grid-cols-5 gap-x-1.5 gap-y-3">
                   {flavors.map((fl) => {
                     const on = picked.includes(fl.slug);
+                    const full = !on && picked.length >= MAX_FLAVORS;
                     return (
-                      <motion.button key={fl.id} type="button" whileTap={{ scale: 0.85 }} onClick={() => toggle(fl.slug)} aria-pressed={on} title={t(fl.name, locale)} className={`grid size-14 place-items-center rounded-full p-1.5 transition-transform ${on ? "scale-110 ring-4 ring-chocolate" : ""}`} style={{ background: lighten(fl.color_primary, 0.4) }}>
-                        <ScoopImg src={thumb(scoopPhoto(fl))!} />
+                      <motion.button key={fl.id} type="button" whileTap={{ scale: 0.88 }} onClick={() => toggle(fl.slug)} aria-pressed={on} disabled={full} className={`flex flex-col items-center gap-1 transition-opacity ${full ? "opacity-35" : ""}`}>
+                        <span className={`grid aspect-square w-full place-items-center rounded-full p-1.5 transition-transform duration-300 ${on ? "scale-105 ring-[3px] ring-chocolate" : ""}`} style={{ background: lighten(fl.color_primary, 0.4) }}>
+                          <ScoopImg src={thumb(scoopPhoto(fl))!} />
+                        </span>
+                        <span className={`max-w-full truncate rounded-full px-1.5 py-0.5 text-[10px] leading-tight font-bold sm:text-xs ${on ? "bg-chocolate text-cream" : "bg-white text-chocolate/80"}`}>{t(fl.name, locale)}</span>
                       </motion.button>
                     );
                   })}
@@ -194,5 +238,45 @@ function OrderForm({ onClose }: { onClose: () => void }) {
         )}
       </motion.div>
     </motion.div>
+  );
+}
+
+/**
+ * "Su misura": a weight slider in 50 g steps with a little bar ladder above it (like a price-range filter) —
+ * the bars up to the chosen weight light up; the price per kilo comes from the tubs on the board.
+ */
+function WeightPicker({ grams, onChange, price, locale }: { grams: number; onChange: (g: number) => void; price: number; locale: string }) {
+  const ui = useTranslations("ui.order");
+  const steps = Array.from({ length: (MAX_G - MIN_G) / 250 + 1 }, (_, i) => MIN_G + i * 250);
+  const pct = ((grams - MIN_G) / (MAX_G - MIN_G)) * 100;
+  return (
+    <div className="mt-3 rounded-3xl bg-white p-4 shadow-soft">
+      <div className="flex items-baseline justify-between">
+        <span className="font-display text-3xl font-bold tabular-nums">{grams >= 1000 ? `${(grams / 1000).toLocaleString(locale)} kg` : `${grams} g`}</span>
+        <span className="font-display text-2xl font-bold tabular-nums">≈ {price.toLocaleString(locale, { style: "currency", currency: "EUR" })}</span>
+      </div>
+      <div className="mt-3 flex h-16 items-end gap-[3px]" aria-hidden>
+        {steps.map((g, i) => (
+          <motion.span
+            key={g}
+            className="flex-1 rounded-t-md"
+            animate={{ backgroundColor: g <= grams ? "#9B8CFF" : "#E7E1F7" }}
+            transition={{ duration: 0.25 }}
+            style={{ height: `${22 + (i / (steps.length - 1)) * 78}%` }}
+          />
+        ))}
+      </div>
+      <div className="relative mt-2 h-8">
+        <div className="absolute top-1/2 right-0 left-0 h-1.5 -translate-y-1/2 rounded-full bg-[#E7E1F7]" />
+        <div className="absolute top-1/2 left-0 h-1.5 -translate-y-1/2 rounded-full bg-[#9B8CFF]" style={{ width: `${pct}%` }} />
+        <img src="/img/ice/sm/fragola.webp" alt="" className="pointer-events-none absolute top-1/2 w-10 -translate-x-1/2 -translate-y-[58%] drop-shadow-[0_4px_5px_rgba(75,42,32,0.35)]" style={{ left: `${pct}%` }} />
+        <input type="range" min={MIN_G} max={MAX_G} step={50} value={grams} onChange={(e) => onChange(Number(e.target.value))} aria-label={ui("weight")} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+      </div>
+      <div className="mt-1 flex justify-between text-xs font-bold text-chocolate/50">
+        <span>{MIN_G} g</span>
+        <span>{ui("perKgNote")}</span>
+        <span>{MAX_G / 1000} kg</span>
+      </div>
+    </div>
   );
 }

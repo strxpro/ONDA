@@ -22,6 +22,7 @@ export function Nav() {
 
   return (
     <motion.header
+      data-nav
       className="fixed inset-x-0 top-3 z-50 px-3 sm:top-5"
       animate={{ y: hidden ? -120 : 0 }}
       transition={{ type: "spring", stiffness: 260, damping: 30 }}

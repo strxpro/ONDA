@@ -128,7 +128,7 @@
       "cta": "Réserver",
       "formTitle": "Réserve ta glace",
       "what": "Que te préparons-nous ?",
-      "flavors": "Choisis les parfums (jusqu'à 4)",
+      "flavors": "Choisis les parfums (jusqu'à {n})",
       "when": "Quand passes-tu la chercher ?",
       "name": "Ton prénom",
       "phone": "Téléphone",
@@ -136,12 +136,19 @@
       "send": "Réserver",
       "thanks": "Merci ! Nous confirmons très vite.",
       "error": "Oups, l'envoi a échoué. Vérifie les infos et réessaie.",
-      "perKg": "le kilo"
+      "perKg": "le kilo",
+      "custom": "Sur mesure",
+      "weight": "Poids",
+      "perKgNote": "par pas de 50 g"
     },
     "map": {
       "load": "Afficher la carte",
       "note": "Ouvre Google Maps",
       "photo": "La boutique"
+    },
+    "priceBoard": {
+      "cone": "Cornet artisanal",
+      "cup": "Pot"
     }
   }
 }

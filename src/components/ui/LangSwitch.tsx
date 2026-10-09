@@ -36,6 +36,7 @@ export function LangSwitch({ inline = false, dark = false }: { inline?: boolean;
             href={pathname}
             locale={l}
             scroll={false}
+            onClick={() => l !== locale && (document.documentElement.dataset.langswap = "1")}
             aria-current={l === locale ? "true" : undefined}
             className={`flex items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm font-bold transition-all duration-300 ease-(--ease-gelato) hover:scale-105 ${l === locale ? (dark ? "bg-cream text-chocolate" : "bg-chocolate text-cream") : dark ? "bg-white/10 text-cream" : "bg-white/60"}`}
           >
@@ -78,7 +79,7 @@ export function LangSwitch({ inline = false, dark = false }: { inline?: boolean;
                   href={pathname}
                   locale={l}
                   scroll={false}
-                  onClick={() => setOpen(false)}
+                  onClick={() => (setOpen(false), l !== locale && (document.documentElement.dataset.langswap = "1"))}
                   className={`flex items-center gap-3 rounded-2xl px-2.5 py-2 font-semibold transition-colors hover:bg-white/80 ${l === locale ? "bg-white" : ""}`}
                 >
                   <Flag locale={l} className="size-7" />

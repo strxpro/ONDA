@@ -128,7 +128,7 @@
       "cta": "Zarezerwuj",
       "formTitle": "Zarezerwuj lody",
       "what": "Co przygotować?",
-      "flavors": "Wybierz smaki (do 4)",
+      "flavors": "Wybierz smaki (do {n})",
       "when": "Kiedy odbierzesz?",
       "name": "Imię",
       "phone": "Telefon",
@@ -136,12 +136,19 @@
       "send": "Zarezerwuj",
       "thanks": "Dziękujemy! Wkrótce potwierdzimy.",
       "error": "Ups, nie wysłało się. Sprawdź dane i spróbuj ponownie.",
-      "perKg": "za kilogram"
+      "perKg": "za kilogram",
+      "custom": "Na wagę",
+      "weight": "Waga",
+      "perKgNote": "co 50 g"
     },
     "map": {
       "load": "Pokaż mapę",
       "note": "Otworzy się Google Maps",
       "photo": "Lokal"
+    },
+    "priceBoard": {
+      "cone": "Rzemieślniczy wafelek",
+      "cup": "Kubeczek"
     }
   }
 }

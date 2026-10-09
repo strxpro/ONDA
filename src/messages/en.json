@@ -128,7 +128,7 @@
       "cta": "Pre-order",
       "formTitle": "Pre-order your gelato",
       "what": "What shall we prepare?",
-      "flavors": "Pick flavors (up to 4)",
+      "flavors": "Pick flavors (up to {n})",
       "when": "When will you pick it up?",
       "name": "Your name",
       "phone": "Phone",
@@ -136,12 +136,19 @@
       "send": "Pre-order",
       "thanks": "Thank you! We'll confirm shortly.",
       "error": "Oops, it didn't go through. Check the details and try again.",
-      "perKg": "per kilo"
+      "perKg": "per kilo",
+      "custom": "Custom weight",
+      "weight": "Weight",
+      "perKgNote": "in 50 g steps"
     },
     "map": {
       "load": "Show the map",
       "note": "Opens Google Maps",
       "photo": "The shop"
+    },
+    "priceBoard": {
+      "cone": "Artisan waffle cone",
+      "cup": "Cup"
     }
   }
 }

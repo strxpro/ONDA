@@ -513,3 +513,15 @@ section.min-h-svh > .mx-auto {
   50% { transform: scaleY(1.08); }
 }
 .melt-drips { transform-origin: 50% 0; animation: melt 7s ease-in-out infinite; }
+
+/* language switch: every text dissolves into a soft blur and re-forms in the new language (no page reload) */
+#main,
+[data-nav] {
+  transition: filter 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+html[data-langswap] #main,
+html[data-langswap] [data-nav] {
+  filter: blur(10px) saturate(1.2);
+  opacity: 0.5;
+  transition-duration: 0.18s;
+}

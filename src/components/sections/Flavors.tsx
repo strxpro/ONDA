@@ -10,7 +10,8 @@ import { darken, lighten } from "@/lib/color";
 import { ingredientPhoto } from "@/lib/ingredients";
 import { sfx } from "@/lib/sound";
 import { t, type Flavor, type Locale } from "@/lib/shared";
-import { PHOTO, PhotoCone, ScoopImg, scoopPhoto, thumb } from "../ice/PhotoStack";
+import { Cup } from "../ice/Cup";
+import { PHOTO, PhotoCone, photoGeometry, ScoopImg, scoopPhoto, thumb } from "../ice/PhotoStack";
 import { useSite } from "../providers/SiteData";
 import { FrameSequence, type FrameSequenceHandle } from "../ui/FrameSequence";
 import { RollingPrice } from "../ui/RollingPrice";
@@ -83,10 +84,8 @@ export function Flavors() {
   return (
     <section id="flavors" className="relative py-20 sm:py-28">
       <div className="relative mx-auto w-full max-w-6xl px-(--gutter)">
-        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-6">
-          <Title color="#FF8FB8">{t(s.texts.flavors_title, locale)}</Title>
-          <PriceStrip />
-        </div>
+        <Title color="#FF8FB8">{t(s.texts.flavors_title, locale)}</Title>
+        <PriceStrip />
 
         {/* the fan: today's flavors, each on its own waffle cone */}
         <ConeFan flavors={all.filter((f) => f.is_available_today).slice(0, 9)} locale={locale} onPick={pick} />
@@ -158,11 +157,11 @@ function FilterBar({ filters, value, onChange }: { filters: readonly FilterKey[]
   const label = (k: FilterKey) => (CATS.includes(k) ? ui(`categories.${k}`) : ui(`filters.${k}`));
   const spring = { type: "spring", stiffness: 380, damping: 32 } as const;
   return (
-    <div className="sticky top-20 z-30 mt-12 flex items-start gap-2 sm:mt-16">
+    <div className="sticky top-20 z-30 mt-12 flex flex-row-reverse items-start gap-2 sm:mt-16">
       <div className="relative">
         <AnimatePresence initial={false} mode="popLayout">
           {open ? (
-            <motion.div key="panel" layoutId="filter-morph" transition={spring} className="w-60 overflow-hidden rounded-[1.75rem] bg-white/95 shadow-float backdrop-blur-md" style={{ borderRadius: 28 }}>
+            <motion.div key="panel" layoutId="filter-morph" transition={spring} className="w-60 origin-top-right overflow-hidden rounded-[1.75rem] bg-white/95 shadow-float backdrop-blur-md" style={{ borderRadius: 28 }}>
               <div className="flex items-center justify-between px-4 pt-3 pb-1">
                 <motion.span layout="position" className="font-display text-lg">{ui("filters.title")}</motion.span>
                 <button type="button" onClick={() => setOpen(false)} aria-label={ui("close")} className="grid size-8 place-items-center rounded-full bg-chocolate/5">
@@ -198,9 +197,9 @@ function FilterBar({ filters, value, onChange }: { filters: readonly FilterKey[]
         {value !== "all" && !open && (
           <motion.button
             type="button"
-            initial={{ opacity: 0, x: -12, scale: 0.8 }}
+            initial={{ opacity: 0, x: 12, scale: 0.8 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -12, scale: 0.8 }}
+            exit={{ opacity: 0, x: 12, scale: 0.8 }}
             onClick={() => onChange("all")}
             className="mt-2.5 flex items-center gap-2 rounded-full py-2 pr-3 pl-4 font-bold shadow-soft"
             style={{ background: FILTER_COLOR[value] }}
@@ -256,7 +255,7 @@ function ConeFan({ flavors, locale, onPick }: { flavors: Flavor[]; locale: Local
   if (n < 3) return null;
   const spread = Math.min(70, 9 * (n - 1)); // total angle in degrees
   return (
-    <div className="relative mx-auto mt-12 h-[clamp(230px,30vw,380px)] w-full max-w-4xl sm:mt-16" aria-label="gelato">
+    <div className="relative mx-auto mt-10 h-[clamp(150px,19vw,250px)] w-full max-w-4xl sm:mt-14" aria-label="gelato">
       {flavors.map((f, i) => {
         const angle = n > 1 ? -spread / 2 + (spread * i) / (n - 1) : 0;
         return (
@@ -381,41 +380,61 @@ function Detail({ flavor: f, locale, onClose }: { flavor: Flavor; locale: Locale
   );
 }
 
-/** Small / medium / large at a glance, with BOTH prices right away: in a cone and in a cup. */
+/**
+ * The price board, two clean rows one under the other: the artisan waffle cones, then the cups —
+ * each size shows the real thing (as many scoops as it holds), how many flavors, and a big price.
+ */
 function PriceStrip() {
   const { data, locale } = useSite();
   const ui = useTranslations("ui");
-  const rows = (g: string) => data.prices.filter((p) => p.is_active && p.price_group === g && p.max_scoops).sort((a, b) => a.price_eur - b.price_eur);
-  const cones = rows("coni");
-  const cups = rows("coppette");
+  const rows = (g: string) => data.prices.filter((p) => p.is_active && p.price_group === g && p.max_scoops).sort((a, b) => (a.max_scoops ?? 0) - (b.max_scoops ?? 0));
+  const groups = [
+    { key: "coni" as const, label: ui("priceBoard.cone"), list: rows("coni"), bg: ["#FFE3EC", "#FFF4C8", "#DDF7EF"] },
+    { key: "coppette" as const, label: ui("priceBoard.cup"), list: rows("coppette"), bg: ["#EFE9FF", "#FFE9DA", "#E4F3FF"] },
+  ].filter((g) => g.list.length);
   const photos = [PHOTO.scoops.pistacchio, PHOTO.scoops.fragola, PHOTO.scoops["yellow-submarine"], PHOTO.scoops.cioccolato];
-  const BG = ["#FFD6E5", "#FFF4BD", "#D2F8EE"];
-  if (!cones.length) return null;
+  if (!groups.length) return null;
   return (
-    <ul className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:gap-3">
-      {cones.map((c, i) => {
-        const cup = cups.find((x) => x.size === c.size);
-        return (
-          <motion.li key={c.id} whileHover={{ y: -4 }} className="flex flex-col items-center gap-1 rounded-3xl px-3 py-3 sm:flex-row sm:items-end sm:gap-2.5 sm:pr-4" style={{ background: BG[i % 3] }}>
-            <PhotoCone small scoops={photos.slice(0, c.max_scoops ?? 1).reverse()} className="h-16 shrink-0 sm:h-20" />
-            <div className="text-center sm:text-left">
-              <p className="font-display text-lg leading-none font-bold">{ui(`sizes.${c.size ?? "medio"}`)}</p>
-              <p className="font-script text-base leading-tight text-chocolate/65">{ui("nFlavors", { n: c.max_scoops ?? 1 })}</p>
-              <p className="mt-1 flex items-baseline justify-center gap-1.5 sm:justify-start">
-                <span className="text-[11px] font-bold tracking-wide text-chocolate/55 uppercase">{ui("cone")}</span>
-                <RollingPrice value={c.price_eur} locale={locale} className="font-display text-2xl leading-none font-bold" />
-              </p>
-              {cup && (
-                <p className="flex items-baseline justify-center gap-1.5 sm:justify-start">
-                  <span className="text-[11px] font-bold tracking-wide text-chocolate/55 uppercase">{ui("cup")}</span>
-                  <RollingPrice value={cup.price_eur} locale={locale} className="font-display text-2xl leading-none font-bold" />
-                </p>
-              )}
-            </div>
-          </motion.li>
-        );
-      })}
-    </ul>
+    <div className="mt-8 space-y-5 sm:mt-10">
+      {groups.map((g) => (
+        <div key={g.key}>
+          <p className="mb-2 font-script text-2xl text-chocolate/75">{g.label}</p>
+          <ul className="grid grid-cols-3 gap-2 sm:gap-4">
+            {g.list.map((c, i) => {
+              const geo = photoGeometry(c.max_scoops ?? 1, { cup: g.key === "coppette" });
+              return (
+                <motion.li
+                  key={c.id}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: i * 0.06 }}
+                  whileHover={{ y: -4 }}
+                  className="flex flex-col items-center gap-2 rounded-[1.6rem] px-2 py-3 text-center sm:flex-row sm:gap-4 sm:px-5 sm:py-4 sm:text-left"
+                  style={{ background: g.bg[i % 3] }}
+                >
+                  <div className="relative h-20 shrink-0 sm:h-28" style={{ aspectRatio: geo.aspect }}>
+                    <div className="absolute" style={geo.cone}>
+                      {g.key === "coppette" ? <Cup className="block w-full" /> : <img src={thumb(PHOTO.cone)!} alt="" className="block w-full" draggable={false} />}
+                    </div>
+                    {photos.slice(0, c.max_scoops ?? 1).map((src, k) => (
+                      <div key={k} className="absolute" style={geo.scoop(k)}>
+                        <ScoopImg src={thumb(src)!} />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-display text-lg leading-none font-bold sm:text-2xl">{ui(`sizes.${c.size ?? "medio"}`)}</p>
+                    <p className="mt-0.5 font-script text-base leading-tight text-chocolate/65 sm:text-lg">{ui("nFlavors", { n: c.max_scoops ?? 1 })}</p>
+                    <RollingPrice value={c.price_eur} locale={locale} className="mt-1 block font-display text-2xl leading-none font-bold sm:text-4xl" />
+                  </div>
+                </motion.li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }
 

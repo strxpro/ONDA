@@ -20,6 +20,8 @@ export const REVEAL_EVENT = "onda:revealed";
 export const HANDOFF_EVENT = "onda:handoff";
 
 type Lenis = { stop(): void; start(): void };
+/** Survives client-side navigations (language switch remounts the layout), resets on a real page load. */
+let playedThisTab = false;
 const lenis = () => (window as unknown as { __lenis?: Lenis }).__lenis;
 
 /**
@@ -56,6 +58,16 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
       html.dataset.handoff = "done";
       window.dispatchEvent(new Event(HANDOFF_EVENT));
     };
+
+    // already played in this tab (e.g. the visitor just switched language): no curtain, the page stays put
+    if (playedThisTab) {
+      reveal();
+      handoff();
+      gsap.set(el, { opacity: 0 });
+      finish();
+      return;
+    }
+    playedThisTab = true;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       reveal();

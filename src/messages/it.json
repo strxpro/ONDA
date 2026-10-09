@@ -128,7 +128,7 @@
       "cta": "Prenota",
       "formTitle": "Prenota il tuo gelato",
       "what": "Cosa ti preparo?",
-      "flavors": "Scegli i gusti (fino a 4)",
+      "flavors": "Scegli i gusti (fino a {n})",
       "when": "Quando passi a ritirarlo?",
       "name": "Il tuo nome",
       "phone": "Telefono",
@@ -136,12 +136,19 @@
       "send": "Prenota",
       "thanks": "Grazie! Ti confermiamo a breve.",
       "error": "Ops, non è partita. Controlla i dati e riprova.",
-      "perKg": "al chilo"
+      "perKg": "al chilo",
+      "custom": "Su misura",
+      "weight": "Peso",
+      "perKgNote": "a passi di 50 g"
     },
     "map": {
       "load": "Mostra la mappa",
       "note": "Si apre Google Maps",
       "photo": "Il locale"
+    },
+    "priceBoard": {
+      "cone": "Cialda artigianale",
+      "cup": "Coppetta"
     }
   }
 }
