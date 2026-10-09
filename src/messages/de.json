@@ -100,6 +100,47 @@
       "frutta": "Frucht",
       "speciali": "Spezial",
       "sorbetti": "Sorbets"
+    },
+    "novita": "Neu heute",
+    "wheel": {
+      "eyebrow": "Unentschlossen?",
+      "title": "Kannst du dich nicht entscheiden?",
+      "subtitle": "Lass das Glück entscheiden: dreh das Rad der heutigen Sorten.",
+      "cta": "Rad drehen",
+      "modalTitle": "Das Sorten-Glücksrad",
+      "spin": "DREH",
+      "spinning": "Es dreht sich…",
+      "hint": "Tippe in die Mitte zum Drehen",
+      "won": "Gewonnen:",
+      "chips": {
+        "all": "Alle",
+        "creamy": "Cremig",
+        "fruity": "Fruchtig",
+        "lactose_free": "Laktosefrei",
+        "vegan": "Vegan",
+        "new": "Neu"
+      }
+    },
+    "order": {
+      "title": "Eis zum Mitnehmen",
+      "subtitle": "Eis nach Kilo und Leckeres auf Bestellung: fertig zur gewünschten Uhrzeit.",
+      "cta": "Vorbestellen",
+      "formTitle": "Eis vorbestellen",
+      "what": "Was dürfen wir vorbereiten?",
+      "flavors": "Sorten wählen (bis zu 4)",
+      "when": "Wann holst du es ab?",
+      "name": "Dein Name",
+      "phone": "Telefon",
+      "notes": "Anmerkungen (optional)",
+      "send": "Vorbestellen",
+      "thanks": "Danke! Wir bestätigen gleich.",
+      "error": "Hoppla, das hat nicht geklappt. Bitte Angaben prüfen und erneut senden.",
+      "perKg": "pro Kilo"
+    },
+    "map": {
+      "load": "Karte anzeigen",
+      "note": "Öffnet Google Maps",
+      "photo": "Der Laden"
     }
   }
 }

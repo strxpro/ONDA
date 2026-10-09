@@ -5,8 +5,8 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { SITE_TAG } from "./data";
 import { emitChange } from "./events";
-import { PK, store, type Actor, type AuditEntry, type Key, type Row, type TableName } from "./store";
-import { Announcement, Comment, Flavor, GalleryImage, OpeningHours, PriceItem, Review, Section, SiteSettings, SpecialDay } from "./types";
+import { PK, PRIVATE_TABLES, store, type Actor, type AuditEntry, type Key, type Row, type TableName } from "./store";
+import { Announcement, Comment, Reservation, Flavor, GalleryImage, OpeningHours, PriceItem, Review, Section, SiteSettings, SpecialDay } from "./types";
 
 /** Full-row validation per table; every write passes through it. */
 const ROW_SCHEMA: Record<TableName, z.ZodType<Row>> = {
@@ -20,11 +20,13 @@ const ROW_SCHEMA: Record<TableName, z.ZodType<Row>> = {
   gallery: GalleryImage,
   reviews: Review,
   comments: Comment,
+  reservations: Reservation,
 } as Record<TableName, z.ZodType<Row>>;
 
 export type Ctx = Actor & { action: string; batchId?: string };
 
 function publish(table: TableName, key: Key, row: Row | null) {
+  if (PRIVATE_TABLES.includes(table)) return;
   emitChange({ table, key: String(key), row });
   try {
     revalidateTag(SITE_TAG);

@@ -2,6 +2,7 @@
 
 import {
   ArrowSquareOut,
+  CalendarCheck,
   ChatCircleDots,
   QrCode,
   ChartLineUp,
@@ -34,6 +35,7 @@ const MORE = [
   { href: "/admin/galleria", label: "Galleria", icon: Images },
   { href: "/admin/testi", label: "Testi e dati", icon: TextAa },
   { href: "/admin/recensioni", label: "Recensioni", icon: Star },
+  { href: "/admin/prenotazioni", label: "Prenotazioni", icon: CalendarCheck },
   { href: "/admin/commenti", label: "Commenti", icon: ChatCircleDots },
   { href: "/admin/qr", label: "QR recensioni", icon: QrCode },
   { href: "/admin/sezioni", label: "Sezioni", icon: SquaresFour },

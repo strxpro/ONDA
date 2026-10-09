@@ -100,6 +100,47 @@
       "frutta": "Fruits",
       "speciali": "Spéciaux",
       "sorbetti": "Sorbets"
+    },
+    "novita": "Nouveautés du jour",
+    "wheel": {
+      "eyebrow": "Indécis ?",
+      "title": "Tu n'arrives pas à choisir ?",
+      "subtitle": "Laisse faire la chance : fais tourner la roue des parfums du jour.",
+      "cta": "Tourner la roue",
+      "modalTitle": "La roue des parfums",
+      "spin": "GO",
+      "spinning": "Ça tourne…",
+      "hint": "Touche le centre pour lancer",
+      "won": "Tu as gagné",
+      "chips": {
+        "all": "Tous",
+        "creamy": "Crémeux",
+        "fruity": "Fruités",
+        "lactose_free": "Sans lactose",
+        "vegan": "Vegan",
+        "new": "Nouveautés"
+      }
+    },
+    "order": {
+      "title": "Glace à emporter",
+      "subtitle": "Glace au kilo et douceurs sur commande : prêtes à l'heure de ton choix.",
+      "cta": "Réserver",
+      "formTitle": "Réserve ta glace",
+      "what": "Que te préparons-nous ?",
+      "flavors": "Choisis les parfums (jusqu'à 4)",
+      "when": "Quand passes-tu la chercher ?",
+      "name": "Ton prénom",
+      "phone": "Téléphone",
+      "notes": "Remarques (facultatif)",
+      "send": "Réserver",
+      "thanks": "Merci ! Nous confirmons très vite.",
+      "error": "Oups, l'envoi a échoué. Vérifie les infos et réessaie.",
+      "perKg": "le kilo"
+    },
+    "map": {
+      "load": "Afficher la carte",
+      "note": "Ouvre Google Maps",
+      "photo": "La boutique"
     }
   }
 }

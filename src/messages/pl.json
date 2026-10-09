@@ -100,6 +100,47 @@
       "frutta": "Owocowe",
       "speciali": "Specjalne",
       "sorbetti": "Sorbety"
+    },
+    "novita": "Nowości dnia",
+    "wheel": {
+      "eyebrow": "Nie wiesz?",
+      "title": "Nie możesz się zdecydować?",
+      "subtitle": "Zdaj się na los: zakręć kołem dzisiejszych smaków.",
+      "cta": "Zakręć kołem",
+      "modalTitle": "Koło smaków",
+      "spin": "KRĘĆ",
+      "spinning": "Kręci się…",
+      "hint": "Dotknij środka, żeby zakręcić",
+      "won": "Wylosowałeś",
+      "chips": {
+        "all": "Wszystkie",
+        "creamy": "Kremowe",
+        "fruity": "Owocowe",
+        "lactose_free": "Bez laktozy",
+        "vegan": "Wegańskie",
+        "new": "Nowości"
+      }
+    },
+    "order": {
+      "title": "Lody na wynos",
+      "subtitle": "Lody na kilogramy i słodkości na zamówienie: przygotujemy na wybraną godzinę.",
+      "cta": "Zarezerwuj",
+      "formTitle": "Zarezerwuj lody",
+      "what": "Co przygotować?",
+      "flavors": "Wybierz smaki (do 4)",
+      "when": "Kiedy odbierzesz?",
+      "name": "Imię",
+      "phone": "Telefon",
+      "notes": "Uwagi (opcjonalnie)",
+      "send": "Zarezerwuj",
+      "thanks": "Dziękujemy! Wkrótce potwierdzimy.",
+      "error": "Ups, nie wysłało się. Sprawdź dane i spróbuj ponownie.",
+      "perKg": "za kilogram"
+    },
+    "map": {
+      "load": "Pokaż mapę",
+      "note": "Otworzy się Google Maps",
+      "photo": "Lokal"
     }
   }
 }

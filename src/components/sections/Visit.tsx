@@ -1,6 +1,8 @@
 "use client";
 
-import { Bicycle, Storefront, NavigationArrow, Phone, ShoppingBag } from "@phosphor-icons/react";
+/* eslint-disable @next/next/no-img-element */
+
+import { Bicycle, MapTrifold, Storefront, NavigationArrow, Phone, ShoppingBag } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -38,11 +40,8 @@ export function Visit() {
 
         <div className="mt-12 grid items-start gap-12 md:grid-cols-[1.15fr_1fr]">
           {/* postcard */}
-          <motion.a
-            href={s.maps_url ?? undefined}
-            target="_blank"
-            rel="noopener"
-            aria-label={ui("navigate")}
+          <div className="relative">
+          <motion.div
             initial={{ y: 60, opacity: 0, rotate: -8 }}
             whileInView={{ y: 0, opacity: 1, rotate: -2.5 }}
             whileHover={{ rotate: -1, y: -4 }}
@@ -51,7 +50,7 @@ export function Visit() {
             className="relative block rounded-md bg-[#fffdf8] p-3 pb-14 shadow-[0_30px_60px_-24px_rgba(20,60,50,0.55)]"
           >
             <div className="overflow-hidden rounded-sm">
-              <StylizedMap />
+              <MapEmbed query={`${s.name}, ${s.address ?? ""}`} />
             </div>
             {/* stamp */}
             <div className="absolute -top-5 -right-3 w-20 rotate-6 rounded-sm border-[3px] border-dotted border-pink bg-[#fffdf8] p-1.5 shadow-md">
@@ -68,7 +67,9 @@ export function Visit() {
               ))}
             </svg>
             <p className="absolute right-4 bottom-3 left-4 font-script text-2xl leading-tight text-chocolate/80">{s.address}</p>
-          </motion.a>
+          </motion.div>
+          <ShopPhoto />
+          </div>
 
           {/* door sign + hours card */}
           <div className="relative flex flex-col items-center md:items-start">
@@ -183,5 +184,70 @@ function StylizedMap() {
         Mare
       </text>
     </svg>
+  );
+}
+
+/**
+ * The real Google map — loaded only when the visitor asks for it (no Google cookies before that, GDPR-friendly).
+ * Until then the drawn map of the seaside sits there with a "show the map" button.
+ */
+function MapEmbed({ query }: { query: string }) {
+  const ui = useTranslations("ui.map");
+  const [on, setOn] = useState(false);
+  return (
+    <div className="relative aspect-[400/260] w-full">
+      {on ? (
+        <iframe title="Google Maps" src={`https://www.google.com/maps?q=${encodeURIComponent(query)}&z=17&output=embed`} className="absolute inset-0 h-full w-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
+      ) : (
+        <>
+          <div className="absolute inset-0">
+            <StylizedMap />
+          </div>
+          <button type="button" onClick={() => setOn(true)} className="absolute inset-0 grid place-items-center bg-chocolate/10 transition-colors hover:bg-chocolate/20">
+            <span className="flex items-center gap-2 rounded-full bg-white px-5 py-3 font-bold shadow-soft">
+              <MapTrifold weight="duotone" className="size-6 text-[#4285F4]" /> {ui("load")}
+            </span>
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** A polaroid of the shop: its Google Business photo (with the author credit), else the first photo of the gallery. */
+function ShopPhoto() {
+  const { data, locale } = useSite();
+  const ui = useTranslations("ui.map");
+  const [g, setG] = useState<{ url: string; author: string | null; authorUrl: string | null } | null>(null);
+  useEffect(() => {
+    fetch("/api/place-photo")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.url && setG(d))
+      .catch(() => {});
+  }, []);
+  const fallback = data.gallery[0];
+  const src = g?.url ?? fallback?.image_url;
+  if (!src) return null;
+  // without the Google photo, the caption is the gallery photo's own (it may not show the shop itself)
+  const caption = g ? ui("photo") : t(fallback?.alt ?? {}, locale);
+  return (
+    <motion.figure
+      initial={{ y: 40, opacity: 0, rotate: 12 }}
+      whileInView={{ y: 0, opacity: 1, rotate: 5 }}
+      whileHover={{ rotate: 2, y: -6, scale: 1.03 }}
+      viewport={{ once: true }}
+      transition={{ type: "spring", stiffness: 110, damping: 14, delay: 0.2 }}
+      className="relative z-10 mx-auto -mt-10 w-[62%] max-w-[300px] rounded-sm bg-[#fffdf8] p-2.5 pb-10 shadow-[0_30px_50px_-20px_rgba(20,60,50,0.55)] md:absolute md:-right-8 md:-bottom-32 md:mt-0 md:w-[38%]"
+    >
+      <img src={src} alt={caption} className="aspect-[4/5] w-full rounded-[2px] object-cover" loading="lazy" referrerPolicy="no-referrer" />
+      <figcaption className="absolute right-3 bottom-2 left-3 flex items-baseline justify-between gap-2 font-script text-xl text-chocolate/80">
+        <span className="truncate">{caption}</span>
+        {g?.author && (
+          <a href={g.authorUrl ?? undefined} target="_blank" rel="noopener" className="truncate font-sans text-[10px] font-semibold text-chocolate/50">
+            Google · {g.author}
+          </a>
+        )}
+      </figcaption>
+    </motion.figure>
   );
 }

@@ -100,6 +100,47 @@
       "frutta": "Fruit",
       "speciali": "Specials",
       "sorbetti": "Sorbets"
+    },
+    "novita": "New today",
+    "wheel": {
+      "eyebrow": "Undecided?",
+      "title": "Can't choose?",
+      "subtitle": "Leave it to luck: spin the wheel of today's flavors.",
+      "cta": "Spin the wheel",
+      "modalTitle": "Spin the flavor wheel",
+      "spin": "SPIN",
+      "spinning": "Spinning…",
+      "hint": "Tap the middle to spin",
+      "won": "You got",
+      "chips": {
+        "all": "All",
+        "creamy": "Creamy",
+        "fruity": "Fruity",
+        "lactose_free": "Lactose-free",
+        "vegan": "Vegan",
+        "new": "New"
+      }
+    },
+    "order": {
+      "title": "Gelato to take home",
+      "subtitle": "Gelato by the kilo and treats to order: ready at the time you choose.",
+      "cta": "Pre-order",
+      "formTitle": "Pre-order your gelato",
+      "what": "What shall we prepare?",
+      "flavors": "Pick flavors (up to 4)",
+      "when": "When will you pick it up?",
+      "name": "Your name",
+      "phone": "Phone",
+      "notes": "Notes (optional)",
+      "send": "Pre-order",
+      "thanks": "Thank you! We'll confirm shortly.",
+      "error": "Oops, it didn't go through. Check the details and try again.",
+      "perKg": "per kilo"
+    },
+    "map": {
+      "load": "Show the map",
+      "note": "Opens Google Maps",
+      "photo": "The shop"
     }
   }
 }

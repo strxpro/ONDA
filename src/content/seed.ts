@@ -574,7 +574,7 @@ export const seed: SiteData = {
   specialDays: [],
   announcements: [],
 
-  sections: ["announcement", "hero", "flavors", "lab", "configurator", "signature", "prices", "reviews", "visit", "footer"].map((key, i) => ({
+  sections: ["announcement", "hero", "flavors", "prices", "lab", "configurator", "signature", "reviews", "visit", "footer"].map((key, i) => ({
     key: key as SiteData["sections"][number]["key"],
     is_visible: true,
     sort_order: (i + 1) * 10,

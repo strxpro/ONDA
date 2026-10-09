@@ -37,6 +37,7 @@ function fresh(): Db {
       gallery: seed.gallery,
       reviews: seed.reviews,
       comments: [],
+      reservations: [],
     },
     audit: [],
     pageViews: [],
@@ -163,6 +164,15 @@ export const fileBackend: Backend = {
     const p = db().pending.find((x) => x.id === id);
     if (p) p.status = status;
     save();
+  },
+  async setPendingArgs(id, args) {
+    const p = db().pending.find((x) => x.id === id);
+    if (p) p.args = args;
+    save();
+  },
+  async latestPending(telegramUserId, tool) {
+    const p = db().pending.find((x) => x.telegram_user_id === telegramUserId && x.tool === tool && x.status === "pending" && Date.parse(x.expires_at) > Date.now());
+    return p ? clone(p) : null;
   },
 
   async adminByEmail(email) {

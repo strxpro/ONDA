@@ -133,6 +133,20 @@ export const Comment = z.object({
 });
 export type Comment = z.infer<typeof Comment>;
 
+/** A pre-order from the site (gelato by the kilo, a tub, treats) — private: only the owner sees it. */
+export const Reservation = z.object({
+  id: z.string(),
+  name: z.string().trim().min(1).max(60),
+  phone: z.string().trim().min(5).max(30),
+  items: z.string().trim().min(1).max(500),
+  pickup_at: z.string(),
+  notes: z.string().max(400).nullable(),
+  locale: z.string().max(5).nullable(),
+  status: z.enum(["new", "confirmed", "declined", "done"]),
+  created_at: z.string(),
+});
+export type Reservation = z.infer<typeof Reservation>;
+
 /** Owner-tunable micro-animation settings (admin → "Animazioni", or by voice). */
 export const MotionSettings = z.object({
   intensity: z.number().min(0).max(1.5).default(1), // 0 = static, 1 = default, 1.5 = extra playful

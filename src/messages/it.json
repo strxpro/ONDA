@@ -100,6 +100,47 @@
       "frutta": "Frutta",
       "speciali": "Speciali",
       "sorbetti": "Sorbetti"
+    },
+    "novita": "Novità di oggi",
+    "wheel": {
+      "eyebrow": "Indecisi?",
+      "title": "Non sai scegliere?",
+      "subtitle": "Lascia fare alla fortuna: gira la ruota dei gusti di oggi.",
+      "cta": "Gira la ruota",
+      "modalTitle": "Gira la ruota dei gusti",
+      "spin": "GIRA",
+      "spinning": "Gira, gira…",
+      "hint": "Tocca il centro per girare",
+      "won": "È uscito",
+      "chips": {
+        "all": "Tutti",
+        "creamy": "Cremosi",
+        "fruity": "Fruttati",
+        "lactose_free": "Senza lattosio",
+        "vegan": "Vegani",
+        "new": "Novità"
+      }
+    },
+    "order": {
+      "title": "Gelato da portare a casa",
+      "subtitle": "Vaschette al chilo e dolci su prenotazione: te li prepariamo per l'ora che vuoi.",
+      "cta": "Prenota",
+      "formTitle": "Prenota il tuo gelato",
+      "what": "Cosa ti preparo?",
+      "flavors": "Scegli i gusti (fino a 4)",
+      "when": "Quando passi a ritirarlo?",
+      "name": "Il tuo nome",
+      "phone": "Telefono",
+      "notes": "Note (facoltative)",
+      "send": "Prenota",
+      "thanks": "Grazie! Ti confermiamo a breve.",
+      "error": "Ops, non è partita. Controlla i dati e riprova.",
+      "perKg": "al chilo"
+    },
+    "map": {
+      "load": "Mostra la mappa",
+      "note": "Si apre Google Maps",
+      "photo": "Il locale"
     }
   }
 }

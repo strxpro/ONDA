@@ -34,7 +34,8 @@ export function Reviews() {
   const reviews = data.reviews.filter((r) => r.is_visible);
 
   return (
-    <section id="reviews" className="relative flex min-h-svh flex-col justify-center py-20">
+    <section id="reviews" className="relative flex min-h-svh flex-col justify-center pt-40 pb-24">
+      <Melt />
       <div className="relative mx-auto grid w-full max-w-6xl items-center gap-10 px-(--gutter) lg:grid-cols-[0.9fr_1.1fr]">
         <div>
           <Title color="#FFAA5C">{t(s.texts.reviews_title, locale)}</Title>
@@ -153,5 +154,50 @@ function Note({ review: r, tilt }: { review: Review; tilt: number }) {
         </span>
       </figcaption>
     </figure>
+  );
+}
+
+/**
+ * The page "melts" into the comments: a strawberry-cream backdrop whose top edge is dripping cream —
+ * the drips stretch down as the section scrolls in, and keep wobbling slowly, like gelato in the sun.
+ */
+function Melt() {
+  const drips = [
+    { x: 4, w: 7, h: 70 },
+    { x: 13, w: 5, h: 120 },
+    { x: 21, w: 9, h: 85 },
+    { x: 33, w: 6, h: 150 },
+    { x: 42, w: 8, h: 95 },
+    { x: 53, w: 5, h: 130 },
+    { x: 61, w: 10, h: 80 },
+    { x: 74, w: 6, h: 140 },
+    { x: 83, w: 8, h: 100 },
+    { x: 93, w: 6, h: 125 },
+  ];
+  return (
+    <div className="pointer-events-none absolute inset-0 -z-0 overflow-hidden" aria-hidden>
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#FFD3E2_0%,#FFC0D4_45%,#FFD9C2_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_60%,rgba(255,255,255,0.55),transparent_70%),radial-gradient(50%_40%_at_85%_80%,rgba(255,244,189,0.6),transparent_70%)]" />
+      {/* the cream band and its drips */}
+      <div className="absolute inset-x-0 top-0 h-16 bg-[#FFF7EE]" />
+      {drips.map((d, i) => (
+        <motion.span
+          key={i}
+          className="absolute top-12 block origin-top rounded-b-full bg-[#FFF7EE]"
+          style={{ left: `${d.x}%`, width: `${d.w}%`, height: d.h }}
+          initial={{ scaleY: 0.15 }}
+          whileInView={{ scaleY: [0.15, 1, 0.9, 1] }}
+          viewport={{ once: true, margin: "0px 0px -20% 0px" }}
+          transition={{ duration: 2.4 + (i % 3) * 0.5, ease: [0.22, 1, 0.36, 1], times: [0, 0.6, 0.8, 1] }}
+        >
+          {/* a drop about to fall */}
+          <motion.span
+            className="absolute -bottom-3 left-1/2 block size-[46%] -translate-x-1/2 rounded-full bg-[#FFF7EE]"
+            animate={{ y: [0, 10, 0], scaleY: [1, 1.25, 1] }}
+            transition={{ duration: 3 + (i % 4) * 0.6, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
+          />
+        </motion.span>
+      ))}
+    </div>
   );
 }

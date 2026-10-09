@@ -100,6 +100,47 @@
       "frutta": "Frutas",
       "speciali": "Especiales",
       "sorbetti": "Sorbetes"
+    },
+    "novita": "Novedades de hoy",
+    "wheel": {
+      "eyebrow": "¿Indeciso?",
+      "title": "¿No sabes cuál elegir?",
+      "subtitle": "Deja que decida la suerte: gira la ruleta de los sabores de hoy.",
+      "cta": "Gira la ruleta",
+      "modalTitle": "La ruleta de sabores",
+      "spin": "GIRA",
+      "spinning": "Girando…",
+      "hint": "Toca el centro para girar",
+      "won": "Te ha tocado",
+      "chips": {
+        "all": "Todos",
+        "creamy": "Cremosos",
+        "fruity": "Afrutados",
+        "lactose_free": "Sin lactosa",
+        "vegan": "Veganos",
+        "new": "Novedades"
+      }
+    },
+    "order": {
+      "title": "Helado para llevar",
+      "subtitle": "Helado al kilo y dulces por encargo: listos a la hora que elijas.",
+      "cta": "Reservar",
+      "formTitle": "Reserva tu helado",
+      "what": "¿Qué te preparamos?",
+      "flavors": "Elige sabores (hasta 4)",
+      "when": "¿Cuándo pasas a recogerlo?",
+      "name": "Tu nombre",
+      "phone": "Teléfono",
+      "notes": "Notas (opcional)",
+      "send": "Reservar",
+      "thanks": "¡Gracias! Te confirmamos enseguida.",
+      "error": "Vaya, no se ha enviado. Revisa los datos e inténtalo de nuevo.",
+      "perKg": "el kilo"
+    },
+    "map": {
+      "load": "Mostrar el mapa",
+      "note": "Se abre Google Maps",
+      "photo": "El local"
     }
   }
 }

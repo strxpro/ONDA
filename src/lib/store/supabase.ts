@@ -99,6 +99,15 @@ export const supabaseBackend: Backend = {
   async setPendingStatus(id, status) {
     must(await db().from("bot_pending_actions").update({ status }).eq("id", id));
   },
+  async setPendingArgs(id, args) {
+    must(await db().from("bot_pending_actions").update({ args }).eq("id", id));
+  },
+  async latestPending(telegramUserId, tool) {
+    const rows = must(
+      await db().from("bot_pending_actions").select("*").eq("telegram_user_id", telegramUserId).eq("tool", tool).eq("status", "pending").gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(1),
+    ) as PendingAction[];
+    return rows[0] ?? null;
+  },
 
   async adminByEmail(email) {
     return must(await db().from("admin_users").select("*").ilike("email", email).maybeSingle()) as AdminUser | null;

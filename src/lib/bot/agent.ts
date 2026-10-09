@@ -7,7 +7,8 @@ import { nowIn } from "../hours";
 import { undoLast } from "../mutations";
 import * as ops from "../ops";
 import { store, type Actor } from "../store";
-import type { Flavor, OpeningHours, PriceItem, SpecialDay } from "../types";
+import type { Flavor, OpeningHours, PriceItem, Reservation, SpecialDay } from "../types";
+import { BOT_SKILL } from "./skill";
 import { READ_TOOLS, TOOL_DEFS, TOOL_INPUT, type ToolName } from "./tools";
 
 /** A change waiting for the owner's ✅. Args are already resolved to row ids. */
@@ -16,7 +17,7 @@ export type Staged = {
   args: Record<string, unknown>;
   label: string;
 };
-export type Choice = { question: string; options: string[] };
+export type Choice = { question: string; options: string[]; multi?: boolean };
 export type AgentResult = {
   text: string;
   lang: Lang;
@@ -68,7 +69,8 @@ ${flavors.map(fmtFlavor).join("\n")}
 Price board:
 ${prices.map((p) => `- ${p.label.it}${p.label.en ? ` (${p.label.en})` : ""}: € ${p.price_eur.toFixed(2)}${p.is_active ? "" : " [hidden]"}`).join("\n")}
 
-Website sections: announcement, hero, flavors (with the cone/cup price strip), lab (gallery), configurator, signature, prices ("Altre delizie": other treats + take-away tubs), reviews, visit, footer.`;
+Website sections: announcement, hero, flavors (with the cone/cup price strip), lab (gallery), configurator, signature, prices ("Altre delizie": other treats + take-away tubs + pre-orders), reviews, visit, footer.
+${BOT_SKILL}`;
 }
 
 /* ─── reads ──────────────────────────────────────────────────────────────── */
@@ -101,6 +103,15 @@ export async function runRead(tool: (typeof READ_TOOLS)[number], args: Record<st
         price_eur: p.price_eur,
         visible: p.is_active,
       }));
+    case "list_reservations": {
+      const rows = (await store().list("reservations")) as Reservation[];
+      const from = Date.now() - 6 * 3_600_000;
+      return rows
+        .filter((r) => (r.status === "new" || r.status === "confirmed") && Date.parse(r.pickup_at) > from)
+        .sort((a, b) => a.pickup_at.localeCompare(b.pickup_at))
+        .slice(0, 20)
+        .map((r) => ({ pickup: new Date(r.pickup_at).toLocaleString("it-IT", { timeZone: "Europe/Rome", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }), what: r.items, name: r.name, phone: r.phone, notes: r.notes, status: r.status }));
+    }
     case "list_comments":
       return (await ops.pendingComments()).map((c) => ({
         author: c.name,
@@ -503,6 +514,18 @@ export async function runAgent(userText: string, photo?: Photo): Promise<AgentRe
       }
       // only changes were staged: the ✅/❌ summary is the answer — saves a call on the free tier
       if (!readSomething && staged.length) return { text: fallbackText(), lang, staged };
+      // only questions: phrase the answer with a tiny prompt (no tools, no menu) — a fraction of the tokens
+      if (readSomething && !staged.length) {
+        const data = chat.filter((m) => m.role === "tool").map((m) => m.content).join("\n");
+        const { message: m } = await compatChat({
+          maxTokens: 400,
+          messages: [
+            { role: "system", content: "You are the friendly assistant of Gelateria Onda. Answer the owner's question in HIS language (the language of the question), in one or two short sentences, using ONLY the data given. Exact numbers. No markdown." },
+            { role: "user", content: `Question: ${first}\n\nData:\n${data.slice(0, 6000)}` },
+          ],
+        });
+        return { text: m.content?.trim() || data.slice(0, 500), lang, staged };
+      }
     }
     return { text: fallbackText(), lang, staged };
   }

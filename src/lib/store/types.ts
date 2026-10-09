@@ -1,7 +1,7 @@
 import type { SiteData } from "@/lib/types";
 
 /** Content tables the admin and the bot can edit. */
-export const TABLES = ["site_settings", "flavors", "price_items", "opening_hours", "special_days", "announcements", "sections", "gallery", "reviews", "comments"] as const;
+export const TABLES = ["site_settings", "flavors", "price_items", "opening_hours", "special_days", "announcements", "sections", "gallery", "reviews", "comments", "reservations"] as const;
 export type TableName = (typeof TABLES)[number];
 
 /** Primary key column per table. */
@@ -16,7 +16,10 @@ export const PK: Record<TableName, string> = {
   gallery: "id",
   reviews: "id",
   comments: "id",
+  reservations: "id",
 };
+/** Tables never pushed to visitors' browsers (live events). */
+export const PRIVATE_TABLES: TableName[] = ["reservations"];
 
 export type Row = Record<string, unknown>;
 export type Key = string | number;
@@ -84,6 +87,10 @@ export interface Backend {
   createPending(p: Omit<PendingAction, "id" | "created_at" | "status">): Promise<PendingAction>;
   getPending(id: string): Promise<PendingAction | null>;
   setPendingStatus(id: string, status: PendingAction["status"]): Promise<void>;
+  /** replace a pending action's args (e.g. the options ticked so far on a multi-choice question) */
+  setPendingArgs(id: string, args: Record<string, unknown>): Promise<void>;
+  /** the newest still-open pending action of a kind for this Telegram user (e.g. a question waiting for a typed answer) */
+  latestPending(telegramUserId: number, tool: string): Promise<PendingAction | null>;
 
   adminByEmail(email: string): Promise<AdminUser | null>;
   adminByTelegram(id: number): Promise<AdminUser | null>;

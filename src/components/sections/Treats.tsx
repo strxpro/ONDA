@@ -7,6 +7,7 @@ import { t, type Locale, type PriceItem } from "@/lib/shared";
 import { useSite } from "../providers/SiteData";
 import { RollingPrice } from "../ui/RollingPrice";
 import { Title } from "../ui/Title";
+import { OrderCard } from "./OrderCard";
 
 const COLORS = ["#FF8FB8", "#FFE066", "#6FE0C4", "#FFAA5C", "#9B8CFF", "#A8DB7A"];
 
@@ -47,7 +48,7 @@ export function Treats() {
   const s = data.settings;
   const ui = useTranslations("ui");
   const treats = data.prices.filter((p) => p.is_active && p.price_group === "delizie");
-  const extras = data.prices.filter((p) => p.is_active && (p.price_group === "vaschette" || p.price_group === "extra"));
+  const extras = data.prices.filter((p) => p.is_active && p.price_group === "extra");
 
   return (
     <section id="prices" className="relative py-20 sm:py-28">
@@ -72,6 +73,7 @@ export function Treats() {
             ))}
           </ul>
         )}
+        <OrderCard />
         <p className="sr-only">{ui("coneOrCup")}</p>
       </div>
     </section>
@@ -90,7 +92,7 @@ function Splash({ item: p, index: i, locale }: { item: PriceItem; index: number;
       viewport={{ once: true, margin: "-12% 0px" }}
       transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="relative w-[46%] max-w-[300px] shrink-0">
+      <div className="relative w-[50%] max-w-[360px] shrink-0">
         {/* the splash */}
         <motion.svg
           viewBox="0 0 200 200"
@@ -114,8 +116,8 @@ function Splash({ item: p, index: i, locale }: { item: PriceItem; index: number;
         </div>
       </div>
       <div className="min-w-0">
-        <h3 className="font-display text-[clamp(1.6rem,3.4vw,2.6rem)] leading-[1.02]">{t(p.label, locale)}</h3>
-        {p.price_eur > 0 && <RollingPrice value={p.price_eur} locale={locale} className="mt-2 block font-display text-xl text-chocolate/60" />}
+        <h3 className="font-display text-[clamp(1.9rem,4vw,3.2rem)] leading-[1.02]">{t(p.label, locale)}</h3>
+        {p.price_eur > 0 && <RollingPrice value={p.price_eur} locale={locale} className="mt-2 block font-display text-3xl font-bold sm:text-4xl" />}
       </div>
     </motion.li>
   );

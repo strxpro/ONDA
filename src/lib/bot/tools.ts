@@ -14,7 +14,7 @@ export const TEXT_KEYS = ["hero_title", "hero_subtitle", "cta_flavors", "cta_dir
 const s = (description: string) => ({ type: "string", description });
 const obj = (properties: Record<string, unknown>, required: string[] = []): Anthropic.Beta.BetaTool["input_schema"] => ({ type: "object", properties, required, additionalProperties: false });
 
-export const READ_TOOLS = ["get_stats", "list_flavors", "list_prices", "get_hours", "list_comments"] as const;
+export const READ_TOOLS = ["get_stats", "list_flavors", "list_prices", "get_hours", "list_comments", "list_reservations"] as const;
 
 const usePhoto = { type: "boolean", description: "true to use the photo the owner sent with this message" };
 const category = { type: "string", enum: [...FLAVOR_CATEGORIES], description: "crema = creamy, frutta = fruit, speciali = specials, sorbetti = sorbets" };
@@ -28,6 +28,7 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
   { name: "list_flavors", description: "List flavors with availability.", input_schema: obj({ onlyAvailable: { type: "boolean" } }) },
   { name: "list_prices", description: "List the price board.", input_schema: obj({}) },
   { name: "get_hours", description: "Weekly opening hours and upcoming special days.", input_schema: obj({}) },
+  { name: "list_reservations", description: "Upcoming pre-orders from the website (gelato by the kilo, tubs, treats): pickup time, what, name, phone, status.", input_schema: obj({}) },
   { name: "list_comments", description: "Visitors' comments waiting for approval (they appear on the site only once approved).", input_schema: obj({}) },
   {
     name: "set_flavor_availability",
@@ -156,8 +157,9 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
   { name: "undo_last", description: "Undo the most recent change to the website.", input_schema: obj({}) },
   {
     name: "ask_choice",
-    description: "Ask the owner ONE short clarifying question with 2-4 button options, when the request is ambiguous. Use the owner's language.",
-    input_schema: obj({ question: s("the question"), options: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 4 } }, ["question", "options"]),
+    description:
+      "Ask the owner ONE short clarifying question with 2-6 button options, when the request is ambiguous. Use the owner's language. Set multi=true when several answers can apply at once (e.g. which flavors are finished). The owner can always type his own answer instead.",
+    input_schema: obj({ question: s("the question"), options: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 6 }, multi: { type: "boolean", description: "true = the owner may tick several options" } }, ["question", "options"]),
   },
 ];
 
@@ -171,6 +173,7 @@ export const TOOL_INPUT = {
   list_prices: z.object({}),
   get_hours: z.object({}),
   list_comments: z.object({}),
+  list_reservations: z.object({}),
   set_flavor_availability: z.object({ flavor: z.string().min(1), available: z.boolean() }),
   add_flavor: z.object({ name: z.string().min(1).max(60), description: z.string().max(300).optional(), ingredients: z.string().max(200).optional(), category: z.enum(FLAVOR_CATEGORIES).optional(), use_photo: z.boolean().optional(), color: hexOpt, tags, featured: z.boolean().optional() }),
   update_flavor: z.object({ flavor: z.string().min(1), new_name: z.string().max(60).optional(), description: z.string().max(300).optional(), ingredients: z.string().max(200).optional(), category: z.enum(FLAVOR_CATEGORIES).optional(), use_photo: z.boolean().optional(), color: hexOpt, tags, featured: z.boolean().optional() }),
@@ -198,7 +201,7 @@ export const TOOL_INPUT = {
     smoothScroll: z.boolean().optional(),
   }),
   undo_last: z.object({}),
-  ask_choice: z.object({ question: z.string().min(1), options: z.array(z.string().min(1)).min(2).max(4) }),
+  ask_choice: z.object({ question: z.string().min(1), options: z.array(z.string().min(1)).min(2).max(6), multi: z.boolean().optional() }),
 } as const;
 
 export type ToolName = keyof typeof TOOL_INPUT;
