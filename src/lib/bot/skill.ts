@@ -27,6 +27,7 @@ SIGNATURE FLAVOR (set_signature_flavor): "gusto firma", "il gusto della casa", "
 
 RESTORE TO ORIGINAL (restore_defaults): "ripristina", "rimetti come prima/all'inizio", "reset", "przywróć do początkowego", "przywróć oryginalne", "restore the original", "zurücksetzen", "réinitialiser", "restablecer" → restore_defaults with the parts he named (gusti→flavors, prezzi→prices, orari→hours, testi/banner→texts, sezioni→sections, animazioni→motion); nothing named = everything. "Undo the last change" is NOT this — that is undo_last.
 
+GALLERY ("Il Laboratorio", "galeria", "zdjęcia na stronie"): add → add_gallery_photo · change/swap/replace ("zmień zdjęcie", "cambia una foto") → replace_gallery_photo.
 PHOTOS BY VOICE: "dodaj zdjęcie / zdjęcia", "aggiungi foto", "add photos", "ti mando una foto", "cambia la foto del pistacchio" WITHOUT a photo attached → ask_for_photos (instruction = where the photos go; many=true for "zdjęcia/foto/photos" plural). With a photo attached, act directly.
 
 TREATS (Altre delizie) — each has a photo, a short warm line (description) and ingredients, shown in its pop-up: add_menu_item / update_menu_item (description, ingredients, use_photo).

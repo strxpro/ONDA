@@ -61,7 +61,7 @@ Your job: understand what he wants and call the right tools. Rules:
 - Always reply in the owner's language, warm and very short. No markdown headings.
 - "people/persone/osób/visitors" = unique visitors; "visits/visite/wejść" = page views.
 - Prices are in euros; "3,50" means 3.50.
-- If the message says [PHOTO ATTACHED], decide what the photo is for from the caption/context: a flavor (add_flavor/update_flavor with use_photo=true), a treat (add_menu_item/update_menu_item with use_photo=true) or the gallery (add_gallery_photo). If there is no caption, ask with ask_choice.
+- If the message says [PHOTO ATTACHED], decide what the photo is for from the caption/context: a flavor (add_flavor/update_flavor with use_photo=true), a treat (add_menu_item/update_menu_item with use_photo=true) or the gallery (add_gallery_photo to add, replace_gallery_photo to change/swap one). If there is no caption, ask with ask_choice.
 - Everything on the website can be changed: flavors (availability, name, description, ingredients, category, color, photo), prices, "Altre delizie" treats, opening hours, banner, gallery photos, texts, sections, animations, visitors' comments.
 
 Now: ${weekday} ${n.date} ${time} (Sardinia time). ISO weekday numbers: 1=Monday … 7=Sunday.
@@ -148,7 +148,7 @@ async function resolveFlavor(name: string, question: string): Promise<{ flavor: 
 }
 
 export async function stage(tool: ToolName, a: Record<string, unknown>, lang: Lang, photo?: Photo): Promise<Resolved> {
-  if (a.use_photo || tool === "add_gallery_photo") {
+  if (a.use_photo || tool === "add_gallery_photo" || tool === "replace_gallery_photo") {
     if (!photo)
       return {
         choice: {
@@ -272,6 +272,8 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
           label: `nuova foto in galleria${a.caption ? ` «${a.caption}»` : ""}`,
         },
       };
+    case "replace_gallery_photo":
+      return { staged: { tool, args: a, label: `sostituire ${a.position ? `la foto n. ${a.position}` : "una foto"} del Laboratorio con questa` } };
     case "moderate_comment": {
       const pending = await ops.pendingComments();
       const q = String(a.comment).toLowerCase();
@@ -435,6 +437,10 @@ export async function execute(s: Staged, actor: Actor) {
         },
         actor,
       );
+    case "replace_gallery_photo": {
+      const p = a.photo as Photo;
+      return ops.replaceGalleryPhoto({ url: p.url, width: p.width, height: p.height, position: a.position as number | undefined, caption: a.caption as string | undefined }, actor);
+    }
     case "add_gallery_photo": {
       const p = a.photo as Photo;
       return ops.addGalleryPhoto(
@@ -480,6 +486,32 @@ const textOf = (content: Anthropic.Beta.BetaContentBlock[]) =>
     .join("\n")
     .trim();
 
+type JsonSchema = { type?: string | string[]; properties?: Record<string, JsonSchema>; required?: string[]; items?: JsonSchema; [k: string]: unknown };
+
+/**
+ * Small free models often send `null` for an optional field ("caption": null). Some providers validate tool calls
+ * against the schema and reject that — so for them every optional property also accepts null…
+ */
+function nullableOptionals(schema: JsonSchema): JsonSchema {
+  if (!schema.properties) return schema;
+  const required = new Set(schema.required ?? []);
+  const properties = Object.fromEntries(
+    Object.entries(schema.properties).map(([k, v]) => {
+      const inner = v.properties ? nullableOptionals(v) : v;
+      if (required.has(k) || !inner.type || Array.isArray(inner.type)) return [k, inner];
+      const { enum: en, ...rest } = inner as JsonSchema & { enum?: unknown[] };
+      return [k, { ...rest, type: [inner.type, "null"], ...(en ? { enum: [...en, null] } : {}) }];
+    }),
+  );
+  return { ...schema, properties };
+}
+
+/** …and the nulls are dropped before our own validation (null = not given). */
+function dropNulls(input: unknown): unknown {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+  return Object.fromEntries(Object.entries(input as Record<string, unknown>).filter(([, v]) => v !== null));
+}
+
 /** Understand one owner message. Reads are answered; writes are staged for confirmation. */
 export async function runAgent(userText: string, photo?: Photo): Promise<AgentResult> {
   const lang = detectLang(userText);
@@ -491,7 +523,7 @@ export async function runAgent(userText: string, photo?: Photo): Promise<AgentRe
 
   /** one tool call → its result text, or a final answer (a question / a choice) that ends the turn */
   const handle = async (name: ToolName, input: unknown): Promise<{ result: string; error?: boolean } | { done: AgentResult }> => {
-    const parsed = TOOL_INPUT[name]?.safeParse(input);
+    const parsed = TOOL_INPUT[name]?.safeParse(dropNulls(input));
     if (!parsed?.success) return { result: `Invalid input: ${parsed?.error.message ?? "unknown tool"}`, error: true };
     const args = parsed.data as Record<string, unknown>;
     if (name === "ask_choice") return { done: { text: String(args.question), lang, staged: [], choice: args as Choice } };
@@ -505,7 +537,7 @@ export async function runAgent(userText: string, photo?: Photo): Promise<AgentRe
 
   // free / OpenAI-compatible models (Groq, Gemini, Grok)
   if (provider() !== "anthropic") {
-    const tools: CompatTool[] = TOOL_DEFS.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.input_schema } }));
+    const tools: CompatTool[] = TOOL_DEFS.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: nullableOptionals(t.input_schema as JsonSchema) } }));
     const chat: CompatMessage[] = [
       { role: "system", content: system },
       { role: "user", content: first },

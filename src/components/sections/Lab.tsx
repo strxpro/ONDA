@@ -22,7 +22,8 @@ const W = 2.4;
 const H = 1.95;
 const SH = 0.95; // scoop height / width (SCOOP_BODY viewBox 200×190)
 const CENTER = { x: W / 2 - 0.5, y: 0.375, s: 1 };
-const SMALL = 0.34;
+/** size of the photos on the arc (in D): a bit bigger on wide screens, set on every layout */
+let SMALL = 0.34;
 const CY = 0.85;
 const RX = 1.05;
 const RY = 0.72;
@@ -60,6 +61,7 @@ export function Lab() {
 
   /** put every photo where `order` says, instantly */
   const layout = () => {
+    SMALL = (stage.current?.offsetWidth ?? 0) > 820 ? 0.4 : 0.34;
     order.current.forEach((photo, place) => {
       const el = items.current[photo];
       if (el) gsap.set(el, { ...px(posOf(place)), zIndex: place === 0 ? 20 : 10, transformOrigin: "0 0" });
@@ -140,7 +142,7 @@ export function Lab() {
     const timer = window.setInterval(() => {
       if (!visible || document.hidden || reduced() || Date.now() < idleUntil.current || lightbox) return;
       bringToCone(1 + Math.floor(Math.random() * Math.min(SLOTS, photos.length - 1)), false);
-    }, Math.max(3000, (m.galleryInterval ?? 4.5) * 1000));
+    }, Math.max(6000, (m.galleryInterval ?? 7) * 1000));
     return () => {
       io.disconnect();
       window.clearInterval(timer);
@@ -166,7 +168,7 @@ export function Lab() {
         </Title>
       </div>
 
-      <div ref={stage} className="relative mt-6 w-[min(124vw,calc(2.4*42svh),1120px)] select-none" style={{ aspectRatio: `${W} / ${H}` }}>
+      <div ref={stage} className="relative mt-6 w-[min(100%,calc(2.4*50svh),1240px)] select-none" style={{ aspectRatio: `${W} / ${H}` }}>
         {/* the waffle cone */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ WebkitMaskImage: "linear-gradient(to bottom, #000 85%, transparent)", maskImage: "linear-gradient(to bottom, #000 85%, transparent)" }}>
           <img src={PHOTO.cone} alt="" draggable={false} className="absolute drop-shadow-[0_24px_24px_rgba(184,110,46,0.25)]" style={{ left: pct(W / 2 - 0.25, W), top: pct(CENTER.y + SH - 0.3, H), width: pct(0.5, W) }} />

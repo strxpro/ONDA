@@ -107,6 +107,11 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
     input_schema: obj({ item: s("current item name"), new_name: s("optional"), description: s("optional"), ingredients: s("optional comma-separated ingredients"), visible: { type: "boolean" }, use_photo: usePhoto }, ["item"]),
   },
   {
+    name: "replace_gallery_photo",
+    description: "Replace one photo of the gallery ('Il Laboratorio') with the photo the owner sent: 'change a photo in the lab', 'swap the first photo'. position = which one (1 = first); omit = any (the oldest).",
+    input_schema: obj({ position: { type: "integer", minimum: 1 }, caption: s("optional short description of the photo") }),
+  },
+  {
     name: "add_gallery_photo",
     description: "Add the photo the owner sent to the website gallery (Il Laboratorio). Use when he sends a photo of the shop, the counter, people, gelato… that is not for a specific flavor or treat.",
     input_schema: obj({ caption: s("optional short caption") }),
@@ -197,6 +202,7 @@ export const TOOL_INPUT = {
   add_menu_item: z.object({ name: z.string().min(1).max(60), description: z.string().max(200).optional(), ingredients: z.string().max(200).optional(), price_eur: z.number().min(0).max(500).optional(), group: z.enum(["delizie", "vaschette", "extra"]).optional(), use_photo: z.boolean().optional() }),
   update_menu_item: z.object({ item: z.string().min(1), new_name: z.string().max(60).optional(), description: z.string().max(200).optional(), ingredients: z.string().max(200).optional(), visible: z.boolean().optional(), use_photo: z.boolean().optional() }),
   add_gallery_photo: z.object({ caption: z.string().max(200).optional() }),
+  replace_gallery_photo: z.object({ position: z.number().int().min(1).max(50).optional(), caption: z.string().max(200).optional() }),
   moderate_comment: z.object({ comment: z.string().min(1), approve: z.boolean() }),
   set_text: z.object({ key: z.enum(TEXT_KEYS), text: z.string().min(1).max(600) }),
   remove_flavor: z.object({ flavor: z.string().min(1) }),

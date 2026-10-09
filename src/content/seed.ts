@@ -137,7 +137,7 @@ export const seed: SiteData = {
     // VERIFY: replace with the direct Tripadvisor listing URL.
     rating_tripadvisor_url: "https://www.tripadvisor.com/Search?q=Gelateria%20Onda%20Santa%20Teresa%20Gallura",
     theme: {},
-    motion: { intensity: 1, preloader: "full", smoothScroll: true, cursor: true, sprinkles: true, galleryInterval: 4.5, meltSpeed: 1 },
+    motion: { intensity: 1, preloader: "full", smoothScroll: true, cursor: true, sprinkles: true, galleryInterval: 7, meltSpeed: 1 },
     timezone: "Europe/Rome",
   },
 

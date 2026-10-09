@@ -253,6 +253,15 @@ export async function updateMenuItem(id: string, fields: { name?: string; descri
 
 /* ─── photos ─────────────────────────────────────────────────────────────── */
 
+/** Swap one gallery photo for a new one: by position (1 = first shown), else the oldest. */
+export async function replaceGalleryPhoto(input: { url: string; width?: number; height?: number; position?: number; caption?: string }, actor: Actor) {
+  const all = ((await store().list("gallery")) as { id: string; sort_order: number }[]).sort((a, b) => a.sort_order - b.sort_order);
+  if (!all.length) return addGalleryPhoto(input, actor);
+  const target = input.position && all[input.position - 1] ? all[input.position - 1] : all[all.length - 1];
+  const tr = input.caption ? await translate({ alt: input.caption }) : {};
+  return patchRow("gallery", target.id, { image_url: input.url, width: input.width ?? null, height: input.height ?? null, ...(tr.alt ? { alt: tr.alt } : {}) }, ctx(actor, "replace_gallery_photo"));
+}
+
 export async function addGalleryPhoto(input: { url: string; caption?: string; width?: number; height?: number }, actor: Actor) {
   const tr = input.caption ? await translate({ alt: input.caption }) : {};
   const all = (await store().list("gallery")) as { sort_order: number }[];

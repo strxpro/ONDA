@@ -38,7 +38,7 @@ export const DEFAULT_MOTION: MotionSettings = {
   smoothScroll: true,
   cursor: true,
   sprinkles: true,
-  galleryInterval: 4.5,
+  galleryInterval: 7,
   meltSpeed: 1,
 };
 

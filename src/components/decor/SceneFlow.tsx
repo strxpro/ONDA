@@ -20,12 +20,12 @@ const PALETTES: Record<string, [string, string, string]> = {
 
 /** How each section arrives — varied, all transform/opacity (GPU only), all scrubbed with smoothing. */
 const ENTER = [
-  { y: 120, opacity: 0.15 }, // rise
-  { scale: 0.9, opacity: 0.2 }, // zoom
-  { y: 90, rotate: -2.5, opacity: 0.2 }, // tilt
-  { xPercent: -7, opacity: 0.15 }, // slide from the left
-  { y: 60, scale: 0.95, opacity: 0.15 }, // rise + zoom
-  { xPercent: 7, opacity: 0.15 }, // slide from the right
+  { y: 110, opacity: 0.55 }, // rise
+  { scale: 0.93, opacity: 0.6 }, // zoom
+  { y: 80, rotate: -2, opacity: 0.6 }, // tilt
+  { xPercent: -6, opacity: 0.55 }, // slide from the left
+  { y: 60, scale: 0.96, opacity: 0.55 }, // rise + zoom
+  { xPercent: 6, opacity: 0.55 }, // slide from the right
 ];
 
 /**
@@ -55,7 +55,7 @@ export function SceneFlow({ children, keys }: { children: ReactNode; keys: strin
           rotate: 0,
           opacity: 1,
           ease: "power2.out",
-          scrollTrigger: { trigger: scene, start: "top 98%", end: "top 35%", scrub: 1.2 },
+          scrollTrigger: { trigger: scene, start: "top 98%", end: "top 55%", scrub: 1 },
         });
       });
     }, el);
