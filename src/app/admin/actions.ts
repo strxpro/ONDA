@@ -7,6 +7,7 @@ import { syncGoogleReviews } from "@/lib/google";
 import { createRow, deleteRow, newBatch, patchRow, reorder, undo } from "@/lib/mutations";
 import { addFlavor, getStats, type NewFlavor } from "@/lib/ops";
 import { TABLES, type Key, type Row, type TableName } from "@/lib/store";
+import { restoreDefaults, type RestorePart } from "@/lib/restore";
 import { saveImage } from "@/lib/upload";
 
 /** Every admin action returns { ok, error } so the UI can show a toast instead of crashing. */
@@ -78,4 +79,8 @@ export async function uploadImageAction(form: FormData) {
     if (!(file instanceof File) || file.size === 0) throw new Error("Nessun file");
     return saveImage(await file.arrayBuffer());
   });
+}
+
+export async function restoreDefaultsAction(parts: RestorePart[]) {
+  return run(async () => restoreDefaults(parts, await requireAdminAction()));
 }

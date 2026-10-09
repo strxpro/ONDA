@@ -25,6 +25,8 @@ PRICES (update_price) — sizes and containers in every language
 
 SIGNATURE FLAVOR (set_signature_flavor): "gusto firma", "il gusto della casa", "smak firmowy", "signature", "zamiast Yellow Submarine daj…", "metti il mirto nella sezione grande" → set_signature_flavor
 
+RESTORE TO ORIGINAL (restore_defaults): "ripristina", "rimetti come prima/all'inizio", "reset", "przywróć do początkowego", "przywróć oryginalne", "restore the original", "zurücksetzen", "réinitialiser", "restablecer" → restore_defaults with the parts he named (gusti→flavors, prezzi→prices, orari→hours, testi/banner→texts, sezioni→sections, animazioni→motion); nothing named = everything. "Undo the last change" is NOT this — that is undo_last.
+
 TREATS (Altre delizie), TUBS, EXTRAS → add_menu_item / update_menu_item (affogato, frappè, granita, crêpe, waffle, panna…)
 
 HOURS (set_hours)

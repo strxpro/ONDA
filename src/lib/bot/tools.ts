@@ -159,6 +159,11 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
       smoothScroll: { type: "boolean" },
     }),
   },
+  {
+    name: "restore_defaults",
+    description: "Put parts of the website back as they were originally delivered (factory reset). Only when the owner clearly asks to restore / reset to the original. Comments, reviews, reservations and photos are never touched. Undoable.",
+    input_schema: obj({ parts: { type: "array", items: { type: "string", enum: ["flavors", "prices", "hours", "texts", "sections", "motion"] }, description: "what to restore; omit or empty = everything" } }),
+  },
   { name: "undo_last", description: "Undo the most recent change to the website.", input_schema: obj({}) },
   {
     name: "ask_choice",
@@ -207,6 +212,7 @@ export const TOOL_INPUT = {
     smoothScroll: z.boolean().optional(),
   }),
   undo_last: z.object({}),
+  restore_defaults: z.object({ parts: z.array(z.enum(["flavors", "prices", "hours", "texts", "sections", "motion"])).optional() }),
   ask_choice: z.object({ question: z.string().min(1), options: z.array(z.string().min(1)).min(2).max(6), multi: z.boolean().optional() }),
 } as const;
 

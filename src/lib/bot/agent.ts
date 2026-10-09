@@ -8,6 +8,7 @@ import { undoLast } from "../mutations";
 import * as ops from "../ops";
 import { store, type Actor } from "../store";
 import type { Flavor, OpeningHours, PriceItem, Reservation, SpecialDay } from "../types";
+import { RESTORE_LABEL, RESTORE_PARTS, restoreDefaults, type RestorePart } from "../restore";
 import { BOT_SKILL } from "./skill";
 import { READ_TOOLS, TOOL_DEFS, TOOL_INPUT, type ToolName } from "./tools";
 
@@ -358,6 +359,10 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
         },
       };
     }
+    case "restore_defaults": {
+      const parts = ((a.parts as RestorePart[] | undefined) ?? []).length ? (a.parts as RestorePart[]) : [...RESTORE_PARTS];
+      return { staged: { tool, args: { parts }, label: `⚠️ ripristinare all'originale: ${parts.map((p) => RESTORE_LABEL[p]).join(", ")} (si può annullare)` } };
+    }
     default:
       throw new Error(`Not a write tool: ${tool}`);
   }
@@ -373,6 +378,8 @@ export async function execute(s: Staged, actor: Actor) {
       return ops.removeFlavor(a.id as string, actor);
     case "set_signature_flavor":
       return ops.setSignatureFlavor(a.id as string, actor);
+    case "restore_defaults":
+      return restoreDefaults(a.parts as RestorePart[], actor);
     case "update_flavor":
       return ops.updateFlavor(
         a.id as string,

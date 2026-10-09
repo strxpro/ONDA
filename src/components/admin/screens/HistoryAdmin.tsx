@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowCounterClockwise, Desktop, TelegramLogo } from "@phosphor-icons/react";
-import { undoAction } from "@/app/admin/actions";
+import { ArrowCounterClockwise, ArrowsCounterClockwise, CheckSquare, Desktop, Square, TelegramLogo, Warning } from "@phosphor-icons/react";
+import { useState } from "react";
+import { restoreDefaultsAction, undoAction } from "@/app/admin/actions";
 import type { AuditEntry } from "@/lib/store/types";
 import { Button, Card, PageTitle, useAction } from "../ui";
 
@@ -20,6 +21,8 @@ const ACTION: Record<string, string> = {
   set_text: "Testo",
   sync_google_reviews: "Recensioni Google",
   undo: "Annullato",
+  restore_defaults: "Ripristino originale",
+  set_signature_flavor: "Gusto firma",
 };
 const TABLE: Record<string, string> = {
   flavors: "Gusti",
@@ -71,6 +74,7 @@ export function HistoryAdmin({ entries }: { entries: AuditEntry[] }) {
   return (
     <>
       <PageTitle title="Cronologia" subtitle="Ogni modifica, dal pannello o da Telegram. Un tocco per annullare." />
+      <RestoreCard />
       {rows.length === 0 ? (
         <Card>
           <p className="font-semibold text-chocolate/60">Ancora nessuna modifica.</p>
@@ -104,5 +108,60 @@ export function HistoryAdmin({ entries }: { entries: AuditEntry[] }) {
         </Card>
       )}
     </>
+  );
+}
+
+const PARTS = { flavors: "Gusti", prices: "Prezzi", hours: "Orari e giorni speciali", texts: "Testi e banner", sections: "Sezioni del sito", motion: "Animazioni" } as const;
+type Part = keyof typeof PARTS;
+
+/**
+ * "Ripristina originale": put the chosen parts back as they were delivered. One batch: it appears in the list below
+ * and a single "Annulla" brings everything back. Comments, reviews, reservations and uploaded photos are never touched.
+ */
+function RestoreCard() {
+  const { call, pending } = useAction();
+  const [open, setOpen] = useState(false);
+  const [parts, setParts] = useState<Set<Part>>(new Set(Object.keys(PARTS) as Part[]));
+  const toggle = (k: Part) => setParts((p) => (p.has(k) ? new Set([...p].filter((x) => x !== k)) : new Set([...p, k])));
+  return (
+    <Card className="mb-4">
+      {!open ? (
+        <button type="button" onClick={() => setOpen(true)} className="flex w-full items-center gap-3 text-left">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-lemon-soft">
+            <ArrowsCounterClockwise weight="bold" className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-lg font-bold">Ripristina originale</span>
+            <span className="block text-sm text-chocolate/60">Rimetti gusti, prezzi, orari o testi come all&apos;inizio. Si può annullare.</span>
+          </span>
+        </button>
+      ) : (
+        <div className="space-y-3">
+          <p className="flex items-center gap-2 font-display text-lg font-bold">
+            <Warning weight="duotone" className="size-6 text-mango" /> Cosa vuoi rimettere come all&apos;inizio?
+          </p>
+          <div className="grid gap-1.5 sm:grid-cols-2">
+            {(Object.keys(PARTS) as Part[]).map((k) => (
+              <button key={k} type="button" onClick={() => toggle(k)} className="flex items-center gap-2 rounded-xl bg-cream px-3 py-2.5 text-left font-semibold">
+                {parts.has(k) ? <CheckSquare weight="fill" className="size-5" /> : <Square weight="bold" className="size-5 text-chocolate/40" />}
+                {PARTS[k]}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-chocolate/60">Commenti, recensioni, prenotazioni e foto caricate restano. Dopo, un tocco su «Annulla» qui sotto riporta tutto com&apos;era.</p>
+          <div className="flex gap-2">
+            <Button
+              disabled={pending || !parts.size}
+              onClick={() => confirm(`Ripristinare all'originale: ${[...parts].map((k) => PARTS[k]).join(", ")}?`) && call(() => restoreDefaultsAction([...parts]), "Ripristinato all'originale").then(() => setOpen(false))}
+            >
+              <ArrowsCounterClockwise weight="bold" className="size-5" /> Ripristina
+            </Button>
+            <Button variant="soft" onClick={() => setOpen(false)} label="Chiudi">
+              Chiudi
+            </Button>
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
