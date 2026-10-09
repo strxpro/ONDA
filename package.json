@@ -1,27 +1,54 @@
 {
-  "name": "onda-tmp",
+  "name": "gelateria-onda",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed-sql": "node --no-warnings scripts/gen-seed-sql.ts",
+    "db:push": "supabase db push --include-seed",
+    "typecheck": "tsc --noEmit",
+    "bot:webhook": "node --no-warnings --env-file-if-exists=.env.local scripts/set-webhook.ts",
+    "db:all": "node scripts/gen-all-sql.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.1",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@phosphor-icons/react": "^2.1.10",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.3",
+    "grammy": "^1.46.0",
+    "gsap": "^3.15.0",
+    "lenis": "^1.3.26",
+    "motion": "^14.0.0",
+    "next": "15.5.27",
+    "next-intl": "^4.14.9",
+    "qrcode": "^1.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.27"
+    "server-only": "^0.0.1",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.5.27",
-    "@eslint/eslintrc": "^3"
+    "puppeteer-core": "^25.13.0",
+    "supabase": "^2.120.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "overrides": {
+    "@swc/core": "1.15.47"
   }
 }

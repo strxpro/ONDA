@@ -1,0 +1,105 @@
+{
+  "ui": {
+    "openNow": "Otwarte teraz",
+    "closed": "Zamknięte",
+    "soldOut": "Skończył się!",
+    "showAtCounter": "Pokaż przy ladzie",
+    "call": "Zadzwoń",
+    "navigate": "Nawiguj",
+    "language": "Język",
+    "skipToContent": "Przejdź do treści",
+    "filters": {
+      "all": "Wszystkie",
+      "vegan": "Wegańskie",
+      "gluten_free": "Bez glutenu",
+      "lactose_free": "Bez laktozy",
+      "new": "Nowość",
+      "signature": "Firmowe"
+    },
+    "weekdays": [
+      "Poniedziałek",
+      "Wtorek",
+      "Środa",
+      "Czwartek",
+      "Piątek",
+      "Sobota",
+      "Niedziela"
+    ],
+    "credit": "Projekt i wykonanie",
+    "groups": {
+      "coni": "Rożki",
+      "coppette": "Kubeczki",
+      "vaschette": "Pudełka",
+      "extra": "Dodatki"
+    },
+    "builder": {
+      "size": "Rozmiar",
+      "flavors": "Dotknij smaków",
+      "hint": "Dotknij gałki, aby ją usunąć.",
+      "scoops": "gałki"
+    },
+    "close": "Zamknij",
+    "readReviews": "Czytaj opinie",
+    "badgeNew": "Nowość",
+    "badgeSignature": "Smak firmowy",
+    "badgeFeatured": "Polecamy",
+    "ingredients": "Składniki",
+    "reviewsCount": "{count} opinii",
+    "today": "Dziś",
+    "scroll": "Przewiń",
+    "details": "Szczegóły",
+    "flavorsCount": "{count} smaków dziś",
+    "sizes": {
+      "piccolo": "Mały",
+      "medio": "Średni",
+      "grande": "Duży"
+    },
+    "nFlavors": "{n} smaki",
+    "coneOrCup": "w wafelku albo w kubku, ta sama cena",
+    "untilTime": "do {time}",
+    "opensAt": "otwieramy o {time}",
+    "opensTomorrow": "otwieramy jutro",
+    "tapToTaste": "Dotknij smaku, żeby zobaczyć, z czego jest",
+    "whatsInside": "Z czego jest",
+    "cone": "Wafelek",
+    "cup": "Kubek",
+    "reset": "Od nowa",
+    "pickUpTo": "Wybierz do {n} smaków",
+    "services": {
+      "dineIn": "Na miejscu",
+      "takeaway": "Na wynos",
+      "delivery": "Dostawa"
+    },
+    "soundOn": "Włącz muzykę i dźwięki",
+    "soundOff": "Wyłącz muzykę i dźwięki",
+    "comments": {
+      "cta": "Zostaw smaczny komentarz",
+      "title": "Twój smaczny komentarz",
+      "name": "Twoje imię",
+      "message": "Co Ci smakowało?",
+      "favorite": "Twój ulubiony smak",
+      "sticker": "Wybierz naklejkę",
+      "send": "Wyślij",
+      "thanks": "Dzięki! Komentarz pojawi się, gdy go „spróbujemy”.",
+      "empty": "Jeszcze nie ma komentarzy — napisz pierwszy!",
+      "error": "Ups, nie udało się. Spróbuj za chwilę.",
+      "wall": "Smaczne komentarze",
+      "rate": "Jak smakowały lody?",
+      "googleAsk": "Super! Napiszesz to też na Google?",
+      "googleCta": "Napisz opinię w Google",
+      "orNote": "albo zostaw karteczkę tutaj",
+      "privateTitle": "Powiedz nam, co poprawić",
+      "privateHint": "Czyta to tylko właściciel — nie jest publikowane.",
+      "googleAnyway": "Wolisz napisać na Google? Możesz tutaj",
+      "changeRating": "Zmień ocenę",
+      "thanksPrivate": "Dziękujemy za szczerość — właściciel przeczyta to osobiście.",
+      "messageLow": "Co nie smakowało?"
+    },
+    "categories": {
+      "crema": "Kremowe",
+      "frutta": "Owocowe",
+      "speciali": "Specjalne",
+      "sorbetti": "Sorbety"
+    }
+  }
+}

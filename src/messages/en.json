@@ -1,0 +1,105 @@
+{
+  "ui": {
+    "openNow": "Open now",
+    "closed": "Closed",
+    "soldOut": "Sold out!",
+    "showAtCounter": "Show it at the counter",
+    "call": "Call",
+    "navigate": "Directions",
+    "language": "Language",
+    "skipToContent": "Skip to content",
+    "filters": {
+      "all": "All",
+      "vegan": "Vegan",
+      "gluten_free": "Gluten free",
+      "lactose_free": "Lactose free",
+      "new": "New",
+      "signature": "Signature"
+    },
+    "weekdays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    "credit": "Design & development",
+    "groups": {
+      "coni": "Cones",
+      "coppette": "Cups",
+      "vaschette": "Tubs",
+      "extra": "Extras"
+    },
+    "builder": {
+      "size": "Size",
+      "flavors": "Tap the flavors",
+      "hint": "Tap a scoop to remove it.",
+      "scoops": "scoops"
+    },
+    "close": "Close",
+    "readReviews": "Read the reviews",
+    "badgeNew": "New",
+    "badgeSignature": "Signature flavor",
+    "badgeFeatured": "Featured",
+    "ingredients": "Ingredients",
+    "reviewsCount": "{count} reviews",
+    "today": "Today",
+    "scroll": "Scroll",
+    "details": "Details",
+    "flavorsCount": "{count} flavors today",
+    "sizes": {
+      "piccolo": "Small",
+      "medio": "Medium",
+      "grande": "Large"
+    },
+    "nFlavors": "{n} flavors",
+    "coneOrCup": "cone or cup, same price",
+    "untilTime": "until {time}",
+    "opensAt": "opens at {time}",
+    "opensTomorrow": "opens tomorrow",
+    "tapToTaste": "Tap a flavor to see what it's made of",
+    "whatsInside": "What's inside",
+    "cone": "Cone",
+    "cup": "Cup",
+    "reset": "Start over",
+    "pickUpTo": "Pick up to {n} flavors",
+    "services": {
+      "dineIn": "Eat in",
+      "takeaway": "Takeaway",
+      "delivery": "Delivery"
+    },
+    "soundOn": "Turn on music and sounds",
+    "soundOff": "Turn off music and sounds",
+    "comments": {
+      "cta": "Leave a tasty comment",
+      "title": "Your tasty comment",
+      "name": "Your name",
+      "message": "What did you love?",
+      "favorite": "Your favourite flavour",
+      "sticker": "Pick a sticker",
+      "send": "Send",
+      "thanks": "Thank you! Your comment will appear once we've had a taste.",
+      "empty": "No comments yet: be the first!",
+      "error": "Oops, it didn't go through. Try again soon.",
+      "wall": "Tasty comments",
+      "rate": "How was your gelato?",
+      "googleAsk": "Lovely! Would you say it on Google too?",
+      "googleCta": "Write a Google review",
+      "orNote": "or leave a note here",
+      "privateTitle": "Tell us what we can do better",
+      "privateHint": "Only the owner reads it — it isn't published.",
+      "googleAnyway": "Prefer Google? You can review us there",
+      "changeRating": "Change rating",
+      "thanksPrivate": "Thank you for being honest — the owner will read it personally.",
+      "messageLow": "What wasn't right?"
+    },
+    "categories": {
+      "crema": "Creamy",
+      "frutta": "Fruit",
+      "speciali": "Specials",
+      "sorbetti": "Sorbets"
+    }
+  }
+}

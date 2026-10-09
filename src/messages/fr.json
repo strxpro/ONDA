@@ -1,0 +1,105 @@
+{
+  "ui": {
+    "openNow": "Ouvert",
+    "closed": "Fermé",
+    "soldOut": "Épuisé !",
+    "showAtCounter": "Montre-le au comptoir",
+    "call": "Appeler",
+    "navigate": "Itinéraire",
+    "language": "Langue",
+    "skipToContent": "Aller au contenu",
+    "filters": {
+      "all": "Tous",
+      "vegan": "Végan",
+      "gluten_free": "Sans gluten",
+      "lactose_free": "Sans lactose",
+      "new": "Nouveau",
+      "signature": "Signature"
+    },
+    "weekdays": [
+      "Lundi",
+      "Mardi",
+      "Mercredi",
+      "Jeudi",
+      "Vendredi",
+      "Samedi",
+      "Dimanche"
+    ],
+    "credit": "Design & développement",
+    "groups": {
+      "coni": "Cornets",
+      "coppette": "Pots",
+      "vaschette": "Bacs",
+      "extra": "Extras"
+    },
+    "builder": {
+      "size": "Taille",
+      "flavors": "Touche les parfums",
+      "hint": "Touche une boule pour l'enlever.",
+      "scoops": "boules"
+    },
+    "close": "Fermer",
+    "readReviews": "Lire les avis",
+    "badgeNew": "Nouveau",
+    "badgeSignature": "Parfum signature",
+    "badgeFeatured": "À la une",
+    "ingredients": "Ingrédients",
+    "reviewsCount": "{count} avis",
+    "today": "Aujourd'hui",
+    "scroll": "Défiler",
+    "details": "Détails",
+    "flavorsCount": "{count} parfums aujourd'hui",
+    "sizes": {
+      "piccolo": "Petit",
+      "medio": "Moyen",
+      "grande": "Grand"
+    },
+    "nFlavors": "{n} parfums",
+    "coneOrCup": "cornet ou pot, même prix",
+    "untilTime": "jusqu'à {time}",
+    "opensAt": "ouvre à {time}",
+    "opensTomorrow": "ouvre demain",
+    "tapToTaste": "Touche un parfum pour voir de quoi il est fait",
+    "whatsInside": "Ce qu'il y a dedans",
+    "cone": "Cornet",
+    "cup": "Pot",
+    "reset": "Recommencer",
+    "pickUpTo": "Choisis jusqu'à {n} parfums",
+    "services": {
+      "dineIn": "Sur place",
+      "takeaway": "À emporter",
+      "delivery": "Livraison"
+    },
+    "soundOn": "Activer musique et sons",
+    "soundOff": "Couper musique et sons",
+    "comments": {
+      "cta": "Laisse un commentaire gourmand",
+      "title": "Ton commentaire gourmand",
+      "name": "Ton prénom",
+      "message": "Qu'est-ce que tu as aimé ?",
+      "favorite": "Ton parfum préféré",
+      "sticker": "Choisis un autocollant",
+      "send": "Envoyer",
+      "thanks": "Merci ! Ton commentaire apparaîtra dès qu'on l'aura goûté.",
+      "empty": "Pas encore de commentaires : écris le premier !",
+      "error": "Oups, ça n'est pas parti. Réessaie dans un instant.",
+      "wall": "Commentaires gourmands",
+      "rate": "Comment était ta glace ?",
+      "googleAsk": "Super ! Tu le dis aussi sur Google ?",
+      "googleCta": "Écrire un avis Google",
+      "orNote": "ou laisse un mot ici",
+      "privateTitle": "Dis-nous ce qu'on peut améliorer",
+      "privateHint": "Seul le gérant le lit : ce n'est pas publié.",
+      "googleAnyway": "Tu préfères Google ? Tu peux nous noter là-bas",
+      "changeRating": "Changer la note",
+      "thanksPrivate": "Merci pour ta franchise : le gérant le lira personnellement.",
+      "messageLow": "Qu'est-ce qui n'allait pas ?"
+    },
+    "categories": {
+      "crema": "Crèmes",
+      "frutta": "Fruits",
+      "speciali": "Spéciaux",
+      "sorbetti": "Sorbets"
+    }
+  }
+}

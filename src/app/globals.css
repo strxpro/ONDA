@@ -1,26 +1,481 @@
 @import "tailwindcss";
 
+/* ─── Design tokens ──────────────────────────────────────────────────────────
+   Candy palette in :root so `site_settings.theme` can override it at runtime. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --pink: #ff8fb8;
+  --pink-soft: #ffd6e5;
+  --strawberry: #ff6f91;
+  --lemon: #ffe066;
+  --lemon-soft: #fff4bd;
+  --mint: #6fe0c4;
+  --mint-soft: #d2f8ee;
+  --blueberry: #9b8cff;
+  --blueberry-soft: #e0dbff;
+  --mango: #ffaa5c;
+  --mango-soft: #ffe2c6;
+  --pistachio: #a8db7a;
+  --pistachio-soft: #e3f5d1;
+  --cream: #fff7ee;
+  --chocolate: #4b2a20;
+  --chocolate-soft: #7a5246;
+  --cone: #eaa65c;
+  --cone-dark: #b86e2e;
+  --cherry: #e5243f;
+
+  /* Per-flavor accent, set locally by cards / cursor / section washes. */
+  --flavor: var(--pink);
+  --flavor-2: var(--strawberry);
+
+  --rainbow: linear-gradient(90deg, var(--pistachio), var(--mint), var(--blueberry), var(--pink), var(--mango), var(--lemon));
+
+  --shadow-soft: 0 2px 4px rgb(75 42 32 / 0.06), 0 14px 34px -10px rgb(75 42 32 / 0.25);
+  --shadow-float: 0 4px 8px rgb(75 42 32 / 0.08), 0 30px 60px -18px rgb(75 42 32 / 0.35);
+  --shadow-candy: 0 6px 0 0 var(--chocolate);
+  --glass: rgb(255 247 238 / 0.7);
+
+  --ease-gelato: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-melt: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --gutter: clamp(1rem, 4vw, 3rem);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-pink: var(--pink);
+  --color-pink-soft: var(--pink-soft);
+  --color-strawberry: var(--strawberry);
+  --color-lemon: var(--lemon);
+  --color-lemon-soft: var(--lemon-soft);
+  --color-mint: var(--mint);
+  --color-mint-soft: var(--mint-soft);
+  --color-blueberry: var(--blueberry);
+  --color-blueberry-soft: var(--blueberry-soft);
+  --color-mango: var(--mango);
+  --color-mango-soft: var(--mango-soft);
+  --color-pistachio: var(--pistachio);
+  --color-pistachio-soft: var(--pistachio-soft);
+  --color-cream: var(--cream);
+  --color-chocolate: var(--chocolate);
+  --color-chocolate-soft: var(--chocolate-soft);
+  --color-cone: var(--cone);
+  --color-cherry: var(--cherry);
+  --color-flavor: var(--flavor);
+
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-dmsans), system-ui, sans-serif;
+  --font-script: var(--font-fraunces), Georgia, serif;
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-float: var(--shadow-float);
+  --shadow-candy: var(--shadow-candy);
+  --ease-gelato: var(--ease-gelato);
+  --ease-melt: var(--ease-melt);
+
+  --text-mega: clamp(6rem, 30vw, 20rem);
+  --text-display: clamp(3rem, 10vw, 7rem);
+  --text-title: clamp(2.8rem, 8vw, 6.25rem);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    overflow-x: clip;
+    background: var(--cream);
+    color: var(--chocolate);
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    font-family: var(--font-sans);
+    background: transparent; /* the animated gradient backdrop (SceneFlow) shows through; html keeps the cream fallback */
+    color: var(--chocolate);
+    overflow-x: clip;
+  }
+  ::selection {
+    background: var(--pink);
+    color: var(--chocolate);
+  }
+  /* side splats and bands hang outside sections horizontally: never let them widen the page */
+  section {
+    overflow-x: clip;
+  }
+  :focus-visible {
+    outline: 3px solid var(--chocolate);
+    outline-offset: 3px;
+    border-radius: 10px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 96;
+  letter-spacing: -0.025em;
+  line-height: 0.95;
+}
+
+/* accents (former handwritten notes): Fraunces italic, soft and wonky */
+.font-script {
+  font-family: var(--font-script);
+  font-style: italic;
+  font-weight: 400;
+  font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 24;
+  letter-spacing: 0;
+}
+
+/* Sticker-style candy heading: solid chocolate offset shadow. */
+.candy-text {
+  font-weight: 700;
+  font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144;
+  letter-spacing: -0.05em;
+}
+
+/* Squishy button: squash-and-stretch on press. */
+.btn-candy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.25rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  border: 0;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 10px 24px -10px rgb(75 42 32 / 0.45);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.05rem;
+  transition:
+    transform 0.35s var(--ease-gelato),
+    box-shadow 0.35s var(--ease-gelato);
+  will-change: transform;
+}
+.btn-candy:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 16px 30px -12px rgb(75 42 32 / 0.5);
+}
+.btn-candy:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 6px 14px -8px rgb(75 42 32 / 0.45);
+  transition-duration: 0.08s;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+.grain {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  opacity: 0.06;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.16 0 0 0 0 0.12 0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  border: 1px solid rgb(255 255 255 / 0.6);
+}
+
+/* Slow drifting mesh-gradient blobs */
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(6%, -4%, 0) scale(1.08);
+  }
+  66% {
+    transform: translate3d(-5%, 5%, 0) scale(0.95);
+  }
+}
+.mesh-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.75;
+  animation: drift 18s ease-in-out infinite;
+  will-change: transform; /* the blur is rasterized once, then only moved on the GPU */
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(2deg);
+  }
+}
+.bob {
+  animation: bob 5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 rgb(46 204 113 / 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgb(46 204 113 / 0);
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Lets the flavor section wash animate between colors. */
+@property --wash {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #d2f8ee;
+}
+
+/* Flowing wave bands (see components/decor/Bands.tsx) */
+@keyframes band-flow {
+  to {
+    translate: -50% 0;
+  }
+}
+.band-wave {
+  animation: band-flow 20s linear infinite;
+  will-change: translate;
+}
+
+/* Colored, soft "candy" shadow helper: set --c on the element */
+.shadow-colored {
+  box-shadow:
+    0 2px 0 0 rgb(255 255 255 / 0.6) inset,
+    0 30px 60px -24px var(--c, var(--pink));
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.group:hover[style*="marquee"] {
+  animation-play-state: paused !important;
+}
+
+/* Maiolica wall tiles behind the vetrina (very soft) */
+.tiles {
+  background-color: #fff7ee;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'><rect width='72' height='72' fill='none' stroke='%23e9dccd' stroke-width='1.5'/><g fill='none' stroke='%2376c9d8' stroke-opacity='.35' stroke-width='2'><circle cx='36' cy='36' r='10'/><path d='M36 8c6 8 6 12 0 18-6-6-6-10 0-18zM36 64c6-8 6-12 0-18-6 6-6 10 0 18zM8 36c8-6 12-6 18 0-6 6-10 6-18 0zM64 36c-8-6-12-6-18 0 6 6 10 6 18 0z'/></g><g fill='%23ff8fb8' fill-opacity='.25'><circle cx='0' cy='0' r='6'/><circle cx='72' cy='0' r='6'/><circle cx='0' cy='72' r='6'/><circle cx='72' cy='72' r='6'/></g></svg>");
+  background-size: 72px 72px;
+}
+
+/* A light glint sweeping across the display-case glass */
+@keyframes glint {
+  0%,
+  70% {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(320%) skewX(-18deg);
+  }
+}
+.glint {
+  animation: glint 7s ease-in-out infinite;
+}
+
+@keyframes spatula {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(-16deg) translateX(-6px);
+  }
+  70% {
+    transform: rotate(8deg);
+  }
+}
+.group:hover .pan-spatula,
+.group:focus-visible .pan-spatula {
+  animation: spatula 0.9s ease-in-out;
+}
+
+/* Marble counter top */
+.marble {
+  background:
+    radial-gradient(120% 60% at 20% 40%, transparent 60%, rgb(155 140 255 / 0.08) 61%, transparent 64%),
+    linear-gradient(115deg, transparent 30%, rgb(122 82 70 / 0.08) 31%, transparent 33%, transparent 60%, rgb(122 82 70 / 0.06) 61%, transparent 62%),
+    linear-gradient(180deg, #fbf8f5, #ebe4dd);
+}
+
+/* Receipt paper with a torn zig-zag bottom */
+.receipt {
+  --z: 8px;
+  mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--z)) 100%;
+  padding-bottom: calc(1.5rem + var(--z));
+}
+
+/* Chalkboard: slate with chalk dust */
+.chalkboard {
+  background-color: #2e3833;
+  background-image:
+    radial-gradient(120% 80% at 30% 20%, rgb(255 255 255 / 0.07), transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='c'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .09 0'/></filter><rect width='100%' height='100%' filter='url(%23c)'/></svg>");
+}
+.chalk {
+  font-family: var(--font-script);
+  color: #f6f3ea;
+  text-shadow: 0 0 1px rgb(255 255 255 / 0.6), 0 0 6px rgb(255 255 255 / 0.12);
+}
+
+@keyframes swing {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+.swing {
+  transform-origin: 50% 0;
+  animation: swing 3.6s ease-in-out infinite;
+}
+
+@keyframes bubble {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-70vh) scale(1.1);
+    opacity: 0;
+  }
+}
+.bubble {
+  animation: bubble linear infinite;
+}
+
+/* Neon sign in the header */
+@keyframes neon-on {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% {
+    opacity: 1;
+  }
+  20%, 24%, 55% {
+    opacity: 0.35;
+  }
+}
+.neon-text {
+  font-family: var(--font-script);
+  color: #fff4f8;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 6px var(--neon),
+    0 0 14px var(--neon),
+    0 0 26px var(--neon);
+  animation: neon-on 3.5s linear 0.6s 1 both;
+}
+.neon-off {
+  font-family: var(--font-script);
+  color: #9b8f8b;
+  text-shadow: 0 0 4px rgb(0 0 0 / 0.4);
+}
+
+/* full-height sections are flex columns: keep their centered containers full width */
+section.min-h-svh > .mx-auto {
+  width: 100%;
+}
+
+.hand-wave {
+  animation: hand-wave 1.6s ease-in-out infinite;
+}
+@keyframes hand-wave {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-4px) rotate(-10deg); }
+}
+/* flavor tiles pop in once (CSS only, staggered via animation-delay) */
+.shape-pop {
+  animation: shape-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) backwards paused;
+}
+.seen .shape-pop {
+  animation-play-state: running;
+}
+@keyframes shape-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+/* elements moved by scroll-scrubbed tweens get their own GPU layer: moving them never repaints */
+.hero-letter-wrap,
+.hero-cone,
+.hero-mesh,
+.sig-bigtext,
+.sig-sub,
+.lab-card {
+  will-change: transform;
+}
+
+/* ─── scene: animated gradient backdrop + gliding sections ─────────────────── */
+.backdrop-layer {
+  will-change: opacity;
+}
+.backdrop-blob {
+  filter: blur(40px);
+  will-change: transform;
+  animation: backdrop-drift 26s ease-in-out infinite alternate;
+}
+.backdrop-blob-2 {
+  animation-duration: 34s;
+  animation-direction: alternate-reverse;
+}
+@keyframes backdrop-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(12vw, 8vh, 0) scale(1.15); }
+  100% { transform: translate3d(-6vw, 14vh, 0) scale(0.95); }
+}
+.grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+}
+@media (prefers-reduced-motion: reduce) {
+  .backdrop-blob { animation: none; }
+}
+#build {
+  --stack-h: 30svh;
+}
+@media (min-width: 768px) {
+  #build {
+    --stack-h: 62svh;
+  }
+}
+
+::selection {
+  background: var(--pink);
+  color: var(--chocolate);
+}
+/* admin → QR recensioni: print only the cards */
+@media print {
+  body * { visibility: hidden; }
+  .print-card, .print-card * { visibility: visible; }
+  .print-card { position: absolute; inset: 0; margin: 0; }
 }

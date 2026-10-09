@@ -1,0 +1,105 @@
+{
+  "ui": {
+    "openNow": "Jetzt geöffnet",
+    "closed": "Geschlossen",
+    "soldOut": "Ausverkauft!",
+    "showAtCounter": "An der Theke zeigen",
+    "call": "Anrufen",
+    "navigate": "Route",
+    "language": "Sprache",
+    "skipToContent": "Zum Inhalt springen",
+    "filters": {
+      "all": "Alle",
+      "vegan": "Vegan",
+      "gluten_free": "Glutenfrei",
+      "lactose_free": "Laktosefrei",
+      "new": "Neu",
+      "signature": "Signature"
+    },
+    "weekdays": [
+      "Montag",
+      "Dienstag",
+      "Mittwoch",
+      "Donnerstag",
+      "Freitag",
+      "Samstag",
+      "Sonntag"
+    ],
+    "credit": "Design & Entwicklung",
+    "groups": {
+      "coni": "Waffeln",
+      "coppette": "Becher",
+      "vaschette": "Packungen",
+      "extra": "Extras"
+    },
+    "builder": {
+      "size": "Größe",
+      "flavors": "Sorten antippen",
+      "hint": "Kugel antippen, um sie zu entfernen.",
+      "scoops": "Kugeln"
+    },
+    "close": "Schließen",
+    "readReviews": "Bewertungen lesen",
+    "badgeNew": "Neu",
+    "badgeSignature": "Signature-Sorte",
+    "badgeFeatured": "Empfehlung",
+    "ingredients": "Zutaten",
+    "reviewsCount": "{count} Bewertungen",
+    "today": "Heute",
+    "scroll": "Scrollen",
+    "details": "Details",
+    "flavorsCount": "{count} Sorten heute",
+    "sizes": {
+      "piccolo": "Klein",
+      "medio": "Mittel",
+      "grande": "Groß"
+    },
+    "nFlavors": "{n} Sorten",
+    "coneOrCup": "Waffel oder Becher, gleicher Preis",
+    "untilTime": "bis {time}",
+    "opensAt": "öffnet um {time}",
+    "opensTomorrow": "öffnet morgen",
+    "tapToTaste": "Tippe eine Sorte an und sieh, woraus sie ist",
+    "whatsInside": "Was drin ist",
+    "cone": "Waffel",
+    "cup": "Becher",
+    "reset": "Neu anfangen",
+    "pickUpTo": "Wähle bis zu {n} Sorten",
+    "services": {
+      "dineIn": "Vor Ort",
+      "takeaway": "Zum Mitnehmen",
+      "delivery": "Lieferung"
+    },
+    "soundOn": "Musik und Töne an",
+    "soundOff": "Musik und Töne aus",
+    "comments": {
+      "cta": "Hinterlass einen leckeren Kommentar",
+      "title": "Dein leckerer Kommentar",
+      "name": "Dein Name",
+      "message": "Was hat dir geschmeckt?",
+      "favorite": "Deine Lieblingssorte",
+      "sticker": "Wähle einen Sticker",
+      "send": "Senden",
+      "thanks": "Danke! Dein Kommentar erscheint, sobald wir ihn probiert haben.",
+      "empty": "Noch keine Kommentare: schreib den ersten!",
+      "error": "Hoppla, das hat nicht geklappt. Versuch es gleich nochmal.",
+      "wall": "Leckere Kommentare",
+      "rate": "Wie war dein Eis?",
+      "googleAsk": "Schön! Sagst du es auch auf Google?",
+      "googleCta": "Google-Bewertung schreiben",
+      "orNote": "oder hinterlass hier eine Notiz",
+      "privateTitle": "Sag uns, was wir besser machen können",
+      "privateHint": "Nur der Inhaber liest es – es wird nicht veröffentlicht.",
+      "googleAnyway": "Lieber auf Google? Hier geht's lang",
+      "changeRating": "Bewertung ändern",
+      "thanksPrivate": "Danke für deine Ehrlichkeit – der Inhaber liest es persönlich.",
+      "messageLow": "Was hat dir nicht gefallen?"
+    },
+    "categories": {
+      "crema": "Cremig",
+      "frutta": "Frucht",
+      "speciali": "Spezial",
+      "sorbetti": "Sorbets"
+    }
+  }
+}

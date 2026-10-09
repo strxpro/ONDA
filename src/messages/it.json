@@ -1,0 +1,105 @@
+{
+  "ui": {
+    "openNow": "Aperto ora",
+    "closed": "Chiuso",
+    "soldOut": "Finito!",
+    "showAtCounter": "Mostralo al banco",
+    "call": "Chiama",
+    "navigate": "Indicazioni",
+    "language": "Lingua",
+    "skipToContent": "Vai al contenuto",
+    "filters": {
+      "all": "Tutti",
+      "vegan": "Vegano",
+      "gluten_free": "Senza glutine",
+      "lactose_free": "Senza lattosio",
+      "new": "Novità",
+      "signature": "Firma"
+    },
+    "weekdays": [
+      "Lunedì",
+      "Martedì",
+      "Mercoledì",
+      "Giovedì",
+      "Venerdì",
+      "Sabato",
+      "Domenica"
+    ],
+    "credit": "Design & development",
+    "groups": {
+      "coni": "Coni",
+      "coppette": "Coppette",
+      "vaschette": "Vaschette",
+      "extra": "Extra"
+    },
+    "builder": {
+      "size": "Misura",
+      "flavors": "Tocca i gusti",
+      "hint": "Tocca una pallina per toglierla.",
+      "scoops": "palline"
+    },
+    "close": "Chiudi",
+    "readReviews": "Leggi le recensioni",
+    "badgeNew": "Novità",
+    "badgeSignature": "Il gusto firma",
+    "badgeFeatured": "In evidenza",
+    "ingredients": "Ingredienti",
+    "reviewsCount": "{count} recensioni",
+    "today": "Oggi",
+    "scroll": "Scorri",
+    "details": "Dettagli",
+    "flavorsCount": "{count} gusti oggi",
+    "sizes": {
+      "piccolo": "Piccolo",
+      "medio": "Medio",
+      "grande": "Grande"
+    },
+    "nFlavors": "{n} gusti",
+    "coneOrCup": "cono o coppetta, stesso prezzo",
+    "untilTime": "fino alle {time}",
+    "opensAt": "riapre alle {time}",
+    "opensTomorrow": "riapre domani",
+    "tapToTaste": "Tocca un gusto: vedi di cosa è fatto",
+    "whatsInside": "Di cosa è fatto",
+    "cone": "Cono",
+    "cup": "Coppetta",
+    "reset": "Ricomincia",
+    "pickUpTo": "Scegli fino a {n} gusti",
+    "services": {
+      "dineIn": "Consumazione sul posto",
+      "takeaway": "Da asporto",
+      "delivery": "Consegna"
+    },
+    "soundOn": "Attiva musica e suoni",
+    "soundOff": "Spegni musica e suoni",
+    "comments": {
+      "cta": "Lascia un commento goloso",
+      "title": "Il tuo commento goloso",
+      "name": "Il tuo nome",
+      "message": "Cosa ti è piaciuto?",
+      "favorite": "Il tuo gusto preferito",
+      "sticker": "Scegli un adesivo",
+      "send": "Invia",
+      "thanks": "Grazie! Il tuo commento apparirà dopo che lo avremo assaggiato.",
+      "empty": "Ancora nessun commento: scrivi il primo!",
+      "error": "Ops, non è partito. Riprova tra poco.",
+      "wall": "Commenti golosi",
+      "rate": "Com'era il tuo gelato?",
+      "googleAsk": "Che bello! Ti va di dirlo anche su Google?",
+      "googleCta": "Scrivi la recensione su Google",
+      "orNote": "oppure lascia un biglietto qui",
+      "privateTitle": "Dicci cosa possiamo migliorare",
+      "privateHint": "Lo legge solo il titolare: non viene pubblicato.",
+      "googleAnyway": "Preferisci scrivere su Google? Puoi farlo qui",
+      "changeRating": "Cambia voto",
+      "thanksPrivate": "Grazie per la sincerità: il titolare lo leggerà di persona.",
+      "messageLow": "Cosa non ti è piaciuto?"
+    },
+    "categories": {
+      "crema": "Creme",
+      "frutta": "Frutta",
+      "speciali": "Speciali",
+      "sorbetti": "Sorbetti"
+    }
+  }
+}

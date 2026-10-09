@@ -1,0 +1,105 @@
+{
+  "ui": {
+    "openNow": "Abierto ahora",
+    "closed": "Cerrado",
+    "soldOut": "¡Agotado!",
+    "showAtCounter": "Enséñalo en el mostrador",
+    "call": "Llamar",
+    "navigate": "Cómo llegar",
+    "language": "Idioma",
+    "skipToContent": "Ir al contenido",
+    "filters": {
+      "all": "Todos",
+      "vegan": "Vegano",
+      "gluten_free": "Sin gluten",
+      "lactose_free": "Sin lactosa",
+      "new": "Novedad",
+      "signature": "De la casa"
+    },
+    "weekdays": [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+      "Domingo"
+    ],
+    "credit": "Diseño y desarrollo",
+    "groups": {
+      "coni": "Cucuruchos",
+      "coppette": "Tarrinas",
+      "vaschette": "Envases",
+      "extra": "Extras"
+    },
+    "builder": {
+      "size": "Tamaño",
+      "flavors": "Toca los sabores",
+      "hint": "Toca una bola para quitarla.",
+      "scoops": "bolas"
+    },
+    "close": "Cerrar",
+    "readReviews": "Leer las reseñas",
+    "badgeNew": "Novedad",
+    "badgeSignature": "Sabor de la casa",
+    "badgeFeatured": "Destacado",
+    "ingredients": "Ingredientes",
+    "reviewsCount": "{count} reseñas",
+    "today": "Hoy",
+    "scroll": "Desliza",
+    "details": "Detalles",
+    "flavorsCount": "{count} sabores hoy",
+    "sizes": {
+      "piccolo": "Pequeño",
+      "medio": "Mediano",
+      "grande": "Grande"
+    },
+    "nFlavors": "{n} sabores",
+    "coneOrCup": "cucurucho o tarrina, mismo precio",
+    "untilTime": "hasta las {time}",
+    "opensAt": "abre a las {time}",
+    "opensTomorrow": "abre mañana",
+    "tapToTaste": "Toca un sabor para ver de qué está hecho",
+    "whatsInside": "De qué está hecho",
+    "cone": "Cucurucho",
+    "cup": "Tarrina",
+    "reset": "Empezar de nuevo",
+    "pickUpTo": "Elige hasta {n} sabores",
+    "services": {
+      "dineIn": "Para tomar aquí",
+      "takeaway": "Para llevar",
+      "delivery": "A domicilio"
+    },
+    "soundOn": "Activar música y sonidos",
+    "soundOff": "Apagar música y sonidos",
+    "comments": {
+      "cta": "Deja un comentario sabroso",
+      "title": "Tu comentario sabroso",
+      "name": "Tu nombre",
+      "message": "¿Qué te ha gustado?",
+      "favorite": "Tu sabor favorito",
+      "sticker": "Elige una pegatina",
+      "send": "Enviar",
+      "thanks": "¡Gracias! Tu comentario aparecerá cuando lo hayamos probado.",
+      "empty": "Aún no hay comentarios: ¡escribe el primero!",
+      "error": "Vaya, no se ha enviado. Inténtalo de nuevo.",
+      "wall": "Comentarios sabrosos",
+      "rate": "¿Qué tal tu helado?",
+      "googleAsk": "¡Qué bien! ¿Nos lo dices también en Google?",
+      "googleCta": "Escribe una reseña en Google",
+      "orNote": "o deja una nota aquí",
+      "privateTitle": "Dinos qué podemos mejorar",
+      "privateHint": "Solo lo lee el dueño: no se publica.",
+      "googleAnyway": "¿Prefieres Google? Puedes reseñarnos allí",
+      "changeRating": "Cambiar voto",
+      "thanksPrivate": "Gracias por tu sinceridad: el dueño lo leerá personalmente.",
+      "messageLow": "¿Qué no te gustó?"
+    },
+    "categories": {
+      "crema": "Cremas",
+      "frutta": "Frutas",
+      "speciali": "Especiales",
+      "sorbetti": "Sorbetes"
+    }
+  }
+}
