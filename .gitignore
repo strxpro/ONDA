@@ -50,3 +50,5 @@ public/uploads/
 /.claude/*
 !/.claude/launch.json
 /supabase/all-in-one.sql
+
+.vercel
