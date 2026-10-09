@@ -36,18 +36,19 @@ export function Reviews() {
   return (
     <section id="reviews" className="relative flex min-h-svh flex-col justify-center pt-40 pb-24">
       <Melt />
-      <div className="relative mx-auto grid w-full max-w-6xl items-center gap-10 px-(--gutter) lg:grid-cols-[0.9fr_1.1fr]">
-        <div>
-          <Title color="#FFAA5C">{t(s.texts.reviews_title, locale)}</Title>
+      <div className="relative mx-auto w-full max-w-6xl px-(--gutter)">
+        {/* the title on one line, the seals and the comments under it */}
+        <Title color="#FFAA5C">{t(s.texts.reviews_title, locale)}</Title>
+        <div className="mt-8 grid items-start gap-10 sm:mt-10 lg:grid-cols-[0.8fr_1.2fr]">
           {ratings.length > 0 && (
-            <div className="mt-8 flex justify-center gap-3 sm:mt-10 sm:gap-6 lg:justify-start">
+            <div className="flex justify-center gap-3 sm:gap-6 lg:justify-start">
               {ratings.map((r, i) => (
                 <Seal key={r.key} rating={r} index={i} />
               ))}
             </div>
           )}
+          <CommentsWall />
         </div>
-        <CommentsWall />
       </div>
       {reviews.length > 0 && <ReviewRiver reviews={reviews} />}
     </section>
@@ -181,14 +182,15 @@ const DRIPS = (() => {
 function Melt() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,#FFD3E2_0%,#FFC0D4_45%,#FFD9C2_100%)] [mask-image:linear-gradient(to_bottom,transparent_0,#000_320px)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#FFD3E2_0%,#FFC0D4_45%,#FFD9C2_100%)] [mask-image:linear-gradient(to_bottom,transparent_0,rgba(0,0,0,0.6)_160px,#000_380px)]" />
       <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_60%,rgba(255,255,255,0.55),transparent_70%),radial-gradient(50%_40%_at_85%_80%,rgba(255,244,189,0.6),transparent_70%)]" />
-      <svg viewBox="0 0 1000 300" preserveAspectRatio="none" className="melt-drips absolute inset-x-0 top-0 h-[clamp(180px,22vw,300px)] w-full">
+      <svg viewBox="0 0 1000 300" preserveAspectRatio="xMidYMin slice" className="melt-drips absolute inset-x-0 top-0 h-[clamp(200px,24vw,320px)] w-full">
         <defs>
           <linearGradient id="melt-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#FFB3CB" stopOpacity="0" />
-            <stop offset="0.25" stopColor="#FFB3CB" stopOpacity="0.85" />
-            <stop offset="1" stopColor="#FFA9C4" />
+            <stop offset="0" stopColor="#FFC4D6" stopOpacity="0" />
+            <stop offset="0.22" stopColor="#FFC4D6" stopOpacity="0.35" />
+            <stop offset="0.6" stopColor="#FFB6CC" stopOpacity="0.9" />
+            <stop offset="1" stopColor="#FFB0C8" />
           </linearGradient>
         </defs>
         <path d={DRIPS} fill="url(#melt-fill)" />

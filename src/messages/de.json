@@ -139,7 +139,8 @@
       "perKg": "pro Kilo",
       "custom": "Nach Gewicht",
       "weight": "Gewicht",
-      "perKgNote": "in 50-g-Schritten"
+      "perKgNote": "in 50-g-Schritten",
+      "popular": "am beliebtesten"
     },
     "map": {
       "load": "Karte anzeigen",
@@ -148,7 +149,12 @@
     },
     "priceBoard": {
       "cone": "Handgemachte Waffel",
-      "cup": "Becher"
+      "cup": "Becher",
+      "extras": "Extra:"
+    },
+    "treats": {
+      "discover": "Entdecken",
+      "madeWith": "Gemacht aus"
     }
   }
 }

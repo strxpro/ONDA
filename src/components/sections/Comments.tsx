@@ -212,22 +212,15 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
                     <>
                       <div>
                         <p className="font-script text-xl text-chocolate/70">{ui("favorite")}</p>
-                        <div className="mt-1 flex flex-wrap gap-2">
-                          {data.flavors.map((f) => {
-                            const photo = scoopPhoto(f);
+                        <div className="mt-2 grid grid-cols-5 gap-x-1.5 gap-y-3">
+                          {data.flavors.filter((f) => f.is_available_today).map((f) => {
                             const on = flavor === f.slug;
                             return (
-                              <motion.button
-                                key={f.id}
-                                type="button"
-                                whileTap={{ scale: 0.85 }}
-                                onClick={() => (sfx.pop(), setFlavor(on ? null : f.slug))}
-                                aria-pressed={on}
-                                title={t(f.name, locale)}
-                                className={`grid size-14 place-items-center rounded-full p-1.5 transition-transform ${on ? "scale-110 ring-4 ring-chocolate" : ""}`}
-                                style={{ background: lighten(f.color_primary, 0.4) }}
-                              >
-                                {photo ? <ScoopImg src={thumb(photo)!} /> : <span className="size-6 rounded-full" style={{ background: f.color_primary }} />}
+                              <motion.button key={f.id} type="button" whileTap={{ scale: 0.88 }} onClick={() => (sfx.pop(), setFlavor(on ? null : f.slug))} aria-pressed={on} className="flex flex-col items-center gap-1">
+                                <span className={`grid aspect-square w-full place-items-center rounded-full p-1.5 transition-transform duration-300 ${on ? "scale-105 ring-[3px] ring-chocolate" : ""}`} style={{ background: lighten(f.color_primary, 0.4) }}>
+                                  <ScoopImg src={thumb(scoopPhoto(f))!} />
+                                </span>
+                                <span className={`max-w-full truncate rounded-full px-1.5 py-0.5 text-[10px] leading-tight font-bold sm:text-xs ${on ? "bg-chocolate text-cream" : "bg-white text-chocolate/80"}`}>{t(f.name, locale)}</span>
                               </motion.button>
                             );
                           })}

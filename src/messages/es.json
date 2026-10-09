@@ -139,7 +139,8 @@
       "perKg": "el kilo",
       "custom": "A medida",
       "weight": "Peso",
-      "perKgNote": "de 50 en 50 g"
+      "perKgNote": "de 50 en 50 g",
+      "popular": "la más elegida"
     },
     "map": {
       "load": "Mostrar el mapa",
@@ -148,7 +149,12 @@
     },
     "priceBoard": {
       "cone": "Cucurucho artesanal",
-      "cup": "Tarrina"
+      "cup": "Tarrina",
+      "extras": "Añade:"
+    },
+    "treats": {
+      "discover": "Descubre",
+      "madeWith": "Hecho con"
     }
   }
 }

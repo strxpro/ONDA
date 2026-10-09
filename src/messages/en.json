@@ -139,7 +139,8 @@
       "perKg": "per kilo",
       "custom": "Custom weight",
       "weight": "Weight",
-      "perKgNote": "in 50 g steps"
+      "perKgNote": "in 50 g steps",
+      "popular": "most chosen"
     },
     "map": {
       "load": "Show the map",
@@ -148,7 +149,12 @@
     },
     "priceBoard": {
       "cone": "Artisan waffle cone",
-      "cup": "Cup"
+      "cup": "Cup",
+      "extras": "Add:"
+    },
+    "treats": {
+      "discover": "Discover",
+      "madeWith": "Made with"
     }
   }
 }

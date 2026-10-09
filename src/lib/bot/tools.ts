@@ -88,11 +88,12 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
   },
   {
     name: "add_menu_item",
-    description: "Add something else the shop serves, shown in 'Altre delizie' (affogato, frappè, granita, crêpe…) or a take-away tub/extra. Translated automatically. Price 0 or missing = no price shown.",
+    description: "Add something else the shop serves, shown in 'Altre delizie' (affogato, frappè, granita, crêpe, cakes…) with a photo and a pop-up, or a take-away tub/extra. Translated automatically. Price 0 or missing = no price shown.",
     input_schema: obj(
       {
         name: s("item name"),
-        description: s("optional one short line"),
+        description: s("optional: one short, warm line about it"),
+        ingredients: s("optional comma-separated ingredients, e.g. 'gelato fior di latte, caffè espresso'"),
         price_eur: { type: "number" },
         group: { type: "string", enum: ["delizie", "vaschette", "extra"], description: "delizie = treats section (default)" },
         use_photo: usePhoto,
@@ -102,8 +103,8 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
   },
   {
     name: "update_menu_item",
-    description: "Change a menu item (treat, tub, extra): rename, new description, show/hide, new photo. For prices use update_price.",
-    input_schema: obj({ item: s("current item name"), new_name: s("optional"), description: s("optional"), visible: { type: "boolean" }, use_photo: usePhoto }, ["item"]),
+    description: "Change a menu item (treat, tub, extra): rename, new description, ingredients, show/hide, new photo. For prices use update_price.",
+    input_schema: obj({ item: s("current item name"), new_name: s("optional"), description: s("optional"), ingredients: s("optional comma-separated ingredients"), visible: { type: "boolean" }, use_photo: usePhoto }, ["item"]),
   },
   {
     name: "add_gallery_photo",
@@ -166,6 +167,12 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
   },
   { name: "undo_last", description: "Undo the most recent change to the website.", input_schema: obj({}) },
   {
+    name: "ask_for_photos",
+    description:
+      "The owner wants to add photo(s) but has not sent them yet (e.g. 'add photos to the gallery', 'I'll send you a photo of the new cake', 'change the photo of pistacchio'). Ask him to send them; every photo he sends next is used for this. many=true when he speaks of several photos.",
+    input_schema: obj({ instruction: s("what to do with each photo, in English, e.g. 'add to the gallery', 'photo of the flavor Mirto', 'photo of the treat Torta della nonna'"), many: { type: "boolean" }, reply: s("short message asking for the photo(s), in the owner's language") }, ["instruction", "reply"]),
+  },
+  {
     name: "ask_choice",
     description:
       "Ask the owner ONE short clarifying question with 2-6 button options, when the request is ambiguous. Use the owner's language. Set multi=true when several answers can apply at once (e.g. which flavors are finished). The owner can always type his own answer instead.",
@@ -187,8 +194,8 @@ export const TOOL_INPUT = {
   set_flavor_availability: z.object({ flavor: z.string().min(1), available: z.boolean() }),
   add_flavor: z.object({ name: z.string().min(1).max(60), description: z.string().max(300).optional(), ingredients: z.string().max(200).optional(), category: z.enum(FLAVOR_CATEGORIES).optional(), use_photo: z.boolean().optional(), color: hexOpt, tags, featured: z.boolean().optional() }),
   update_flavor: z.object({ flavor: z.string().min(1), new_name: z.string().max(60).optional(), description: z.string().max(300).optional(), ingredients: z.string().max(200).optional(), category: z.enum(FLAVOR_CATEGORIES).optional(), use_photo: z.boolean().optional(), color: hexOpt, tags, featured: z.boolean().optional() }),
-  add_menu_item: z.object({ name: z.string().min(1).max(60), description: z.string().max(200).optional(), price_eur: z.number().min(0).max(500).optional(), group: z.enum(["delizie", "vaschette", "extra"]).optional(), use_photo: z.boolean().optional() }),
-  update_menu_item: z.object({ item: z.string().min(1), new_name: z.string().max(60).optional(), description: z.string().max(200).optional(), visible: z.boolean().optional(), use_photo: z.boolean().optional() }),
+  add_menu_item: z.object({ name: z.string().min(1).max(60), description: z.string().max(200).optional(), ingredients: z.string().max(200).optional(), price_eur: z.number().min(0).max(500).optional(), group: z.enum(["delizie", "vaschette", "extra"]).optional(), use_photo: z.boolean().optional() }),
+  update_menu_item: z.object({ item: z.string().min(1), new_name: z.string().max(60).optional(), description: z.string().max(200).optional(), ingredients: z.string().max(200).optional(), visible: z.boolean().optional(), use_photo: z.boolean().optional() }),
   add_gallery_photo: z.object({ caption: z.string().max(200).optional() }),
   moderate_comment: z.object({ comment: z.string().min(1), approve: z.boolean() }),
   set_text: z.object({ key: z.enum(TEXT_KEYS), text: z.string().min(1).max(600) }),
@@ -213,6 +220,7 @@ export const TOOL_INPUT = {
   }),
   undo_last: z.object({}),
   restore_defaults: z.object({ parts: z.array(z.enum(["flavors", "prices", "hours", "texts", "sections", "motion"])).optional() }),
+  ask_for_photos: z.object({ instruction: z.string().min(2).max(200), many: z.boolean().optional(), reply: z.string().min(1).max(300) }),
   ask_choice: z.object({ question: z.string().min(1), options: z.array(z.string().min(1)).min(2).max(6), multi: z.boolean().optional() }),
 } as const;
 

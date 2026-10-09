@@ -139,7 +139,8 @@
       "perKg": "le kilo",
       "custom": "Sur mesure",
       "weight": "Poids",
-      "perKgNote": "par pas de 50 g"
+      "perKgNote": "par pas de 50 g",
+      "popular": "la plus choisie"
     },
     "map": {
       "load": "Afficher la carte",
@@ -148,7 +149,12 @@
     },
     "priceBoard": {
       "cone": "Cornet artisanal",
-      "cup": "Pot"
+      "cup": "Pot",
+      "extras": "Ajoute :"
+    },
+    "treats": {
+      "discover": "Découvrir",
+      "madeWith": "Fait avec"
     }
   }
 }

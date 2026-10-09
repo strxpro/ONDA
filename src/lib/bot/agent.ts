@@ -24,6 +24,8 @@ export type AgentResult = {
   lang: Lang;
   staged: Staged[];
   choice?: Choice;
+  /** he wants to add photos he has not sent yet: the next ones are for this */
+  awaitPhotos?: { instruction: string; many: boolean };
 };
 /** A photo the owner sent with the message, already uploaded. */
 export type Photo = { url: string; width: number; height: number };
@@ -414,6 +416,7 @@ export async function execute(s: Staged, actor: Actor) {
         {
           name: a.name as string,
           description: a.description as string | undefined,
+          ingredients: a.ingredients as string | undefined,
           price: a.price_eur as number | undefined,
           group: a.group as PriceItem["price_group"] | undefined,
           photo: (a.photo as Photo | undefined)?.url,
@@ -426,6 +429,7 @@ export async function execute(s: Staged, actor: Actor) {
         {
           name: a.new_name as string | undefined,
           description: a.description as string | undefined,
+          ingredients: a.ingredients as string | undefined,
           visible: a.visible as boolean | undefined,
           photo: (a.photo as Photo | undefined)?.url,
         },
@@ -491,6 +495,7 @@ export async function runAgent(userText: string, photo?: Photo): Promise<AgentRe
     if (!parsed?.success) return { result: `Invalid input: ${parsed?.error.message ?? "unknown tool"}`, error: true };
     const args = parsed.data as Record<string, unknown>;
     if (name === "ask_choice") return { done: { text: String(args.question), lang, staged: [], choice: args as Choice } };
+    if (name === "ask_for_photos") return { done: { text: String(args.reply), lang, staged: [], awaitPhotos: { instruction: String(args.instruction), many: Boolean(args.many) } } };
     if ((READ_TOOLS as readonly string[]).includes(name)) return { result: JSON.stringify(await runRead(name as (typeof READ_TOOLS)[number], args)) };
     const r = await stage(name, args, lang, photo);
     if ("choice" in r) return { done: { text: r.choice.question, lang, staged: [], choice: r.choice } };

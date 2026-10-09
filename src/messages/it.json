@@ -139,7 +139,8 @@
       "perKg": "al chilo",
       "custom": "Su misura",
       "weight": "Peso",
-      "perKgNote": "a passi di 50 g"
+      "perKgNote": "a passi di 50 g",
+      "popular": "la più scelta"
     },
     "map": {
       "load": "Mostra la mappa",
@@ -148,7 +149,12 @@
     },
     "priceBoard": {
       "cone": "Cialda artigianale",
-      "cup": "Coppetta"
+      "cup": "Coppetta",
+      "extras": "Aggiungi:"
+    },
+    "treats": {
+      "discover": "Scopri",
+      "madeWith": "Fatto con"
     }
   }
 }

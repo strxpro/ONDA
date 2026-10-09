@@ -19,13 +19,20 @@ export const PHOTO = {
  * The photo for a flavor: its own uploaded cut-out, else the bundled one for its slug,
  * else the shared realistic scoop tinted to the flavor's color — so every flavor always has a real-looking scoop.
  */
-export function scoopPhoto(f: { slug: string; image_url?: string | null; color_primary?: string }) {
-  return f.image_url || PHOTO.scoops[f.slug] || `/api/scoop/${(f.color_primary ?? "#FFF3E2").replace("#", "")}`;
+export function scoopPhoto(f: { slug: string; image_url?: string | null; color_primary?: string; scoop_texture?: string }) {
+  return f.image_url || PHOTO.scoops[f.slug] || `/api/scoop/${(f.color_primary ?? "#FFF3E2").replace("#", "")}?b=${scoopShape(f.slug, f.scoop_texture)}`;
+}
+
+/** A shape for a flavor without a photo: picked from its texture, varied by its name — always the same for it. */
+function scoopShape(slug: string, texture?: string) {
+  const h = [...slug].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+  const pool = texture === "swirl" ? [4, 0] : texture === "chunks" ? [3, 5, 1] : [0, 1, 2];
+  return pool[h % pool.length];
 }
 
 /** Small (360 px) version of a scoop photo, for tiles and buttons: far cheaper to decode than the full one. */
 export const thumb = (src: string | null) =>
-  !src ? src : src.startsWith("/img/ice/") ? src.replace("/img/ice/", "/img/ice/sm/") : src.startsWith("/api/scoop/") ? `${src}?s=sm` : src;
+  !src ? src : src.startsWith("/img/ice/") ? src.replace("/img/ice/", "/img/ice/sm/") : src.startsWith("/api/scoop/") ? `${src}${src.includes("?") ? "&" : "?"}s=sm` : src;
 
 /**
  * Geometry for a photographed cone with `n` scoops, in units of the scoop width W.

@@ -393,6 +393,7 @@ function PriceStrip() {
     { key: "coppette" as const, label: ui("priceBoard.cup"), list: rows("coppette"), bg: ["#EFE9FF", "#FFE9DA", "#E4F3FF"] },
   ].filter((g) => g.list.length);
   const photos = [PHOTO.scoops.pistacchio, PHOTO.scoops.fragola, PHOTO.scoops["yellow-submarine"], PHOTO.scoops.cioccolato];
+  const extras = data.prices.filter((p) => p.is_active && p.price_group === "extra");
   if (!groups.length) return null;
   return (
     <div className="mt-8 space-y-5 sm:mt-10">
@@ -434,6 +435,24 @@ function PriceStrip() {
           </ul>
         </div>
       ))}
+      {extras.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+          <span className="font-script text-xl text-chocolate/70">{ui("priceBoard.extras")}</span>
+          {extras.map((x, i) => (
+            <motion.span
+              key={x.id}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", stiffness: 260, damping: 18, delay: i * 0.06 }}
+              className="flex items-center gap-2 rounded-full bg-white/90 py-1.5 pr-1.5 pl-4 font-bold shadow-soft"
+            >
+              + {t(x.label, locale)}
+              <RollingPrice value={x.price_eur} locale={locale} className="rounded-full bg-lemon px-3 py-0.5 font-display text-lg" />
+            </motion.span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -139,7 +139,8 @@
       "perKg": "za kilogram",
       "custom": "Na wagę",
       "weight": "Waga",
-      "perKgNote": "co 50 g"
+      "perKgNote": "co 50 g",
+      "popular": "najczęściej"
     },
     "map": {
       "load": "Pokaż mapę",
@@ -148,7 +149,12 @@
     },
     "priceBoard": {
       "cone": "Rzemieślniczy wafelek",
-      "cup": "Kubeczek"
+      "cup": "Kubeczek",
+      "extras": "Dodatki:"
+    },
+    "treats": {
+      "discover": "Zobacz",
+      "madeWith": "Z czego"
     }
   }
 }

@@ -85,7 +85,7 @@ function OrderForm({ onClose }: { onClose: () => void }) {
   useScrollLock();
   const { data, locale } = useSite();
   const ui = useTranslations("ui.order");
-  const items = data.prices.filter((p) => p.is_active && (p.price_group === "vaschette" || p.price_group === "delizie"));
+  const items = data.prices.filter((p) => p.is_active && p.price_group === "vaschette");
   const flavors = data.flavors.filter((f) => f.is_available_today);
   const [item, setItem] = useState(items[0]?.id ?? "");
   const [picked, setPicked] = useState<string[]>([]);
@@ -171,13 +171,22 @@ function OrderForm({ onClose }: { onClose: () => void }) {
             <h3 className="pr-10 font-display text-3xl font-bold">{ui("formTitle")}</h3>
             <div>
               <p className="font-script text-xl text-chocolate/70">{ui("what")}</p>
-              <div className="mt-1 flex flex-wrap gap-2">
-                {items.map((p) => (
-                  <button key={p.id} type="button" onClick={() => (sfx.pop(), setItem(p.id), setPicked((x) => x.slice(0, maxFlavors(gramsOf(t(p.label, "it"))))))} aria-pressed={item === p.id} className={`rounded-full px-4 py-2 text-sm font-bold transition-colors ${item === p.id ? "bg-chocolate text-cream" : "bg-white text-chocolate/80"}`}>
-                    {t(p.label, locale)}
-                    {p.price_eur > 0 && <span className="ml-1.5 opacity-70">{p.price_eur.toLocaleString(locale, { style: "currency", currency: "EUR" })}</span>}
-                  </button>
-                ))}
+              <div className="mt-3 flex flex-wrap gap-x-2 gap-y-4">
+                {items.map((p) => {
+                  const n = maxFlavors(gramsOf(t(p.label, "it")));
+                  const on = item === p.id;
+                  return (
+                    <button key={p.id} type="button" onClick={() => (sfx.pop(), setItem(p.id), setPicked((x) => x.slice(0, n)))} aria-pressed={on} className={`relative rounded-full px-4 py-2 text-sm font-bold transition-colors ${on ? "bg-chocolate text-cream" : "bg-white text-chocolate/80"}`}>
+                      {/* how many flavors fit: a scoop and the number, right above the price */}
+                      <span className={`absolute -top-3 right-3 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-black shadow-sm ${on ? "bg-lemon text-chocolate" : "bg-chocolate text-cream"}`}>
+                        <img src="/img/ice/sm/fragola.webp" alt="" className="size-4 object-contain" />
+                        {n}
+                      </span>
+                      {t(p.label, locale)}
+                      {p.price_eur > 0 && <span className="ml-1.5 opacity-70">{p.price_eur.toLocaleString(locale, { style: "currency", currency: "EUR" })}</span>}
+                    </button>
+                  );
+                })}
                 {perKg > 0 && (
                   <button type="button" onClick={() => (sfx.pop(), setItem(CUSTOM))} aria-pressed={isCustom} className={`rounded-full px-4 py-2 text-sm font-bold transition-colors ${isCustom ? "bg-chocolate text-cream" : "bg-white text-chocolate/80"}`}>
                     {ui("custom")}
@@ -231,8 +240,18 @@ function OrderForm({ onClose }: { onClose: () => void }) {
             <textarea name="notes" maxLength={400} rows={2} placeholder={ui("notes")} className={`${field} resize-none font-semibold`} />
             <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
             {state === "error" && <p className="font-bold text-cherry">{ui("error")}</p>}
-            <button type="submit" disabled={state === "sending" || !item} className="btn-candy w-full justify-center bg-lemon disabled:opacity-50">
-              <PaperPlaneTilt weight="duotone" className="size-6" /> {ui("send")}
+            <button type="submit" disabled={state === "sending" || !item} className="btn-candy w-full justify-center bg-lemon disabled:opacity-90">
+              {state === "sending" ? (
+                <span className="flex h-6 items-center gap-1.5" aria-label="…">
+                  {[0, 1, 2].map((i) => (
+                    <motion.span key={i} className="block size-2.5 rounded-full bg-chocolate" animate={{ y: [0, -8, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.12, ease: "easeInOut" }} />
+                  ))}
+                </span>
+              ) : (
+                <>
+                  <PaperPlaneTilt weight="duotone" className="size-6" /> {ui("send")}
+                </>
+              )}
             </button>
           </form>
         )}
@@ -242,12 +261,24 @@ function OrderForm({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * "Su misura": a weight slider in 50 g steps with a little bar ladder above it (like a price-range filter) —
- * the bars up to the chosen weight light up; the price per kilo comes from the tubs on the board.
+ * "Su misura": a weight slider in 50 g steps. Above it a small bar ladder like a price filter: each bar is how often
+ * people pre-order that weight (real orders, /api/reservations/stats) — the most chosen weight is the tallest.
+ * Until there are orders, the 1 kg tub (the classic) leads. The bars up to the chosen weight light up.
  */
 function WeightPicker({ grams, onChange, price, locale }: { grams: number; onChange: (g: number) => void; price: number; locale: string }) {
   const ui = useTranslations("ui.order");
   const steps = Array.from({ length: (MAX_G - MIN_G) / 250 + 1 }, (_, i) => MIN_G + i * 250);
+  const [counts, setCounts] = useState<number[] | null>(null);
+  useEffect(() => {
+    fetch("/api/reservations/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setCounts(d.buckets))
+      .catch(() => {});
+  }, []);
+  // a gentle prior around 1 kg gives the ladder a shape before the first orders; real orders quickly dominate
+  const score = steps.map((g, i) => (counts?.[i] ?? 0) * 3 + Math.exp(-(((g - 1000) / 600) ** 2)));
+  const top = Math.max(...score);
+  const best = score.indexOf(top);
   const pct = ((grams - MIN_G) / (MAX_G - MIN_G)) * 100;
   return (
     <div className="mt-3 rounded-3xl bg-white p-4 shadow-soft">
@@ -255,15 +286,11 @@ function WeightPicker({ grams, onChange, price, locale }: { grams: number; onCha
         <span className="font-display text-3xl font-bold tabular-nums">{grams >= 1000 ? `${(grams / 1000).toLocaleString(locale)} kg` : `${grams} g`}</span>
         <span className="font-display text-2xl font-bold tabular-nums">≈ {price.toLocaleString(locale, { style: "currency", currency: "EUR" })}</span>
       </div>
-      <div className="mt-3 flex h-16 items-end gap-[3px]" aria-hidden>
+      <div className="relative mt-5 flex h-9 items-end gap-[3px]" aria-hidden>
         {steps.map((g, i) => (
-          <motion.span
-            key={g}
-            className="flex-1 rounded-t-md"
-            animate={{ backgroundColor: g <= grams ? "#9B8CFF" : "#E7E1F7" }}
-            transition={{ duration: 0.25 }}
-            style={{ height: `${22 + (i / (steps.length - 1)) * 78}%` }}
-          />
+          <motion.span key={g} className="relative flex-1 rounded-t-[4px]" animate={{ backgroundColor: g <= grams ? "#9B8CFF" : "#E7E1F7" }} transition={{ duration: 0.25 }} style={{ height: `${18 + (score[i] / top) * 82}%` }}>
+            {i === best && <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-black whitespace-nowrap text-[#7a6be0]">★ {ui("popular")}</span>}
+          </motion.span>
         ))}
       </div>
       <div className="relative mt-2 h-8">

@@ -216,8 +216,8 @@ export async function setText(key: string, text: string, actor: Actor) {
 /* ─── menu items ("Altre delizie", tubs, extras) ──────────────────────────── */
 
 /** Add a menu item (e.g. a new treat), translated into the 6 languages. Price 0 = no price shown. */
-export async function addMenuItem(input: { name: string; description?: string; price?: number; group?: PriceItem["price_group"]; photo?: string }, actor: Actor) {
-  const tr = await translate({ name: input.name, ...(input.description ? { description: input.description } : {}) });
+export async function addMenuItem(input: { name: string; description?: string; ingredients?: string; price?: number; group?: PriceItem["price_group"]; photo?: string }, actor: Actor) {
+  const tr = await translate({ name: input.name, ...(input.description ? { description: input.description } : {}), ...(input.ingredients ? { ingredients: input.ingredients } : {}) });
   const all = await allPrices();
   let slug = slugify(input.name) || "voce";
   if (all.some((p) => p.slug === slug)) slug = `${slug}-${all.length + 1}`;
@@ -234,16 +234,18 @@ export async function addMenuItem(input: { name: string; description?: string; p
       is_active: true,
       image_url: input.photo ?? null,
       description: tr.description ?? null,
+      ...(tr.ingredients ? { ingredients: tr.ingredients } : {}),
     },
     ctx(actor, "add_menu_item"),
   );
 }
 
-export async function updateMenuItem(id: string, fields: { name?: string; description?: string; visible?: boolean; photo?: string }, actor: Actor) {
-  const tr = await translate({ ...(fields.name ? { name: fields.name } : {}), ...(fields.description ? { description: fields.description } : {}) });
+export async function updateMenuItem(id: string, fields: { name?: string; description?: string; ingredients?: string; visible?: boolean; photo?: string }, actor: Actor) {
+  const tr = await translate({ ...(fields.name ? { name: fields.name } : {}), ...(fields.description ? { description: fields.description } : {}), ...(fields.ingredients ? { ingredients: fields.ingredients } : {}) });
   const patch: Row = {};
   if (tr.name) patch.label = tr.name;
   if (tr.description) patch.description = tr.description;
+  if (tr.ingredients) patch.ingredients = tr.ingredients;
   if (fields.visible != null) patch.is_active = fields.visible;
   if (fields.photo) patch.image_url = fields.photo;
   return patchRow("price_items", id, patch, ctx(actor, "update_menu_item"));

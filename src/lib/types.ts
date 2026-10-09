@@ -51,6 +51,8 @@ export const PriceItem = z.object({
   /** "delizie" only: photo + one line shown in the treats section */
   image_url: z.string().nullable().default(null),
   description: I18nText.nullable().default(null),
+  /** "delizie": what it is made of, shown in its pop-up */
+  ingredients: I18nText.nullable().default(null),
 });
 export type PriceItem = z.infer<typeof PriceItem>;
 

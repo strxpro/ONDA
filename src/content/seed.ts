@@ -14,6 +14,14 @@ const id = (n: number) => `00000000-0000-4000-8000-${n.toString().padStart(12, "
 type L = { it: string; pl: string; en: string; es: string; de: string; fr: string };
 const all = (s: string): L => ({ it: s, pl: s, en: s, es: s, de: s, fr: s });
 
+/** What the treats are made of (shown in their pop-up). VERIFY with Mauro. */
+const TREAT_INGREDIENTS: Record<string, L> = {
+  affogato: { it: "Gelato fior di latte, caffè espresso", pl: "Lody fior di latte, kawa espresso", en: "Fior di latte gelato, espresso", es: "Helado de fior di latte, café espresso", de: "Fior-di-latte-Eis, Espresso", fr: "Glace fior di latte, expresso" },
+  frappe: { it: "Gelato a scelta, latte fresco", pl: "Lody do wyboru, świeże mleko", en: "Gelato of your choice, fresh milk", es: "Helado a elegir, leche fresca", de: "Eis nach Wahl, frische Milch", fr: "Glace au choix, lait frais" },
+  granita: { it: "Ghiaccio, frutta fresca, zucchero", pl: "Lód, świeże owoce, cukier", en: "Ice, fresh fruit, sugar", es: "Hielo, fruta fresca, azúcar", de: "Eis, frisches Obst, Zucker", fr: "Glace pilée, fruits frais, sucre" },
+  coppa: { it: "Tre gusti, panna montata, cialda", pl: "Trzy smaki, bita śmietana, wafelek", en: "Three flavours, whipped cream, wafer", es: "Tres sabores, nata montada, barquillo", de: "Drei Sorten, Schlagsahne, Waffel", fr: "Trois parfums, chantilly, gaufrette" },
+};
+
 export const seed: SiteData = {
   settings: {
     name: "Gelateria Onda",
@@ -528,15 +536,15 @@ export const seed: SiteData = {
 
   // VERIFY: every price below is a placeholder until Mauro confirms the menu board.
   prices: [
-    { id: id(201), slug: "cono-piccolo", label: { it: "Cono piccolo", pl: "Mały rożek", en: "Small cone", es: "Cucurucho pequeño", de: "Kleine Waffel", fr: "Petit cornet" }, price_group: "coni", size: "piccolo", max_scoops: 2, price_eur: 3.0, sort_order: 10, is_active: true, image_url: null, description: null },
-    { id: id(202), slug: "cono-medio", label: { it: "Cono medio", pl: "Średni rożek", en: "Medium cone", es: "Cucurucho mediano", de: "Mittlere Waffel", fr: "Cornet moyen" }, price_group: "coni", size: "medio", max_scoops: 3, price_eur: 3.5, sort_order: 20, is_active: true, image_url: null, description: null },
-    { id: id(203), slug: "cono-grande", label: { it: "Cono grande", pl: "Duży rożek", en: "Large cone", es: "Cucurucho grande", de: "Große Waffel", fr: "Grand cornet" }, price_group: "coni", size: "grande", max_scoops: 4, price_eur: 4.5, sort_order: 30, is_active: true, image_url: null, description: null },
-    { id: id(211), slug: "coppetta-piccola", label: { it: "Coppetta piccola", pl: "Mały kubek", en: "Small cup", es: "Tarrina pequeña", de: "Kleiner Becher", fr: "Petit pot" }, price_group: "coppette", size: "piccolo", max_scoops: 2, price_eur: 3.0, sort_order: 40, is_active: true, image_url: null, description: null },
-    { id: id(212), slug: "coppetta-media", label: { it: "Coppetta media", pl: "Średni kubek", en: "Medium cup", es: "Tarrina mediana", de: "Mittlerer Becher", fr: "Pot moyen" }, price_group: "coppette", size: "medio", max_scoops: 3, price_eur: 3.5, sort_order: 50, is_active: true, image_url: null, description: null },
-    { id: id(213), slug: "coppetta-grande", label: { it: "Coppetta grande", pl: "Duży kubek", en: "Large cup", es: "Tarrina grande", de: "Großer Becher", fr: "Grand pot" }, price_group: "coppette", size: "grande", max_scoops: 4, price_eur: 4.5, sort_order: 60, is_active: true, image_url: null, description: null },
-    { id: id(221), slug: "vaschetta-500", label: { it: "Vaschetta 500 g", pl: "Pudełko 500 g", en: "Tub 500 g", es: "Envase 500 g", de: "Becher 500 g", fr: "Bac 500 g" }, price_group: "vaschette", size: "500g", max_scoops: null, price_eur: 12.0, sort_order: 70, is_active: true, image_url: null, description: null },
-    { id: id(222), slug: "vaschetta-1000", label: { it: "Vaschetta 1 kg", pl: "Pudełko 1 kg", en: "Tub 1 kg", es: "Envase 1 kg", de: "Becher 1 kg", fr: "Bac 1 kg" }, price_group: "vaschette", size: "1kg", max_scoops: null, price_eur: 22.0, sort_order: 80, is_active: true, image_url: null, description: null },
-    { id: id(231), slug: "panna", label: { it: "Panna montata", pl: "Bita śmietana", en: "Whipped cream", es: "Nata montada", de: "Schlagsahne", fr: "Chantilly" }, price_group: "extra", size: null, max_scoops: null, price_eur: 0.5, sort_order: 90, is_active: true, image_url: null, description: null },
+    { id: id(201), slug: "cono-piccolo", label: { it: "Cono piccolo", pl: "Mały rożek", en: "Small cone", es: "Cucurucho pequeño", de: "Kleine Waffel", fr: "Petit cornet" }, price_group: "coni", size: "piccolo", max_scoops: 2, price_eur: 3.0, sort_order: 10, is_active: true, image_url: null, description: null, ingredients: null },
+    { id: id(202), slug: "cono-medio", label: { it: "Cono medio", pl: "Średni rożek", en: "Medium cone", es: "Cucurucho mediano", de: "Mittlere Waffel", fr: "Cornet moyen" }, price_group: "coni", size: "medio", max_scoops: 3, price_eur: 3.5, sort_order: 20, is_active: true, image_url: null, description: null, ingredients: null },
+    { id: id(203), slug: "cono-grande", label: { it: "Cono grande", pl: "Duży rożek", en: "Large cone", es: "Cucurucho grande", de: "Große Waffel", fr: "Grand cornet" }, price_group: "coni", size: "grande", max_scoops: 4, price_eur: 4.5, sort_order: 30, is_active: true, image_url: null, description: null, ingredients: null },
+    { id: id(211), slug: "coppetta-piccola", label: { it: "Coppetta piccola", pl: "Mały kubek", en: "Small cup", es: "Tarrina pequeña", de: "Kleiner Becher", fr: "Petit pot" }, price_group: "coppette", size: "piccolo", max_scoops: 2, price_eur: 3.0, sort_order: 40, is_active: true, image_url: null, description: null, ingredients: null },
+    { id: id(212), slug: "coppetta-media", label: { it: "Coppetta media", pl: "Średni kubek", en: "Medium cup", es: "Tarrina mediana", de: "Mittlerer Becher", fr: "Pot moyen" }, price_group: "coppette", size: "medio", max_scoops: 3, price_eur: 3.5, sort_order: 50, is_active: true, image_url: null, description: null, ingredients: null },
+    { id: id(213), slug: "coppetta-grande", label: { it: "Coppetta grande", pl: "Duży kubek", en: "Large cup", es: "Tarrina grande", de: "Großer Becher", fr: "Grand pot" }, price_group: "coppette", size: "grande", max_scoops: 4, price_eur: 4.5, sort_order: 60, is_active: true, image_url: null, description: null, ingredients: null },
+    { id: id(221), slug: "vaschetta-500", label: { it: "Vaschetta 500 g", pl: "Pudełko 500 g", en: "Tub 500 g", es: "Envase 500 g", de: "Becher 500 g", fr: "Bac 500 g" }, price_group: "vaschette", size: "500g", max_scoops: null, price_eur: 12.0, sort_order: 70, is_active: true, image_url: null, description: null, ingredients: null },
+    { id: id(222), slug: "vaschetta-1000", label: { it: "Vaschetta 1 kg", pl: "Pudełko 1 kg", en: "Tub 1 kg", es: "Envase 1 kg", de: "Becher 1 kg", fr: "Bac 1 kg" }, price_group: "vaschette", size: "1kg", max_scoops: null, price_eur: 22.0, sort_order: 80, is_active: true, image_url: null, description: null, ingredients: null },
+    { id: id(231), slug: "panna", label: { it: "Panna montata", pl: "Bita śmietana", en: "Whipped cream", es: "Nata montada", de: "Schlagsahne", fr: "Chantilly" }, price_group: "extra", size: null, max_scoops: null, price_eur: 0.5, sort_order: 90, is_active: true, image_url: null, description: null, ingredients: null },
     // "Altre delizie" - VERIFY the list and the prices with Mauro (price 0 = no price shown). Photos are Unsplash placeholders.
     ...(
       [
@@ -563,8 +571,9 @@ export const seed: SiteData = {
       price_eur: 0,
       sort_order: 100 + i * 10,
       is_active: true,
-      image_url: `https://images.unsplash.com/photo-${photo}?w=480&h=480&q=70&auto=format&fit=crop`,
+      image_url: `https://images.unsplash.com/photo-${photo}?w=900&h=900&q=72&auto=format&fit=crop`,
       description,
+      ingredients: TREAT_INGREDIENTS[slug] ?? null,
     })),
   ],
 

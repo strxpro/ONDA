@@ -56,6 +56,20 @@ async function handle(ctx: Context, text: string, photo?: Photo) {
   }
   const t = L[result.lang];
 
+  if (result.awaitPhotos) {
+    // the next photo(s) he sends are for this
+    await store().createPending({
+      telegram_user_id: ctx.from!.id,
+      chat_id: ctx.chat!.id,
+      tool: "await_photo",
+      args: { ...result.awaitPhotos, lang: result.lang },
+      summary: result.text,
+      expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
+    });
+    await ctx.reply(`📷 ${result.text}`);
+    return;
+  }
+
   if (result.choice) {
     const multi = Boolean(result.choice.multi);
     const p = await store().createPending({
@@ -130,7 +144,10 @@ export function getBot() {
         },
         "upload_photo",
       );
-      await handle(ctx, ctx.message.caption ?? "", saved);
+      // a photo without a caption, after he said he would send one: it is for that
+      const waiting = !ctx.message.caption ? await store().latestPending(ctx.from!.id, "await_photo") : null;
+      if (waiting && !waiting.args.many) await store().setPendingStatus(waiting.id, "confirmed");
+      await handle(ctx, waiting ? `${String(waiting.args.instruction)} (the photo he announced)` : (ctx.message.caption ?? ""), saved);
     } catch (e) {
       await ctx.reply(`${L.it.error} ${errText(e)}`);
     }
