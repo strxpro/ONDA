@@ -3,7 +3,6 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
 import { hasSupabase } from "./env";
 import { getServiceSupabase } from "./supabase/server";
 
@@ -14,6 +13,7 @@ import { getServiceSupabase } from "./supabase/server";
 export async function saveImage(input: ArrayBuffer | Buffer) {
   const buf = Buffer.isBuffer(input) ? input : Buffer.from(input);
   if (buf.byteLength > 15 * 1024 * 1024) throw new Error("File troppo grande (max 15 MB)");
+  const { default: sharp } = await import("sharp"); // lazy: text-only bot messages never load the image library
   const webp = await sharp(buf).rotate().resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true }).webp({ quality: 80 }).toBuffer({ resolveWithObject: true });
   const name = `${new Date().toISOString().slice(0, 10)}-${randomUUID().slice(0, 8)}.webp`;
   let url: string;
