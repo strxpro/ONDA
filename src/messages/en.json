@@ -94,7 +94,9 @@
       "googleAnyway": "Prefer Google? You can review us there",
       "changeRating": "Change rating",
       "thanksPrivate": "Thank you for being honest — the owner will read it personally.",
-      "messageLow": "What wasn't right?"
+      "messageLow": "What wasn't right?",
+      "copiedHint": "Your comment is already copied: on Google just tap «Paste» and post. Thank you!",
+      "pasteHint": "Copy your comment and paste it on Google — it helps us a lot!"
     },
     "categories": {
       "crema": "Creamy",
@@ -155,6 +157,72 @@
     "treats": {
       "discover": "Discover",
       "madeWith": "Made with"
+    },
+    "cake": {
+      "title": "Your gelato cake",
+      "order": "Order your cake",
+      "people": "people",
+      "priceNote": "we'll confirm the price",
+      "tabs": {
+        "build": "Build it",
+        "contact": "Contact us"
+      },
+      "steps": {
+        "shape": "Shape",
+        "base": "Base",
+        "flavors": "Flavors",
+        "coat": "Coating",
+        "decor": "Decorations",
+        "details": "Pick-up"
+      },
+      "stepTitles": {
+        "shape": "Which shape, for how many?",
+        "base": "On which base?",
+        "flavors": "Which gelato flavors?",
+        "coat": "How do we cover it?",
+        "decor": "And on top?",
+        "details": "A message and when you pick it up"
+      },
+      "shapes": {
+        "round": "Round",
+        "heart": "Heart",
+        "square": "Square"
+      },
+      "bases": {
+        "sponge": "Sponge cake",
+        "cocoa": "Cocoa biscuit",
+        "brownie": "Brownie",
+        "crumble": "Crumble"
+      },
+      "coats": {
+        "cream": "Whipped cream",
+        "chocolate": "Chocolate glaze",
+        "meringue": "Meringue",
+        "pink": "Pink glaze"
+      },
+      "decor": {
+        "berries": "Berries",
+        "strawberries": "Strawberries",
+        "chocolate": "Chocolate flakes",
+        "sprinkles": "Sprinkles",
+        "candles": "Candles",
+        "wafers": "Wafers"
+      },
+      "flavorsHint": "Up to 3 layers",
+      "writing": "Message",
+      "writingPh": "Message on the cake (e.g. Happy birthday Anna!)",
+      "name": "Your name",
+      "phone": "Phone",
+      "notes": "Allergies or requests (optional)",
+      "send": "Send the request",
+      "next": "Next",
+      "back": "Back",
+      "thanks": "Got it! We'll call you to confirm.",
+      "error": "Oops, it didn't go through. Check the details and try again.",
+      "contactIntro": "Rather talk? Call us, message us on WhatsApp or leave us a note.",
+      "writeUs": "Write to us",
+      "messagePh": "For when, for how many, which flavors…",
+      "waText": "Hi! I'd like to order a gelato cake."
     }
   }
 }

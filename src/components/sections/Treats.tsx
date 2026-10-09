@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { ArrowRight, X } from "@phosphor-icons/react";
+import { ArrowRight, Cake, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -14,6 +14,7 @@ import { t, type Locale, type PriceItem } from "@/lib/shared";
 import { useSite } from "../providers/SiteData";
 import { RollingPrice } from "../ui/RollingPrice";
 import { Title } from "../ui/Title";
+import { CAKE_PHOTOS, CakeOrder } from "./CakeOrder";
 import { OrderCard } from "./OrderCard";
 
 const COLORS = ["#FF8FB8", "#FFE066", "#6FE0C4", "#FFAA5C", "#9B8CFF", "#A8DB7A"];
@@ -56,6 +57,7 @@ export function Treats() {
   const ui = useTranslations("ui");
   const treats = data.prices.filter((p) => p.is_active && p.price_group === "delizie");
   const [open, setOpen] = useState<PriceItem | null>(null);
+  const [cakeOpen, setCakeOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -71,7 +73,8 @@ export function Treats() {
         </ul>
 
         <OrderCard />
-        {mounted && createPortal(<AnimatePresence>{open && <TreatCard key={open.id} item={open} index={treats.findIndex((x) => x.id === open.id)} locale={locale} onClose={() => setOpen(null)} />}</AnimatePresence>, document.body)}
+        {mounted && createPortal(<AnimatePresence>{open && <TreatCard key={open.id} item={open} index={treats.findIndex((x) => x.id === open.id)} locale={locale} onClose={() => setOpen(null)} onOrderCake={() => (setOpen(null), setCakeOpen(true))} />}
+            {cakeOpen && <CakeOrder key="cake" onClose={() => setCakeOpen(false)} />}</AnimatePresence>, document.body)}
         <p className="sr-only">{ui("coneOrCup")}</p>
       </div>
     </section>
@@ -134,9 +137,13 @@ function Splash({ item: p, index: i, locale, onOpen }: { item: PriceItem; index:
  * A treat's own card: the photo big on its paint splash (the splash grows into the card), its name, a short warm
  * line, what it is made of and the price. Everything here is editable by voice (update_menu_item).
  */
-function TreatCard({ item: p, index: i, locale, onClose }: { item: PriceItem; index: number; locale: Locale; onClose: () => void }) {
+function TreatCard({ item: p, index: i, locale, onClose, onOrderCake }: { item: PriceItem; index: number; locale: Locale; onClose: () => void; onOrderCake: () => void }) {
   useScrollLock();
   const ui = useTranslations("ui.treats");
+  const uiCake = useTranslations("ui.cake");
+  const isCake = /^tort/.test(p.slug);
+  const photos = isCake ? [...(p.image_url ? [p.image_url] : []), ...CAKE_PHOTOS.filter((x) => x !== p.image_url)] : p.image_url ? [p.image_url] : [];
+  const [shown, setShown] = useState(0);
   const color = COLORS[Math.max(0, i) % COLORS.length];
   const sp = splash(Math.max(0, i) * 11 + 3);
   const ingredients = t(p.ingredients ?? {}, locale)
@@ -169,8 +176,24 @@ function TreatCard({ item: p, index: i, locale, onClose }: { item: PriceItem; in
             ))}
           </motion.svg>
           <motion.div className="absolute inset-[10%] overflow-hidden rounded-full border-[6px] border-white shadow-[0_30px_50px_-24px_rgba(75,42,32,0.55)]" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 180, damping: 16, delay: 0.1 }}>
-            {p.image_url && <Image src={p.image_url} alt={t(p.label, locale)} fill sizes="340px" className="object-cover" />}
+            <AnimatePresence initial={false} mode="popLayout">
+              {photos[shown] && (
+                <motion.div key={photos[shown]} className="absolute inset-0" initial={{ opacity: 0, scale: 1.15 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+                  <Image src={photos[shown]} alt={t(p.label, locale)} fill sizes="340px" className="object-cover" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
+          {/* more photos: tap to see each one big */}
+          {photos.length > 1 && (
+            <div className="mt-3 flex justify-center gap-1.5">
+              {photos.slice(0, 6).map((src, k) => (
+                <button key={src} type="button" onClick={() => (sfx.pop(), setShown(k))} className={`relative size-11 overflow-hidden rounded-full border-2 transition-transform ${k === shown ? "scale-110 border-chocolate" : "border-white"}`} aria-label={`${k + 1}`}>
+                  <Image src={src} alt="" fill sizes="44px" className="object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="min-w-0 pr-6">
           <h3 className="font-display text-4xl leading-[1.02] sm:text-5xl">{t(p.label, locale)}</h3>
@@ -189,6 +212,11 @@ function TreatCard({ item: p, index: i, locale, onClose }: { item: PriceItem; in
             </>
           )}
           {p.price_eur > 0 && <RollingPrice value={p.price_eur} locale={locale} className="mt-5 block font-display text-5xl font-bold" />}
+          {isCake && (
+            <motion.button type="button" onClick={onOrderCake} whileHover={{ scale: 1.04, rotate: -1 }} whileTap={{ scale: 0.95 }} className="btn-candy mt-6 bg-[linear-gradient(110deg,#FF8FB8,#FFAA5C)]">
+              <Cake weight="duotone" className="size-6" /> {uiCake("order")}
+            </motion.button>
+          )}
         </div>
       </motion.div>
     </motion.div>

@@ -94,7 +94,9 @@
       "googleAnyway": "Lieber auf Google? Hier geht's lang",
       "changeRating": "Bewertung ändern",
       "thanksPrivate": "Danke für deine Ehrlichkeit – der Inhaber liest es persönlich.",
-      "messageLow": "Was hat dir nicht gefallen?"
+      "messageLow": "Was hat dir nicht gefallen?",
+      "copiedHint": "Dein Kommentar ist schon kopiert: bei Google einfach «Einfügen» und posten. Danke!",
+      "pasteHint": "Kopiere deinen Kommentar und füge ihn bei Google ein – das hilft uns sehr!"
     },
     "categories": {
       "crema": "Cremig",
@@ -155,6 +157,72 @@
     "treats": {
       "discover": "Entdecken",
       "madeWith": "Gemacht aus"
+    },
+    "cake": {
+      "title": "Deine Eistorte",
+      "order": "Torte bestellen",
+      "people": "Personen",
+      "priceNote": "den Preis bestätigen wir dir",
+      "tabs": {
+        "build": "Selbst gestalten",
+        "contact": "Kontakt"
+      },
+      "steps": {
+        "shape": "Form",
+        "base": "Boden",
+        "flavors": "Sorten",
+        "coat": "Überzug",
+        "decor": "Deko",
+        "details": "Abholung"
+      },
+      "stepTitles": {
+        "shape": "Welche Form, für wie viele?",
+        "base": "Auf welchem Boden?",
+        "flavors": "Welche Eissorten?",
+        "coat": "Womit überziehen wir sie?",
+        "decor": "Und obendrauf?",
+        "details": "Eine Aufschrift und wann du sie abholst"
+      },
+      "shapes": {
+        "round": "Rund",
+        "heart": "Herz",
+        "square": "Eckig"
+      },
+      "bases": {
+        "sponge": "Biskuit",
+        "cocoa": "Kakao-Keks",
+        "brownie": "Brownie",
+        "crumble": "Streusel"
+      },
+      "coats": {
+        "cream": "Sahne",
+        "chocolate": "Schokoglasur",
+        "meringue": "Baiser",
+        "pink": "Rosa Glasur"
+      },
+      "decor": {
+        "berries": "Waldbeeren",
+        "strawberries": "Erdbeeren",
+        "chocolate": "Schokoraspeln",
+        "sprinkles": "Bunte Streusel",
+        "candles": "Kerzen",
+        "wafers": "Waffeln"
+      },
+      "flavorsHint": "Bis zu 3 Schichten",
+      "writing": "Aufschrift",
+      "writingPh": "Aufschrift (z. B. Alles Gute Anna!)",
+      "name": "Dein Name",
+      "phone": "Telefon",
+      "notes": "Allergien oder Wünsche (optional)",
+      "send": "Anfrage senden",
+      "next": "Weiter",
+      "back": "Zurück",
+      "thanks": "Angekommen! Wir rufen dich zur Bestätigung an.",
+      "error": "Hoppla, das hat nicht geklappt. Bitte Angaben prüfen und erneut senden.",
+      "contactIntro": "Lieber reden? Ruf uns an, schreib uns per WhatsApp oder hinterlass eine Nachricht.",
+      "writeUs": "Schreib uns",
+      "messagePh": "Für wann, für wie viele, welche Sorten…",
+      "waText": "Hallo! Ich möchte eine Eistorte bestellen."
     }
   }
 }

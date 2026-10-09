@@ -94,7 +94,9 @@
       "googleAnyway": "Tu préfères Google ? Tu peux nous noter là-bas",
       "changeRating": "Changer la note",
       "thanksPrivate": "Merci pour ta franchise : le gérant le lira personnellement.",
-      "messageLow": "Qu'est-ce qui n'allait pas ?"
+      "messageLow": "Qu'est-ce qui n'allait pas ?",
+      "copiedHint": "Ton commentaire est déjà copié : sur Google, appuie sur «Coller» et publie. Merci !",
+      "pasteHint": "Copie ton commentaire et colle-le sur Google : ça nous aide beaucoup !"
     },
     "categories": {
       "crema": "Crèmes",
@@ -155,6 +157,72 @@
     "treats": {
       "discover": "Découvrir",
       "madeWith": "Fait avec"
+    },
+    "cake": {
+      "title": "Ton gâteau glacé",
+      "order": "Commander ton gâteau",
+      "people": "personnes",
+      "priceNote": "on te confirme le prix",
+      "tabs": {
+        "build": "Crée-le",
+        "contact": "Contacte-nous"
+      },
+      "steps": {
+        "shape": "Forme",
+        "base": "Base",
+        "flavors": "Parfums",
+        "coat": "Nappage",
+        "decor": "Décor",
+        "details": "Retrait"
+      },
+      "stepTitles": {
+        "shape": "Quelle forme, pour combien ?",
+        "base": "Sur quelle base ?",
+        "flavors": "Quels parfums de glace ?",
+        "coat": "Comment on le nappe ?",
+        "decor": "Et dessus ?",
+        "details": "Un message et quand tu le récupères"
+      },
+      "shapes": {
+        "round": "Rond",
+        "heart": "Cœur",
+        "square": "Carré"
+      },
+      "bases": {
+        "sponge": "Génoise",
+        "cocoa": "Biscuit cacao",
+        "brownie": "Brownie",
+        "crumble": "Crumble"
+      },
+      "coats": {
+        "cream": "Chantilly",
+        "chocolate": "Glaçage chocolat",
+        "meringue": "Meringue",
+        "pink": "Glaçage rose"
+      },
+      "decor": {
+        "berries": "Fruits rouges",
+        "strawberries": "Fraises",
+        "chocolate": "Copeaux de chocolat",
+        "sprinkles": "Vermicelles",
+        "candles": "Bougies",
+        "wafers": "Gaufrettes"
+      },
+      "flavorsHint": "Jusqu'à 3 couches",
+      "writing": "Message",
+      "writingPh": "Message sur le gâteau (ex. Joyeux anniversaire Anna !)",
+      "name": "Ton prénom",
+      "phone": "Téléphone",
+      "notes": "Allergies ou demandes (facultatif)",
+      "send": "Envoyer la demande",
+      "next": "Suivant",
+      "back": "Retour",
+      "thanks": "Reçue ! On t'appelle pour confirmer.",
+      "error": "Oups, l'envoi a échoué. Vérifie les infos et réessaie.",
+      "contactIntro": "Tu préfères en parler ? Appelle-nous, écris-nous sur WhatsApp ou laisse-nous un message.",
+      "writeUs": "Écris-nous",
+      "messagePh": "Pour quand, pour combien, quels parfums…",
+      "waText": "Bonjour ! Je voudrais commander un gâteau glacé."
     }
   }
 }

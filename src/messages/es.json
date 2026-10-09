@@ -94,7 +94,9 @@
       "googleAnyway": "¿Prefieres Google? Puedes reseñarnos allí",
       "changeRating": "Cambiar voto",
       "thanksPrivate": "Gracias por tu sinceridad: el dueño lo leerá personalmente.",
-      "messageLow": "¿Qué no te gustó?"
+      "messageLow": "¿Qué no te gustó?",
+      "copiedHint": "Tu comentario ya está copiado: en Google pulsa «Pegar» y publica. ¡Gracias!",
+      "pasteHint": "Copia tu comentario y pégalo en Google: ¡nos ayuda muchísimo!"
     },
     "categories": {
       "crema": "Cremas",
@@ -155,6 +157,72 @@
     "treats": {
       "discover": "Descubre",
       "madeWith": "Hecho con"
+    },
+    "cake": {
+      "title": "Tu tarta helada",
+      "order": "Encarga tu tarta",
+      "people": "personas",
+      "priceNote": "te confirmamos el precio",
+      "tabs": {
+        "build": "Créala tú",
+        "contact": "Contáctanos"
+      },
+      "steps": {
+        "shape": "Forma",
+        "base": "Base",
+        "flavors": "Sabores",
+        "coat": "Cobertura",
+        "decor": "Decoración",
+        "details": "Recogida"
+      },
+      "stepTitles": {
+        "shape": "¿Qué forma y para cuántos?",
+        "base": "¿Sobre qué base?",
+        "flavors": "¿Qué sabores de helado?",
+        "coat": "¿Cómo la cubrimos?",
+        "decor": "¿Y encima?",
+        "details": "Un mensaje y cuándo la recoges"
+      },
+      "shapes": {
+        "round": "Redonda",
+        "heart": "Corazón",
+        "square": "Cuadrada"
+      },
+      "bases": {
+        "sponge": "Bizcocho",
+        "cocoa": "Galleta de cacao",
+        "brownie": "Brownie",
+        "crumble": "Crumble"
+      },
+      "coats": {
+        "cream": "Nata",
+        "chocolate": "Glaseado de chocolate",
+        "meringue": "Merengue",
+        "pink": "Glaseado rosa"
+      },
+      "decor": {
+        "berries": "Frutos rojos",
+        "strawberries": "Fresas",
+        "chocolate": "Virutas de chocolate",
+        "sprinkles": "Fideos de colores",
+        "candles": "Velas",
+        "wafers": "Barquillos"
+      },
+      "flavorsHint": "Hasta 3 capas",
+      "writing": "Mensaje",
+      "writingPh": "Mensaje en la tarta (p. ej. ¡Feliz cumple Ana!)",
+      "name": "Tu nombre",
+      "phone": "Teléfono",
+      "notes": "Alergias o peticiones (opcional)",
+      "send": "Enviar la solicitud",
+      "next": "Siguiente",
+      "back": "Atrás",
+      "thanks": "¡Recibida! Te llamamos para confirmar.",
+      "error": "Vaya, no se ha enviado. Revisa los datos e inténtalo de nuevo.",
+      "contactIntro": "¿Prefieres hablarlo? Llámanos, escríbenos por WhatsApp o déjanos un mensaje.",
+      "writeUs": "Escríbenos",
+      "messagePh": "Para cuándo, para cuántos, qué sabores…",
+      "waText": "¡Hola! Quisiera encargar una tarta helada."
     }
   }
 }

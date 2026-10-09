@@ -19,6 +19,7 @@ const TREAT_INGREDIENTS: Record<string, L> = {
   affogato: { it: "Gelato fior di latte, caffè espresso", pl: "Lody fior di latte, kawa espresso", en: "Fior di latte gelato, espresso", es: "Helado de fior di latte, café espresso", de: "Fior-di-latte-Eis, Espresso", fr: "Glace fior di latte, expresso" },
   frappe: { it: "Gelato a scelta, latte fresco", pl: "Lody do wyboru, świeże mleko", en: "Gelato of your choice, fresh milk", es: "Helado a elegir, leche fresca", de: "Eis nach Wahl, frische Milch", fr: "Glace au choix, lait frais" },
   granita: { it: "Ghiaccio, frutta fresca, zucchero", pl: "Lód, świeże owoce, cukier", en: "Ice, fresh fruit, sugar", es: "Hielo, fruta fresca, azúcar", de: "Eis, frisches Obst, Zucker", fr: "Glace pilée, fruits frais, sucre" },
+  torte: { it: "Gelato artigianale, base a scelta, panna, decorazioni", pl: "Lody rzemieślnicze, spód do wyboru, śmietana, dekoracje", en: "Artisan gelato, base of your choice, cream, decorations", es: "Helado artesanal, base a elegir, nata, decoración", de: "Handgemachtes Eis, Boden nach Wahl, Sahne, Deko", fr: "Glace artisanale, base au choix, chantilly, décor" },
   coppa: { it: "Tre gusti, panna montata, cialda", pl: "Trzy smaki, bita śmietana, wafelek", en: "Three flavours, whipped cream, wafer", es: "Tres sabores, nata montada, barquillo", de: "Drei Sorten, Schlagsahne, Waffel", fr: "Trois parfums, chantilly, gaufrette" },
 };
 
@@ -560,6 +561,9 @@ export const seed: SiteData = {
         ["coppa", "1567357502214-dd13f3512e71",
           { it: "Coppa con panna", pl: "Puchar z bitą śmietaną", en: "Sundae", es: "Copa con nata", de: "Eisbecher mit Sahne", fr: "Coupe chantilly" },
           { it: "Tre gusti, panna montata e una cialda croccante.", pl: "Trzy smaki, bita śmietana i chrupiący wafelek.", en: "Three flavours, whipped cream and a crisp wafer.", es: "Tres sabores, nata montada y un barquillo.", de: "Drei Sorten, Schlagsahne und eine knusprige Waffel.", fr: "Trois parfums, chantilly et une gaufrette." }],
+        ["torte", "1621303837174-89787a7d4729",
+          { it: "Torte gelato", pl: "Torty lodowe", en: "Gelato cakes", es: "Tartas heladas", de: "Eistorten", fr: "Gâteaux glacés" },
+          { it: "Per le feste: la tua torta di gelato, con i tuoi gusti e la tua scritta.", pl: "Na święta i urodziny: Twój tort lodowy, z Twoimi smakami i napisem.", en: "For celebrations: your own gelato cake, your flavours, your message.", es: "Para celebrar: tu tarta de helado, con tus sabores y tu mensaje.", de: "Zum Feiern: deine Eistorte, mit deinen Sorten und deiner Aufschrift.", fr: "Pour les fêtes : ton gâteau glacé, tes parfums, ton message." }],
       ] as [string, string, L, L][]
     ).map(([slug, photo, label, description], i) => ({
       id: id(241 + i),

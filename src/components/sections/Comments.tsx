@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ChatCircleDots, GoogleLogo, Heart, LockSimple, PaperPlaneTilt, Smiley, Star, X } from "@phosphor-icons/react";
+import { ArrowLeft, ChatCircleDots, GoogleLogo, Heart, PaperPlaneTilt, Smiley, Star, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
@@ -76,7 +76,12 @@ function Note({ comment: c, index: i }: { comment: Comment; index: number }) {
       </span>
       <p className="line-clamp-4 text-sm leading-snug font-semibold sm:text-base">«{c.message}»</p>
       <p className="mt-2 flex items-center gap-1.5 font-script text-lg text-chocolate/70">
-        {photo && <span className="block h-6 w-7 shrink-0"><ScoopImg src={thumb(photo)!} /></span>}— {c.name}
+        {photo && (
+          <span className="block h-6 w-7 shrink-0">
+            <ScoopImg src={thumb(photo)!} />
+          </span>
+        )}
+        — {c.name}
       </p>
     </motion.li>
   );
@@ -112,20 +117,33 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
     }
   }, [open]);
 
+  const [copied, setCopied] = useState(false);
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
+    const message = String(f.get("message") ?? "");
+    // 4–5★: copy the text and open Google right now, inside the click (browsers block pop-ups opened later)
+    let tab: Window | null = null;
+    if (happy && googleUrl) {
+      navigator.clipboard?.writeText(message).then(
+        () => setCopied(true),
+        () => {},
+      );
+      tab = window.open("about:blank", "_blank");
+    }
     setState("sending");
     try {
       const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: f.get("name"), message: f.get("message"), website: f.get("website") || undefined, flavor_slug: happy ? flavor : null, sticker, rating, locale, elapsed: Date.now() - openedAt.current }),
+        body: JSON.stringify({ name: f.get("name"), message, website: f.get("website") || undefined, flavor_slug: flavor, sticker, rating, locale, elapsed: Date.now() - openedAt.current }),
       });
       if (!res.ok) throw new Error();
       sfx.sparkle();
       setState("done");
+      if (tab && googleUrl) tab.location.href = googleUrl;
     } catch {
+      tab?.close();
       setState("error");
     }
   };
@@ -134,7 +152,16 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
   return createPortal(
     <AnimatePresence>
       {open && (
-        <motion.div className="fixed inset-0 z-[95] grid place-items-center bg-chocolate/40 p-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} role="dialog" aria-modal="true" aria-label={ui("title")}>
+        <motion.div
+          className="fixed inset-0 z-[95] grid place-items-center bg-chocolate/40 p-4 backdrop-blur-md"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-label={ui("title")}
+        >
           <motion.div
             layout
             data-lenis-prevent
@@ -145,17 +172,37 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
             transition={{ type: "spring", stiffness: 260, damping: 22 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button type="button" onClick={onClose} aria-label={uiRoot("close")} className="absolute top-4 right-4 z-10 grid size-10 place-items-center rounded-full bg-white transition-transform hover:rotate-90">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={uiRoot("close")}
+              className="absolute top-4 right-4 z-10 grid size-10 place-items-center rounded-full bg-white transition-transform hover:rotate-90"
+            >
               <X weight="bold" className="size-5" />
             </button>
             <AnimatePresence mode="wait" initial={false}>
               {state === "done" ? (
                 <motion.div key="done" className="py-8 text-center" {...STEP}>
-                  <motion.div initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 260, damping: 10 }} className="mx-auto grid size-20 place-items-center rounded-full bg-pink text-white">
+                  <motion.div
+                    initial={{ scale: 0, rotate: -40 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 10 }}
+                    className="mx-auto grid size-20 place-items-center rounded-full bg-pink text-white"
+                  >
                     <Heart weight="fill" className="size-10" />
                   </motion.div>
                   <p className="mt-4 font-display text-2xl font-bold">{happy ? ui("thanks") : ui("thanksPrivate")}</p>
-                  {happy && googleUrl && <GoogleButton href={googleUrl} label={ui("googleCta")} className="mt-6" />}
+                  {happy && googleUrl && (
+                    <>
+                      <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-chocolate/75">{copied ? ui("copiedHint") : ui("pasteHint")}</p>
+                      <GoogleButton href={googleUrl} label={ui("googleCta")} className="mt-4" />
+                    </>
+                  )}
+                  {!happy && googleUrl && (
+                    <a href={googleUrl} target="_blank" rel="noopener" className="mt-5 inline-block text-sm font-semibold text-chocolate/55 underline underline-offset-4">
+                      {ui("googleAnyway")}
+                    </a>
+                  )}
                 </motion.div>
               ) : !rating ? (
                 <motion.div key="rate" className="py-6 text-center" {...STEP}>
@@ -190,40 +237,57 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
                       ))}
                     </span>
                   </button>
-                  {happy ? (
-                    <>
-                      <h3 className="pr-10 font-display text-3xl leading-tight font-bold">{ui("googleAsk")}</h3>
-                      {googleUrl && <GoogleButton href={googleUrl} label={ui("googleCta")} />}
-                      <p className="flex items-center gap-3 pt-1 font-script text-xl whitespace-nowrap text-chocolate/60 before:h-px before:flex-1 before:bg-chocolate/15 after:h-px after:flex-1 after:bg-chocolate/15">{ui("orNote")}</p>
-                    </>
-                  ) : (
-                    <>
-                      <h3 className="pr-10 font-display text-3xl leading-tight font-bold">{ui("privateTitle")}</h3>
-                      <p className="flex items-center gap-2 rounded-2xl bg-chocolate/5 px-4 py-3 text-sm font-semibold text-chocolate/70" data-private>
-                        <LockSimple weight="duotone" className="size-5 shrink-0" /> {ui("privateHint")}
-                      </p>
-                    </>
-                  )}
-                  <input name="name" required maxLength={40} placeholder={ui("name")} className="w-full rounded-2xl border-2 border-chocolate/10 bg-white px-4 py-3 font-bold outline-none focus:border-pink" />
-                  <textarea name="message" required minLength={2} maxLength={280} rows={3} placeholder={happy ? ui("message") : ui("messageLow")} className="w-full resize-none rounded-2xl border-2 border-chocolate/10 bg-white px-4 py-3 font-semibold outline-none focus:border-pink" />
+                  <h3 className="pr-10 font-display text-3xl leading-tight font-bold">{ui("title")}</h3>
+                  <input
+                    name="name"
+                    required
+                    maxLength={40}
+                    placeholder={ui("name")}
+                    className="w-full rounded-2xl border-2 border-chocolate/10 bg-white px-4 py-3 font-bold outline-none focus:border-pink"
+                  />
+                  <textarea
+                    name="message"
+                    required
+                    minLength={2}
+                    maxLength={280}
+                    rows={3}
+                    placeholder={ui("message")}
+                    className="w-full resize-none rounded-2xl border-2 border-chocolate/10 bg-white px-4 py-3 font-semibold outline-none focus:border-pink"
+                  />
                   {/* honeypot */}
                   <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
-                  {happy && (
+                  {
                     <>
                       <div>
                         <p className="font-script text-xl text-chocolate/70">{ui("favorite")}</p>
                         <div className="mt-2 grid grid-cols-5 gap-x-1.5 gap-y-3">
-                          {data.flavors.filter((f) => f.is_available_today).map((f) => {
-                            const on = flavor === f.slug;
-                            return (
-                              <motion.button key={f.id} type="button" whileTap={{ scale: 0.88 }} onClick={() => (sfx.pop(), setFlavor(on ? null : f.slug))} aria-pressed={on} className="flex flex-col items-center gap-1">
-                                <span className={`grid aspect-square w-full place-items-center rounded-full p-1.5 transition-transform duration-300 ${on ? "scale-105 ring-[3px] ring-chocolate" : ""}`} style={{ background: lighten(f.color_primary, 0.4) }}>
-                                  <ScoopImg src={thumb(scoopPhoto(f))!} />
-                                </span>
-                                <span className={`max-w-full truncate rounded-full px-1.5 py-0.5 text-[10px] leading-tight font-bold sm:text-xs ${on ? "bg-chocolate text-cream" : "bg-white text-chocolate/80"}`}>{t(f.name, locale)}</span>
-                              </motion.button>
-                            );
-                          })}
+                          {data.flavors
+                            .filter((f) => f.is_available_today)
+                            .map((f) => {
+                              const on = flavor === f.slug;
+                              return (
+                                <motion.button
+                                  key={f.id}
+                                  type="button"
+                                  whileTap={{ scale: 0.88 }}
+                                  onClick={() => (sfx.pop(), setFlavor(on ? null : f.slug))}
+                                  aria-pressed={on}
+                                  className="flex flex-col items-center gap-1"
+                                >
+                                  <span
+                                    className={`grid aspect-square w-full place-items-center rounded-full p-1.5 transition-transform duration-300 ${on ? "scale-105 ring-[3px] ring-chocolate" : ""}`}
+                                    style={{ background: lighten(f.color_primary, 0.4) }}
+                                  >
+                                    <ScoopImg src={thumb(scoopPhoto(f))!} />
+                                  </span>
+                                  <span
+                                    className={`max-w-full truncate rounded-full px-1.5 py-0.5 text-[10px] leading-tight font-bold sm:text-xs ${on ? "bg-chocolate text-cream" : "bg-white text-chocolate/80"}`}
+                                  >
+                                    {t(f.name, locale)}
+                                  </span>
+                                </motion.button>
+                              );
+                            })}
                         </div>
                       </div>
                       <div>
@@ -232,7 +296,15 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
                           {(Object.keys(STICKERS) as (keyof typeof STICKERS)[]).map((k) => {
                             const Icon = STICKERS[k];
                             return (
-                              <motion.button key={k} type="button" whileTap={{ scale: 0.8, rotate: 20 }} onClick={() => (sfx.pop(), setSticker(k))} aria-pressed={sticker === k} aria-label={k} className={`grid size-12 place-items-center rounded-full text-white shadow ${sticker === k ? "bg-cherry ring-4 ring-chocolate" : "bg-cherry/50"}`}>
+                              <motion.button
+                                key={k}
+                                type="button"
+                                whileTap={{ scale: 0.8, rotate: 20 }}
+                                onClick={() => (sfx.pop(), setSticker(k))}
+                                aria-pressed={sticker === k}
+                                aria-label={k}
+                                className={`grid size-12 place-items-center rounded-full text-white shadow ${sticker === k ? "bg-cherry ring-4 ring-chocolate" : "bg-cherry/50"}`}
+                              >
                                 <Icon weight="fill" className="size-6" />
                               </motion.button>
                             );
@@ -240,16 +312,11 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
                         </div>
                       </div>
                     </>
-                  )}
+                  }
                   {state === "error" && <p className="font-bold text-cherry">{ui("error")}</p>}
                   <button type="submit" disabled={state === "sending"} className="btn-candy w-full justify-center bg-lemon disabled:opacity-50">
                     <PaperPlaneTilt weight="duotone" className="size-6" /> {ui("send")}
                   </button>
-                  {!happy && googleUrl && (
-                    <a href={googleUrl} target="_blank" rel="noopener" className="block text-center text-sm font-semibold text-chocolate/55 underline underline-offset-4">
-                      {ui("googleAnyway")}
-                    </a>
-                  )}
                 </motion.form>
               )}
             </AnimatePresence>

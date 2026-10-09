@@ -94,7 +94,9 @@
       "googleAnyway": "Wolisz napisać na Google? Możesz tutaj",
       "changeRating": "Zmień ocenę",
       "thanksPrivate": "Dziękujemy za szczerość — właściciel przeczyta to osobiście.",
-      "messageLow": "Co nie smakowało?"
+      "messageLow": "Co nie smakowało?",
+      "copiedHint": "Twój komentarz jest już skopiowany: w Google kliknij «Wklej» i opublikuj. Dziękujemy!",
+      "pasteHint": "Skopiuj komentarz i wklej go w Google — bardzo nam to pomaga!"
     },
     "categories": {
       "crema": "Kremowe",
@@ -155,6 +157,72 @@
     "treats": {
       "discover": "Zobacz",
       "madeWith": "Z czego"
+    },
+    "cake": {
+      "title": "Twój tort lodowy",
+      "order": "Zamów tort",
+      "people": "osób",
+      "priceNote": "cenę potwierdzimy my",
+      "tabs": {
+        "build": "Stwórz sam",
+        "contact": "Kontakt"
+      },
+      "steps": {
+        "shape": "Kształt",
+        "base": "Spód",
+        "flavors": "Smaki",
+        "coat": "Polewa",
+        "decor": "Dekoracje",
+        "details": "Odbiór"
+      },
+      "stepTitles": {
+        "shape": "Jaki kształt i dla ilu osób?",
+        "base": "Na jakim spodzie?",
+        "flavors": "Jakie smaki lodów?",
+        "coat": "Czym go pokryjemy?",
+        "decor": "A na wierzch?",
+        "details": "Napis i kiedy odbierasz"
+      },
+      "shapes": {
+        "round": "Okrągły",
+        "heart": "Serce",
+        "square": "Kwadratowy"
+      },
+      "bases": {
+        "sponge": "Biszkopt",
+        "cocoa": "Kakaowy herbatnik",
+        "brownie": "Brownie",
+        "crumble": "Kruszonka"
+      },
+      "coats": {
+        "cream": "Bita śmietana",
+        "chocolate": "Polewa czekoladowa",
+        "meringue": "Beza",
+        "pink": "Różowa polewa"
+      },
+      "decor": {
+        "berries": "Owoce leśne",
+        "strawberries": "Truskawki",
+        "chocolate": "Wiórki czekoladowe",
+        "sprinkles": "Kolorowa posypka",
+        "candles": "Świeczki",
+        "wafers": "Wafelki"
+      },
+      "flavorsHint": "Do 3 warstw",
+      "writing": "Napis",
+      "writingPh": "Napis na torcie (np. Sto lat Ania!)",
+      "name": "Imię",
+      "phone": "Telefon",
+      "notes": "Alergie lub życzenia (opcjonalnie)",
+      "send": "Wyślij zamówienie",
+      "next": "Dalej",
+      "back": "Wstecz",
+      "thanks": "Mamy to! Zadzwonimy, żeby potwierdzić.",
+      "error": "Ups, nie wysłało się. Sprawdź dane i spróbuj ponownie.",
+      "contactIntro": "Wolisz porozmawiać? Zadzwoń, napisz na WhatsAppie albo zostaw wiadomość.",
+      "writeUs": "Napisz do nas",
+      "messagePh": "Na kiedy, dla ilu osób, jakie smaki…",
+      "waText": "Cześć! Chciałbym zamówić tort lodowy."
     }
   }
 }

@@ -94,7 +94,9 @@
       "googleAnyway": "Preferisci scrivere su Google? Puoi farlo qui",
       "changeRating": "Cambia voto",
       "thanksPrivate": "Grazie per la sincerità: il titolare lo leggerà di persona.",
-      "messageLow": "Cosa non ti è piaciuto?"
+      "messageLow": "Cosa non ti è piaciuto?",
+      "copiedHint": "Il tuo commento è già copiato: su Google premi «Incolla» e pubblica. Grazie di cuore!",
+      "pasteHint": "Copia il tuo commento e incollalo su Google: ci aiuta tantissimo!"
     },
     "categories": {
       "crema": "Creme",
@@ -155,6 +157,72 @@
     "treats": {
       "discover": "Scopri",
       "madeWith": "Fatto con"
+    },
+    "cake": {
+      "title": "La tua torta gelato",
+      "order": "Ordina la tua torta",
+      "people": "persone",
+      "priceNote": "il prezzo te lo confermiamo noi",
+      "tabs": {
+        "build": "Creala tu",
+        "contact": "Contattaci"
+      },
+      "steps": {
+        "shape": "Forma",
+        "base": "Base",
+        "flavors": "Gusti",
+        "coat": "Copertura",
+        "decor": "Decorazioni",
+        "details": "Ritiro"
+      },
+      "stepTitles": {
+        "shape": "Che forma e per quanti?",
+        "base": "Su che base?",
+        "flavors": "Quali gusti di gelato?",
+        "coat": "Come la copriamo?",
+        "decor": "E sopra?",
+        "details": "Una scritta e quando la ritiri"
+      },
+      "shapes": {
+        "round": "Rotonda",
+        "heart": "Cuore",
+        "square": "Quadrata"
+      },
+      "bases": {
+        "sponge": "Pan di Spagna",
+        "cocoa": "Biscotto al cacao",
+        "brownie": "Brownie",
+        "crumble": "Crumble"
+      },
+      "coats": {
+        "cream": "Panna",
+        "chocolate": "Glassa al cioccolato",
+        "meringue": "Meringa",
+        "pink": "Glassa rosa"
+      },
+      "decor": {
+        "berries": "Frutti di bosco",
+        "strawberries": "Fragole",
+        "chocolate": "Scaglie di cioccolato",
+        "sprinkles": "Codette colorate",
+        "candles": "Candeline",
+        "wafers": "Cialde"
+      },
+      "flavorsHint": "Fino a 3 strati",
+      "writing": "Scritta",
+      "writingPh": "Scritta sulla torta (es. Auguri Anna!)",
+      "name": "Il tuo nome",
+      "phone": "Telefono",
+      "notes": "Allergie o richieste (facoltativo)",
+      "send": "Invia la richiesta",
+      "next": "Avanti",
+      "back": "Indietro",
+      "thanks": "Ricevuta! Ti chiamiamo per confermare.",
+      "error": "Ops, non è partita. Controlla i dati e riprova.",
+      "contactIntro": "Preferisci parlarne? Chiamaci, scrivici su WhatsApp o lasciaci un messaggio.",
+      "writeUs": "Scrivici",
+      "messagePh": "Per quando, per quanti, che gusti…",
+      "waText": "Ciao! Vorrei ordinare una torta gelato."
     }
   }
 }
