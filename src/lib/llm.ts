@@ -27,11 +27,13 @@ const COMPAT = {
   },
 } as const;
 
+const blockedUntil = new Map<string, number>();
+
 /** The models to try, in order (each has its own free limits on Groq). GROQ_MODELS="a,b,c" overrides. */
 function modelsFor(p: Exclude<Provider, "anthropic">) {
   if (p === "groq") {
     const list = process.env.GROQ_MODELS?.split(",").map((x) => x.trim()).filter(Boolean);
-    return list?.length ? list : [COMPAT.groq.model(), "qwen/qwen3.8-27b", "openai/gpt-oss-20b"].filter((v, i, a) => a.indexOf(v) === i);
+    return list?.length ? list : [COMPAT.groq.model(), "openai/gpt-oss-20b", "qwen/qwen3.8-27b"].filter((v, i, a) => a.indexOf(v) === i);
   }
   return [COMPAT[p].model()];
 }
@@ -58,7 +60,7 @@ export type CompatToolCall = {
 export type CompatMessage =
   { role: "system" | "user"; content: string } | { role: "assistant"; content: string | null; tool_calls?: CompatToolCall[] } | { role: "tool"; tool_call_id: string; content: string };
 
-export async function compatChat(body: { messages: CompatMessage[]; tools?: CompatTool[]; json?: boolean; maxTokens?: number }) {
+export async function compatChat(body: { messages: CompatMessage[]; tools?: CompatTool[]; json?: boolean; maxTokens?: number; skipFirst?: boolean }) {
   const p = provider();
   if (!p || p === "anthropic") throw new Error("compatChat needs groq, gemini or xai");
   const c = COMPAT[p];
@@ -66,9 +68,11 @@ export async function compatChat(body: { messages: CompatMessage[]; tools?: Comp
   if (!key) throw new Error(`Manca ${c.key}`);
   // free tiers have per-minute AND per-day limits. A short wait (per-minute) → wait and retry the same model;
   // a long one (the day's tokens are used up) → move on to the next model of the chain right away.
-  const models = modelsFor(p);
+  // models whose daily limit is used up are skipped until they reset (remembered on this server instance)
+  const models = modelsFor(p).filter((x) => (blockedUntil.get(x) ?? 0) < Date.now());
+  if (!models.length) models.push(...modelsFor(p));
   let res: Response | undefined;
-  let m = 0;
+  let m = body.skipFirst && models.length > 1 ? 1 : 0;
   for (let attempt = 0; attempt < 6 && m < models.length; attempt++) {
     res = await fetch(`${c.url}/chat/completions`, {
       method: "POST",
@@ -98,6 +102,7 @@ export async function compatChat(body: { messages: CompatMessage[]; tools?: Comp
     const text = await res.clone().text();
     const wait = Number(res.headers.get("retry-after")) || Number(/try again in (?:(\d+)m)?([\d.]+)s/.exec(text)?.slice(1).reduce((t, v, i) => t + (Number(v) || 0) * (i === 0 ? 60 : 1), 0)) || 5;
     if (wait > 12 || /per day|TPD|RPD/i.test(text)) {
+      if (/per day|TPD|RPD/i.test(text)) blockedUntil.set(models[m], Date.now() + Math.max(wait, 60) * 1000);
       m++;
       continue;
     }
@@ -106,10 +111,12 @@ export async function compatChat(body: { messages: CompatMessage[]; tools?: Comp
   res = res!;
   if (!res.ok) throw new Error(`${p} ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = (await res.json()) as {
+    usage?: { prompt_tokens: number; completion_tokens: number };
     choices: {
       message: { content: string | null; tool_calls?: CompatToolCall[] };
       finish_reason: string;
     }[];
   };
+  if (process.env.NODE_ENV !== "production") console.log(`[llm] ${models[m]} in=${data.usage?.prompt_tokens} out=${data.usage?.completion_tokens}`);
   return data.choices[0];
 }

@@ -4,7 +4,7 @@ import { getBot } from "@/lib/bot/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 /** update_ids already taken on this instance — Telegram re-sends an update when it gets no quick 200 */
 const seen = new Set<number>();

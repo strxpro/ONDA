@@ -9,7 +9,7 @@ import * as ops from "../ops";
 import { store, type Actor } from "../store";
 import type { Flavor, OpeningHours, PriceItem, Reservation, SpecialDay } from "../types";
 import { RESTORE_LABEL, RESTORE_PARTS, restoreDefaults, type RestorePart } from "../restore";
-import { BOT_SKILL } from "./skill";
+import { BOT_SKILL, BOT_SKILL_SHORT } from "./skill";
 import { READ_TOOLS, TOOL_DEFS, TOOL_INPUT, type ToolName } from "./tools";
 
 /** A change waiting for the owner's ✅. Args are already resolved to row ids. */
@@ -44,6 +44,25 @@ export function detectLang(text: string): Lang {
 
 const fmtFlavor = (f: Flavor) =>
   `- ${f.name.it}${f.name.en && f.name.en !== f.name.it ? ` (${f.name.en}/${f.name.pl ?? ""})` : ""}: ${f.deleted_at ? "removed" : f.is_available_today ? "available" : "SOLD OUT"}`;
+
+/**
+ * Free models have small per-minute limits (≈7–8k input tokens): a compact prompt — same rules, short vocabulary,
+ * Italian names only. Claude gets the full one.
+ */
+async function compactPrompt() {
+  const [flavors, prices, settings] = await Promise.all([ops.allFlavors(), ops.allPrices(), store().get("site_settings", 1)]);
+  const n = nowIn((settings?.timezone as string) ?? "Europe/Rome");
+  const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][n.weekday - 1];
+  const time = `${String(Math.floor(n.minutes / 60)).padStart(2, "0")}:${String(n.minutes % 60).padStart(2, "0")}`;
+  return `You run the website of Gelateria Onda (gelato shop, Sardinia) for the owner, who writes or speaks (transcribed) in any language. ALWAYS act by calling tools:
+- questions → read tools, then answer with exact numbers in one short sentence;
+- changes → write tools (they are only staged; he confirms with a button). One call per change; several changes = several calls;
+- unclear → ask_choice (multi=true if several answers fit); photos he will send later → ask_for_photos.
+Reply in his language, short, no markdown. Prices in euros ("3,50" = 3.5). Now: ${weekday} ${n.date} ${time}. Weekdays 1=Mon…7=Sun.
+Flavors: ${flavors.map((f) => `${f.name.it}${f.is_available_today ? "" : " (finito)"}`).join(", ")}
+Prices: ${prices.map((p) => `${p.label.it} ${p.price_eur}`).join("; ")}
+${BOT_SKILL_SHORT}`;
+}
 
 async function systemPrompt() {
   const [flavors, prices, settings] = await Promise.all([ops.allFlavors(true), ops.allPrices(), store().get("site_settings", 1)]);
@@ -515,7 +534,7 @@ function slim(text: unknown, max: number) {
 }
 function slimSchema(schema: JsonSchema): JsonSchema {
   if (!schema.properties) return schema;
-  return { ...schema, properties: Object.fromEntries(Object.entries(schema.properties).map(([k, v]) => [k, { ...v, ...(v.description ? { description: slim(v.description, 60) } : {}) }])) };
+  return { ...schema, properties: Object.fromEntries(Object.entries(schema.properties).map(([k, v]) => [k, { ...v, ...(v.description ? { description: slim(v.description, 40) } : {}) }])) };
 }
 
 function nullableOptionals(schema: JsonSchema): JsonSchema {
@@ -541,7 +560,7 @@ function dropNulls(input: unknown): unknown {
 /** Understand one owner message. Reads are answered; writes are staged for confirmation. */
 export async function runAgent(userText: string, photo?: Photo): Promise<AgentResult> {
   const lang = detectLang(userText);
-  const system = await systemPrompt();
+  const system = provider() === "anthropic" ? await systemPrompt() : await compactPrompt();
   const first = photo ? `[PHOTO ATTACHED]\n${userText || "(no caption)"}` : userText;
   const messages: Anthropic.Beta.BetaMessageParam[] = [{ role: "user", content: first }];
   const staged: Staged[] = [];
@@ -563,13 +582,14 @@ export async function runAgent(userText: string, photo?: Photo): Promise<AgentRe
 
   // free / OpenAI-compatible models (Groq, Gemini, Grok)
   if (provider() !== "anthropic") {
-    const tools: CompatTool[] = TOOL_DEFS.map((t) => ({ type: "function", function: { name: t.name, description: slim(t.description, 170), parameters: nullableOptionals(slimSchema(t.input_schema as JsonSchema)) } }));
+    const tools: CompatTool[] = TOOL_DEFS.map((t) => ({ type: "function", function: { name: t.name, description: slim(t.description, 120), parameters: nullableOptionals(slimSchema(t.input_schema as JsonSchema)) } }));
     const chat: CompatMessage[] = [
       { role: "system", content: system },
       { role: "user", content: first },
     ];
     for (let turn = 0; turn < 6; turn++) {
-      const { message } = await compatChat({ messages: chat, tools });
+      let { message } = await compatChat({ messages: chat, tools });
+      if (!message.tool_calls?.length && !message.content?.trim()) ({ message } = await compatChat({ messages: chat, tools, skipFirst: true }));
       const calls = message.tool_calls ?? [];
       if (!calls.length) return { text: message.content?.trim() || fallbackText(), lang, staged };
       chat.push({ role: "assistant", content: message.content ?? null, tool_calls: calls });

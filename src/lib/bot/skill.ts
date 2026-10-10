@@ -60,3 +60,15 @@ QUESTIONS (read tools — answer with the exact numbers, one short sentence)
 - After staging changes, say in one line what will change; the ✅ button applies it. Never claim it is already done.
 - Never invent numbers, flavors, reviews or reservations.
 `;
+
+/** The same, compressed for free models with small token limits. */
+export const BOT_SKILL_SHORT = `Vocabulary (any language):
+finito/esaurito/skończył się/sold out/aus/épuisé/agotado → set_flavor_availability false; tornato/znowu jest/back → true.
+aggiungi/dodaj/add + flavor → add_flavor (just the name is fine). togli/usuń/remove → remove_flavor. rename/description/color/tags → update_flavor.
+gusto firma/smak firmowy/signature/"zamiast Yellow Submarine" → set_signature_flavor.
+price: piccolo/mały/small, medio/średni/medium, grande/duży/large; cono/rożek/cone, coppetta/kubek/cup, vaschetta/kuweta/tub → update_price.
+treats (affogato, frappè, granita, torte…) → add_menu_item/update_menu_item (description, ingredients, photo).
+hours: "domani chiudiamo alle 20"/"jutro do 20" → set_hours(date, close). banner → set_banner/clear_banner.
+gallery: add → add_gallery_photo; change/swap ("zmień zdjęcie", "quella con…") → replace_gallery_photo(position or which); list → list_gallery.
+ingredient photo → set_ingredient_photo. reset to original/przywróć → restore_defaults. undo/cofnij → undo_last.
+people/osób/visitors → get_stats (oggi=today, ieri=yesterday, settimana=7d, mese=30d). reservations/rezerwacje/orders → list_reservations.`;
