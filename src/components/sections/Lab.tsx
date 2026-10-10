@@ -28,8 +28,9 @@ const CY = 0.85;
 const RX = 1.05;
 const RY = 0.72;
 const SLOTS = 8;
-const slot = (k: number) => {
-  const a = ((195 - 30 * k) * Math.PI) / 180;
+/** place k of m photos on the arc: spread evenly over it, so fewer photos never leave a gap on one side */
+const slot = (k: number, m = SLOTS) => {
+  const a = ((m > 1 ? 195 - (210 * k) / (m - 1) : 90) * Math.PI) / 180;
   return { x: W / 2 + RX * Math.cos(a) - SMALL / 2, y: CY - RY * Math.sin(a) - (SMALL * SH) / 2, s: SMALL };
 };
 const DOTS = ["#6FE0C4", "#FFE066", "#FF8FB8"];
@@ -60,15 +61,18 @@ export function Lab() {
   const reduced = () => m.intensity === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const D = () => (stage.current?.offsetWidth ?? 0) / W;
-  const posOf = (place: number) => (place === 0 ? CENTER : slot(place - 1));
+  const posOf = (place: number) => (place === 0 ? CENTER : slot(place - 1, Math.max(1, order.current.length - 1)));
   const px = (p: { x: number; y: number; s: number }) => ({ x: p.x * D(), y: p.y * D(), scale: p.s });
 
-  /** put every photo where `order` says, instantly; the hidden ones wait (invisible) on the ring */
-  const layout = () => {
+  /** put every photo where `order` says (instantly, or gliding there); the hidden ones wait (invisible) on the ring */
+  const layout = (glide: unknown = false) => {
     SMALL = (stage.current?.offsetWidth ?? 0) > 820 ? 0.4 : 0.34;
     order.current.forEach((photo, place) => {
       const el = items.current[photo];
-      if (el) gsap.set(el, { ...px(posOf(place)), zIndex: place === 0 ? 20 : 10, opacity: 1, transformOrigin: "0 0" });
+      if (!el) return;
+      gsap.set(el, { zIndex: place === 0 ? 20 : 10, opacity: 1, transformOrigin: "0 0" });
+      if (glide === true) gsap.to(el, { ...px(posOf(place)), duration: 0.8, ease: "expo.inOut" });
+      else gsap.set(el, px(posOf(place)));
     });
     hidden.current.forEach((photo) => {
       const el = items.current[photo];
@@ -76,16 +80,37 @@ export function Lab() {
     });
   };
 
-  // the gallery changed (a photo added, replaced, removed): everything gets its place again, the new one pops in
+  // the gallery changed (a photo added, replaced, removed): every photo KEEPS its place; a new one fills the first
+  // free place on the arc (or waits on the ring when the arc is full) and pops in there; a removed one frees its place
   const prevIds = useRef<string[]>([]);
   useEffect(() => {
-    const n = Math.min(photos.length, SLOTS + 1);
-    order.current = photos.slice(0, n).map((_, i) => i);
-    hidden.current = photos.slice(n).map((_, i) => n + i);
-    layout();
-    const fresh = photos.findIndex((g, i) => i < n && prevIds.current.length > 0 && !prevIds.current.includes(g.id));
-    prevIds.current = photos.map((g) => g.id);
-    if (fresh >= 0 && items.current[fresh] && !reduced()) gsap.from(items.current[fresh], { scale: 0, opacity: 0, duration: 0.9, ease: "back.out(1.7)", clearProps: "opacity" });
+    const ids = photos.map((g) => g.id);
+    const n = Math.min(ids.length, SLOTS + 1);
+    const first = prevIds.current.length === 0;
+    // what was where, by id (before this change)
+    const was = order.current.map((i) => prevIds.current[i]).filter((id) => id && ids.includes(id));
+    const waiting = hidden.current.map((i) => prevIds.current[i]).filter((id) => id && ids.includes(id) && !was.includes(id));
+    const fresh = ids.filter((id) => !was.includes(id) && !waiting.includes(id));
+    const queue = first ? ids.slice() : [...fresh, ...waiting];
+    const places = first ? [] : was.slice(0, n);
+    queue.unshift(...was.slice(n));
+    while (places.length < n && queue.length) places.push(queue.shift()!);
+    // an animation in flight would carry an item away from its new place
+    gsap.killTweensOf(items.current.filter(Boolean));
+    busy.current = false;
+    order.current = places.map((id) => ids.indexOf(id));
+    hidden.current = queue.map((id) => ids.indexOf(id));
+    layout(!first && !reduced()); // the others glide to make room / close the gap
+    prevIds.current = ids;
+    if (!first && !reduced())
+      for (const id of fresh) {
+        const el = items.current[ids.indexOf(id)];
+        if (el && places.includes(id)) {
+          gsap.killTweensOf(el);
+          gsap.set(el, { ...px(posOf(places.indexOf(id))), scale: 0, rotate: -25 });
+          gsap.to(el, { scale: posOf(places.indexOf(id)).s, rotate: 0, duration: 0.9, delay: 0.35, ease: "back.out(1.7)" });
+        }
+      }
     const ro = new ResizeObserver(layout);
     if (stage.current) ro.observe(stage.current);
     return () => ro.disconnect();
