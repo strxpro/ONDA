@@ -99,6 +99,15 @@ export function Signature() {
     };
   }, [target?.slug, target?.title, target?.body, locale]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // development only: window.__sigSwap("pistacchio") plays the swap without touching the database
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    (window as unknown as { __sigSwap?: (slug: string) => void }).__sigSwap = (slug) => {
+      const f = data.flavors.find((x) => x.slug === slug);
+      if (f) setNext(viewOf(f));
+    };
+  });
+
   // scroll: the cone surfaces, the name drifts across the whole pass, the bubbles rise and bob
   useEffect(() => {
     const el = root.current;
@@ -241,7 +250,7 @@ export function Signature() {
                 <ScoopImg src={nv.scoop} />
               </div>
             )}
-            {nv && <img src="/img/spatula.webp" alt="" className="sig-spatula pointer-events-none absolute z-30 w-[95%] opacity-0" style={{ left: "-4%", top: "36%", transformOrigin: "20% 50%" }} />}
+            {nv && <img src="/img/spatula.webp" alt="" className="sig-spatula pointer-events-none absolute z-30 w-[150%] max-w-none opacity-0 drop-shadow-[0_10px_14px_rgba(75,42,32,0.35)]" style={{ left: "-12%", top: "33%", transformOrigin: "20% 50%" }} />}
           </motion.div>
           {[20, 50, 78].map((x, i) => (
             <span key={i} className="sig-drop absolute top-[60%] block h-3 w-2 rounded-full bg-white/80" style={{ left: `${x}%` }} aria-hidden />

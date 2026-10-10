@@ -12,7 +12,7 @@ const FLOODS = ["#BFE59A", "#FFB3CE", "#FFE37A"];
 const FLOOD_EDGE = "M0 60 C180 10 360 110 540 60 C720 10 900 110 1080 60 C1260 10 1440 110 1620 60 C1800 10 1980 110 2160 60 C2340 10 2520 110 2880 60 V140 H0 Z";
 /** Glitch slices left behind by each flood (deterministic so server and client render the same). */
 const GLITCH = Array.from({ length: 9 }, (_, i) => ({ top: (i * 37 + 11) % 92, h: 1.5 + ((i * 53) % 7), w: 40 + ((i * 29) % 60), left: (i * 41) % 50 }));
-const MAX_WAIT = 2.4; // seconds: never hold the page longer than this, loaded or not
+const MAX_WAIT = 14; // seconds: on a very slow connection, open anyway after this
 
 /** Fired when the curtain starts lifting; the hero starts its intro on it. */
 export const REVEAL_EVENT = "onda:revealed";
@@ -79,7 +79,7 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
     // The full stacking plays on every visit; the owner can switch to the short version in the admin.
     const repeat = mode === "short";
     // safety net: whatever happens (slow device, blocked script…), never keep the page covered
-    const failsafe = window.setTimeout(() => !document.documentElement.dataset.revealed && (reveal(), handoff(), finish()), 7000);
+    const failsafe = window.setTimeout(() => !document.documentElement.dataset.revealed && (reveal(), handoff(), finish()), (MAX_WAIT + 5) * 1000);
 
     /** Fly the stack onto the hero cone (FLIP), lift the curtain with a colored wave. */
     const exit = (speed = 1) => {
@@ -114,13 +114,27 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
       };
     }
 
-    // real loading progress (fonts + window load), capped by MAX_WAIT
+    // REAL loading: fonts, the page, and every picture on it — the lazy ones further down too (they are asked for
+    // now), so when the curtain lifts the whole page is there and nothing pops in while scrolling
     let real = 0;
-    const parts = { fonts: false, load: document.readyState === "complete" };
-    const update = () => (real = (parts.fonts ? 0.45 : 0.1) + (parts.load ? 0.55 : 0));
+    const parts = { fonts: false, load: document.readyState === "complete", imgs: 0, total: 0 };
+    const update = () => (real = (parts.fonts ? 0.08 : 0) + (parts.load ? 0.07 : 0) + 0.85 * (parts.total ? parts.imgs / parts.total : 1));
     document.fonts?.ready.then(() => ((parts.fonts = true), update()));
     const onLoad = () => ((parts.load = true), update());
     window.addEventListener("load", onLoad, { once: true });
+    const pics = [...document.images].filter((img) => !el.contains(img));
+    parts.total = pics.length;
+    for (const img of pics) {
+      const done = () => ((parts.imgs += 1), update());
+      if (img.complete) {
+        parts.imgs += 1;
+        continue;
+      }
+      img.addEventListener("load", done, { once: true });
+      img.addEventListener("error", done, { once: true });
+      if (img.loading === "lazy") img.loading = "eager";
+      img.decoding = "async";
+    }
     update();
     const started = performance.now();
 

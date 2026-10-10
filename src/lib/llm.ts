@@ -1,52 +1,55 @@
 import "server-only";
 
 /**
- * Which model understands the owner. Claude (ANTHROPIC_API_KEY) or a free / OpenAI-compatible one:
- *   groq   — GROQ_API_KEY   (free tier; the same key also transcribes voice notes)   model GROQ_MODEL   (openai/gpt-oss-120b)
- *   gemini — GEMINI_API_KEY (free tier at aistudio.google.com)                       model GEMINI_MODEL (gemini-2.5-flash)
- *   xai    — XAI_API_KEY    (Grok, paid credits)                                     model XAI_MODEL    (grok-4)
- * AI_PROVIDER forces one; otherwise the first configured of anthropic → groq → gemini → xai.
+ * Which model understands the owner. Claude (ANTHROPIC_API_KEY) — or a CHAIN of free OpenAI-compatible models.
+ * Every free provider whose key is set joins the chain; when one is busy, out of its daily quota, slow or broken,
+ * the next one answers — silently, the owner never sees an error for that:
+ *   groq       GROQ_API_KEY        console.groq.com           (also transcribes voice notes; qwen also sees photos)
+ *   cerebras   CEREBRAS_API_KEY    cloud.cerebras.ai          (1M tokens / day)
+ *   gemini     GEMINI_API_KEY      aistudio.google.com        (sees photos)
+ *   openrouter OPENROUTER_API_KEY  openrouter.ai              (the ":free" models)
+ *   mistral    MISTRAL_API_KEY     console.mistral.ai         (free "Experiment" plan; sees photos)
+ *   xai        XAI_API_KEY         (Grok, paid)
+ *   pollinations — no key at all, the last resort
+ * <NAME>_MODELS="a,b" overrides a provider's models; AI_ORDER="gemini,groq,…" overrides the order.
  */
-export type Provider = "anthropic" | "groq" | "gemini" | "xai";
+export type Provider = "anthropic" | "compat";
 
-const COMPAT = {
-  groq: {
-    url: "https://api.groq.com/openai/v1",
-    key: "GROQ_API_KEY",
-    model: () => process.env.GROQ_MODEL || "openai/gpt-oss-120b",
-  },
-  gemini: {
-    url: "https://generativelanguage.googleapis.com/v1beta/openai",
-    key: "GEMINI_API_KEY",
-    model: () => process.env.GEMINI_MODEL || "gemini-2.5-flash",
-  },
-  xai: {
-    url: "https://api.x.ai/v1",
-    key: "XAI_API_KEY",
-    model: () => process.env.XAI_MODEL || "grok-4",
-  },
-} as const;
+type Slot = { provider: string; url: string; key?: string; model: string; vision: boolean };
 
-const blockedUntil = new Map<string, number>();
+const PROVIDERS: { name: string; url: string; env?: string; models: string[]; vision: (model: string) => boolean }[] = [
+  { name: "groq", url: "https://api.groq.com/openai/v1", env: "GROQ_API_KEY", models: [process.env.GROQ_MODEL || "openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"], vision: (m) => /qwen3\.8|llama-4|vision/i.test(m) },
+  { name: "cerebras", url: "https://api.cerebras.ai/v1", env: "CEREBRAS_API_KEY", models: ["gpt-oss-120b", "qwen-3-235b-a22b-instruct-2507"], vision: () => false },
+  { name: "gemini", url: "https://generativelanguage.googleapis.com/v1beta/openai", env: "GEMINI_API_KEY", models: [process.env.GEMINI_MODEL || "gemini-2.5-flash", "gemini-2.5-flash-lite"], vision: () => true },
+  { name: "openrouter", url: "https://openrouter.ai/api/v1", env: "OPENROUTER_API_KEY", models: ["openai/gpt-oss-120b:free", "meta-llama/llama-3.3-70b-instruct:free", "google/gemma-3-27b-it:free"], vision: (m) => /gemma-3|vision|vl/i.test(m) },
+  { name: "mistral", url: "https://api.mistral.ai/v1", env: "MISTRAL_API_KEY", models: ["mistral-small-latest"], vision: () => true },
+  { name: "xai", url: "https://api.x.ai/v1", env: "XAI_API_KEY", models: [process.env.XAI_MODEL || "grok-4"], vision: () => true },
+  { name: "pollinations", url: "https://text.pollinations.ai/openai", models: ["openai"], vision: () => true },
+];
 
-/** The models to try, in order (each has its own free limits on Groq). GROQ_MODELS="a,b,c" overrides. */
-function modelsFor(p: Exclude<Provider, "anthropic">) {
-  if (p === "groq") {
-    const list = process.env.GROQ_MODELS?.split(",").map((x) => x.trim()).filter(Boolean);
-    return list?.length ? list : [COMPAT.groq.model(), "openai/gpt-oss-20b", "qwen/qwen3.8-27b"].filter((v, i, a) => a.indexOf(v) === i);
-  }
-  return [COMPAT[p].model()];
+function slots(): Slot[] {
+  const order = process.env.AI_ORDER?.split(",").map((s) => s.trim()) ?? [];
+  const list = [...PROVIDERS].sort((a, b) => (order.indexOf(a.name) + 1 || 99) - (order.indexOf(b.name) + 1 || 99));
+  return list.flatMap((p) => {
+    const key = p.env ? process.env[p.env] : undefined;
+    if (p.env && !key) return [];
+    const override = process.env[`${p.name.toUpperCase()}_MODELS`]?.split(",").map((x) => x.trim()).filter(Boolean);
+    const models = (override?.length ? override : p.models).filter((v, i, a) => a.indexOf(v) === i);
+    return models.map((model) => ({ provider: p.name, url: p.url, key, model, vision: p.vision(model) }));
+  });
 }
+
+/** slots that recently failed or hit a limit rest until then (remembered on this server instance) */
+const restUntil = new Map<string, number>();
+const id = (s: Slot) => `${s.provider}/${s.model}`;
+const rest = (s: Slot, seconds: number) => restUntil.set(id(s), Date.now() + seconds * 1000);
 
 export function provider(): Provider | null {
-  const forced = process.env.AI_PROVIDER as Provider | undefined;
-  if (forced) return forced;
-  if (process.env.ANTHROPIC_API_KEY) return "anthropic";
-  for (const p of ["groq", "gemini", "xai"] as const) if (process.env[COMPAT[p].key]) return p;
-  return null;
+  if (process.env.AI_PROVIDER === "anthropic" || (!process.env.AI_PROVIDER && process.env.ANTHROPIC_API_KEY)) return "anthropic";
+  return "compat"; // pollinations needs no key, so there is always someone to ask
 }
 
-/* ─── OpenAI-compatible chat (Groq, Gemini, xAI) ─────────────────────────── */
+/* ─── OpenAI-compatible chat ─────────────────────────────────────────────── */
 
 export type CompatTool = {
   type: "function";
@@ -57,66 +60,115 @@ export type CompatToolCall = {
   type: "function";
   function: { name: string; arguments: string };
 };
+export type ContentPart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
 export type CompatMessage =
-  { role: "system" | "user"; content: string } | { role: "assistant"; content: string | null; tool_calls?: CompatToolCall[] } | { role: "tool"; tool_call_id: string; content: string };
+  | { role: "system"; content: string }
+  | { role: "user"; content: string | ContentPart[] }
+  | { role: "assistant"; content: string | null; tool_calls?: CompatToolCall[] }
+  | { role: "tool"; tool_call_id: string; content: string };
 
-export async function compatChat(body: { messages: CompatMessage[]; tools?: CompatTool[]; json?: boolean; maxTokens?: number; skipFirst?: boolean }) {
-  const p = provider();
-  if (!p || p === "anthropic") throw new Error("compatChat needs groq, gemini or xai");
-  const c = COMPAT[p];
-  const key = process.env[c.key];
-  if (!key) throw new Error(`Manca ${c.key}`);
-  // free tiers have per-minute AND per-day limits. A short wait (per-minute) → wait and retry the same model;
-  // a long one (the day's tokens are used up) → move on to the next model of the chain right away.
-  // models whose daily limit is used up are skipped until they reset (remembered on this server instance)
-  const models = modelsFor(p).filter((x) => (blockedUntil.get(x) ?? 0) < Date.now());
-  if (!models.length) models.push(...modelsFor(p));
-  let res: Response | undefined;
-  let m = body.skipFirst && models.length > 1 ? 1 : 0;
-  for (let attempt = 0; attempt < 6 && m < models.length; attempt++) {
-    res = await fetch(`${c.url}/chat/completions`, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${key}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: models[m],
-        messages: body.messages,
-        temperature: 0.2,
-        max_tokens: body.maxTokens ?? 2000,
-        ...(body.tools?.length ? { tools: body.tools, tool_choice: "auto" } : {}),
-        ...(body.json ? { response_format: { type: "json_object" } } : {}),
-      }),
-      signal: AbortSignal.timeout(45_000),
-    });
-    if (res.status === 404 || (res.status === 400 && /model/i.test(await res.clone().text()))) {
-      m++; // this model is gone or does not exist here: try the next one
-      continue;
-    }
-    if (res.status === 413) {
-      m++; // too big for this model's per-minute input limit: the next one may take it
-      continue;
-    }
-    if (res.status !== 429) break;
-    const text = await res.clone().text();
-    const wait = Number(res.headers.get("retry-after")) || Number(/try again in (?:(\d+)m)?([\d.]+)s/.exec(text)?.slice(1).reduce((t, v, i) => t + (Number(v) || 0) * (i === 0 ? 60 : 1), 0)) || 5;
-    if (wait > 12 || /per day|TPD|RPD/i.test(text)) {
-      if (/per day|TPD|RPD/i.test(text)) blockedUntil.set(models[m], Date.now() + Math.max(wait, 60) * 1000);
-      m++;
-      continue;
-    }
-    await new Promise((r) => setTimeout(r, (wait + 0.5) * 1000));
+type Choice = { message: { content: string | null; tool_calls?: CompatToolCall[] }; finish_reason: string };
+
+/** Thrown only when every free model failed — the bot turns it into a calm "try again in a minute". */
+export class AllBusyError extends Error {
+  constructor(detail: string) {
+    super(`AI_BUSY ${detail}`);
   }
-  res = res!;
-  if (!res.ok) throw new Error(`${p} ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const data = (await res.json()) as {
-    usage?: { prompt_tokens: number; completion_tokens: number };
-    choices: {
-      message: { content: string | null; tool_calls?: CompatToolCall[] };
-      finish_reason: string;
-    }[];
-  };
-  if (process.env.NODE_ENV !== "production") console.log(`[llm] ${models[m]} in=${data.usage?.prompt_tokens} out=${data.usage?.completion_tokens}`);
-  return data.choices[0];
+}
+
+/**
+ * Ask the chain. `vision` = only models that see images; `skipFirst` = an earlier answer was empty, start one later;
+ * `deadline` = give up (with AllBusyError) after that many ms in total.
+ */
+export async function compatChat(body: { messages: CompatMessage[]; tools?: CompatTool[]; json?: boolean; maxTokens?: number; skipFirst?: boolean; vision?: boolean; deadline?: number }): Promise<Choice> {
+  const start = Date.now();
+  const deadline = body.deadline ?? 75_000;
+  const all = slots().filter((s) => !body.vision || s.vision);
+  const errors: string[] = [];
+  let skip = body.skipFirst;
+  for (let round = 0; round < 4; round++) {
+    // who is free now; if nobody, wait for the first one back (a per-minute limit) — if that fits in the time left
+    const now = Date.now();
+    let queue = all.filter((s) => (restUntil.get(id(s)) ?? 0) <= now);
+    if (!queue.length) {
+      const soonest = Math.min(...all.map((s) => restUntil.get(id(s)) ?? 0));
+      if (soonest - now > deadline - (now - start) - 8000) break;
+      await new Promise((r) => setTimeout(r, soonest - now + 300));
+      queue = all.filter((s) => (restUntil.get(id(s)) ?? 0) <= Date.now());
+    }
+    if (skip && queue.length > 1) queue = [...queue.slice(1), queue[0]];
+    skip = false;
+    const answer = await tryQueue(queue, body, start, deadline, errors);
+    if (answer) return answer;
+  }
+  throw new AllBusyError(errors.join(", ") || "no model");
+}
+
+async function tryQueue(queue: Slot[], body: Parameters<typeof compatChat>[0], start: number, deadline: number, errors: string[]): Promise<Choice | null> {
+  for (const s of queue) {
+    const left = deadline - (Date.now() - start);
+    if (left < 3000) break;
+    try {
+      const res = await fetch(`${s.url}/chat/completions`, {
+        method: "POST",
+        headers: { ...(s.key ? { authorization: `Bearer ${s.key}` } : {}), "content-type": "application/json" },
+        body: JSON.stringify({
+          model: s.model,
+          messages: body.messages,
+          temperature: 0.2,
+          max_tokens: body.maxTokens ?? 2000,
+          ...(body.tools?.length ? { tools: body.tools, tool_choice: "auto" } : {}),
+          ...(body.json ? { response_format: { type: "json_object" } } : {}),
+        }),
+        signal: AbortSignal.timeout(Math.min(40_000, left)),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        errors.push(`${id(s)} ${res.status}`);
+        if (res.status === 429) {
+          const wait = Number(res.headers.get("retry-after")) || Number(/try again in (?:(\d+)m)?([\d.]+)s/.exec(text)?.slice(1).reduce((t, v, i) => t + (Number(v) || 0) * (i === 0 ? 60 : 1), 0)) || 12;
+          rest(s, /per day|TPD|RPD|daily/i.test(text) ? Math.max(wait, 3600) : wait);
+        } else if (res.status === 404 || res.status === 401 || res.status === 403) rest(s, 6 * 3600); // gone / no access: not today
+        else if (res.status === 413) rest(s, 30); // too big for its per-minute window
+        else rest(s, 60); // 5xx, a 400 it does not like (schema, tools…): someone else
+        continue;
+      }
+      const data = (await res.json()) as { usage?: { prompt_tokens: number; completion_tokens: number }; choices?: Choice[] };
+      const choice = data.choices?.[0];
+      if (!choice?.message) {
+        errors.push(`${id(s)} empty`);
+        rest(s, 30);
+        continue;
+      }
+      if (process.env.NODE_ENV !== "production") console.log(`[llm] ${id(s)} in=${data.usage?.prompt_tokens} out=${data.usage?.completion_tokens}`);
+      return choice;
+    } catch (e) {
+      errors.push(`${id(s)} ${(e as Error).name}`);
+      rest(s, 60); // timeout / network
+    }
+  }
+  return null;
+}
+
+/** What a photo shows, in one short English sentence (subject, colors, background) — for finding it by words later. */
+export async function describeImage(url: string): Promise<string | null> {
+  try {
+    const r = await compatChat({
+      vision: true,
+      maxTokens: 120,
+      deadline: 40_000,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Describe this photo for a search index in ONE short sentence: the main subject, what people/objects are there, the main colors and the background color. No intro." },
+            { type: "image_url", image_url: { url } },
+          ],
+        },
+      ],
+    });
+    return r.message.content?.trim().replace(/\s+/g, " ").slice(0, 300) || null;
+  } catch {
+    return null;
+  }
 }

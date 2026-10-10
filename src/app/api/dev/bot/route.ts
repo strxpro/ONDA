@@ -3,6 +3,7 @@ import { detectLang, execute, runAgent, runRead, stage } from "@/lib/bot/agent";
 import { READ_TOOLS, TOOL_INPUT, type ToolName } from "@/lib/bot/tools";
 import { deleteRow, patchRow } from "@/lib/mutations";
 import { findFlavor } from "@/lib/ops";
+import { allPhotos, describeAll } from "@/lib/photos";
 import { store } from "@/lib/store";
 
 export const runtime = "nodejs";
@@ -18,7 +19,7 @@ const PROMO_COMMENTS = ["Il pistacchio più buono della Gallura!", "Buono, ma al
  */
 export async function POST(req: Request) {
   if (process.env.NODE_ENV === "production") return new Response("Not found", { status: 404 });
-  const body = z.object({ text: z.string().optional(), tool: z.string().optional(), args: z.record(z.string(), z.unknown()).optional(), confirm: z.boolean().optional(), cleanup: z.literal("promo").optional() }).parse(await req.json());
+  const body = z.object({ text: z.string().optional(), tool: z.string().optional(), args: z.record(z.string(), z.unknown()).optional(), confirm: z.boolean().optional(), cleanup: z.literal("promo").optional(), describe: z.boolean().optional() }).parse(await req.json());
 
   // after recording the presentation film: put back what it changed (pistacchio in stock, no special days from tomorrow on)
   if (body.cleanup === "promo") {
@@ -31,6 +32,13 @@ export async function POST(req: Request) {
     for (const c of await store().list("comments")) if (PROMO_COMMENTS.includes(String(c.message))) await deleteRow("comments", String(c.id), ctx);
     for (const f of await store().list("flavors")) if (f.slug === "mirto") await deleteRow("flavors", String(f.id), ctx);
     return Response.json({ ok: true });
+  }
+
+  // look at every photo once (what each shows), so the bot can find them by words
+  if (body.describe) {
+    const refs = await allPhotos();
+    const seen = await describeAll(refs, 50);
+    return Response.json(refs.map((r) => ({ label: r.label, seen: seen.get(r.url) ?? null })));
   }
 
   if (body.tool && (READ_TOOLS as readonly string[]).includes(body.tool)) {

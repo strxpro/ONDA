@@ -142,7 +142,9 @@ function TreatCard({ item: p, index: i, locale, onClose, onOrderCake }: { item: 
   const ui = useTranslations("ui.treats");
   const uiCake = useTranslations("ui.cake");
   const isCake = /^tort/.test(p.slug);
-  const photos = isCake ? [...(p.image_url ? [p.image_url] : []), ...CAKE_PHOTOS.filter((x) => x !== p.image_url)] : p.image_url ? [p.image_url] : [];
+  // the shop's own cake photo first (not the old stock one), then Onda's cakes
+  const own = p.image_url && !p.image_url.includes("unsplash.com") ? [p.image_url] : [];
+  const photos = isCake ? [...own, ...CAKE_PHOTOS.filter((x) => x !== p.image_url)] : p.image_url ? [p.image_url] : [];
   const [shown, setShown] = useState(0);
   const color = COLORS[Math.max(0, i) % COLORS.length];
   const sp = splash(Math.max(0, i) * 11 + 3);

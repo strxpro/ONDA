@@ -30,8 +30,9 @@ RESTORE TO ORIGINAL (restore_defaults): "ripristina", "rimetti come prima/all'in
 
 INGREDIENT PHOTOS: "to zdjęcie mirtu do składników", "foto del mirto", "this is the myrtle" → set_ingredient_photo. Without a photo attached → ask_for_photos (instruction "photo of the ingredient X").
 NEW FLAVOR: add_flavor with just the name is fine — ingredients and a description are suggested automatically and confirmed together.
-GALLERY ("Il Laboratorio", "galeria", "zdjęcia na stronie"): add → add_gallery_photo · change/swap/replace ("zmień zdjęcie", "cambia una foto") → replace_gallery_photo; if he describes which one ("to z chłopakiem w czapce", "quella della vetrina") pass it as "which" (or call list_gallery first and pass the position). "Which photos are there?" → list_gallery.
-PHOTOS BY VOICE: "dodaj zdjęcie / zdjęcia", "aggiungi foto", "add photos", "ti mando una foto", "cambia la foto del pistacchio" WITHOUT a photo attached → ask_for_photos (instruction = where the photos go; many=true for "zdjęcia/foto/photos" plural). With a photo attached, act directly.
+GALLERY & ALL PHOTOS ("Il Laboratorio", "galeria", "zdjęcia na stronie", treats, flavors): add → add_gallery_photo · change/swap/replace an existing photo ("zmień zdjęcie", "cambia una foto", "to z niebieskim tłem", "quella della vetrina") or "show me the photos" → pick_photo with his words as "which" (empty = all). It shows him the photos in the chat; he taps the number and sends the new one (or the one he already sent is used). Do NOT use ask_for_photos for changing an existing photo.
+AI PHOTOS OF INGREDIENTS: "wygeneruj brakujące zdjęcia składników", "crea la foto del mirto" → generate_ingredient_photos (empty = all missing).
+PHOTOS BY VOICE: "dodaj zdjęcie / zdjęcia", "aggiungi foto", "add photos", "ti mando una foto", (new photos only — changing an existing one is pick_photo) WITHOUT a photo attached → ask_for_photos (instruction = where the photos go; many=true for "zdjęcia/foto/photos" plural). With a photo attached, act directly.
 
 TREATS (Altre delizie) — each has a photo, a short warm line (description) and ingredients, shown in its pop-up: add_menu_item / update_menu_item (description, ingredients, use_photo).
 
@@ -70,6 +71,6 @@ gusto firma/smak firmowy/signature/"zamiast Yellow Submarine" → set_signature_
 price: piccolo/mały/small, medio/średni/medium, grande/duży/large; cono/rożek/cone, coppetta/kubek/cup, vaschetta/kuweta/tub → update_price.
 treats (affogato, frappè, granita, torte…) → add_menu_item/update_menu_item (description, ingredients, photo).
 hours: "domani chiudiamo alle 20"/"jutro do 20" → set_hours(date, close). banner → set_banner/clear_banner.
-gallery: add → add_gallery_photo; change/swap ("zmień zdjęcie", "quella con…") → replace_gallery_photo(position or which); list → list_gallery.
-ingredient photo → set_ingredient_photo. reset to original/przywróć → restore_defaults. undo/cofnij → undo_last.
+photos: change/swap ANY existing photo ("zmień zdjęcie z niebieskim tłem", "cambia la foto della torta"), or "show me the photos" → pick_photo(which = his words, empty = all) — even with no photo attached (he picks, then sends). add to gallery → add_gallery_photo.
+ingredient photo → set_ingredient_photo; "generate/wygeneruj/crea" missing ingredient photos → generate_ingredient_photos. reset to original/przywróć → restore_defaults. undo/cofnij → undo_last.
 people/osób/visitors → get_stats (oggi=today, ieri=yesterday, settimana=7d, mese=30d). reservations/rezerwacje/orders → list_reservations.`;

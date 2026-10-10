@@ -115,8 +115,18 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
   },
   {
     name: "replace_gallery_photo",
-    description: "Replace one photo of the gallery ('Il Laboratorio') with the photo the owner sent: 'change a photo in the lab', 'swap the first photo', 'the one with the boy in a cap'. position = which one (1 = first) OR which = words describing the photo to replace (matched against the photo descriptions); neither = the oldest.",
+    description: "Replace gallery photo number N (position, 1 = first) with the photo the owner sent. If he describes the photo with words, use pick_photo instead.",
     input_schema: obj({ position: { type: "integer", minimum: 1 }, which: s("words describing the photo to replace, e.g. 'ragazzo con cappellino'"), caption: s("optional short description of the NEW photo") }),
+  },
+  {
+    name: "pick_photo",
+    description: "Find a photo on the website by what it shows and SHOW it to the owner in the chat to pick (then he sends the new one, or uses the photo he already sent): 'change the photo with the blue background', 'show me the photos', 'which photos are in the lab'. Use this (not replace_gallery_photo) whenever the photo is described by words or he wants to see them.",
+    input_schema: obj({ which: s("words describing the photo, in any language, e.g. 'niebieskie tło'; empty = show all") }),
+  },
+  {
+    name: "generate_ingredient_photos",
+    description: "Create (with a free image AI) photos for ingredients that have none yet, e.g. 'generate the missing ingredient photos', 'make a photo of the myrtle'. Empty = every ingredient without a photo.",
+    input_schema: obj({ ingredients: s("comma-separated ingredient names, or empty for all missing ones") }),
   },
   {
     name: "add_gallery_photo",
@@ -181,7 +191,7 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
   {
     name: "ask_for_photos",
     description:
-      "The owner wants to add photo(s) but has not sent them yet (e.g. 'add photos to the gallery', 'I'll send you a photo of the new cake', 'change the photo of pistacchio'). Ask him to send them; every photo he sends next is used for this. many=true when he speaks of several photos.",
+      "The owner wants to ADD new photo(s) but has not sent them yet (e.g. 'add photos to the gallery', 'I'll send you a photo of the new cake'). Not for changing an existing photo (that is pick_photo). Ask him to send them; every photo he sends next is used for this. many=true when he speaks of several photos.",
     input_schema: obj({ instruction: s("what to do with each photo, in English, e.g. 'add to the gallery', 'photo of the flavor Mirto', 'photo of the treat Torta della nonna'"), many: { type: "boolean" }, reply: s("short message asking for the photo(s), in the owner's language") }, ["instruction", "reply"]),
   },
   {
@@ -235,6 +245,8 @@ export const TOOL_INPUT = {
   }),
   undo_last: z.object({}),
   restore_defaults: z.object({ parts: z.array(z.enum(["flavors", "prices", "hours", "texts", "sections", "motion"])).optional() }),
+  pick_photo: z.object({ which: z.string().max(160).optional() }),
+  generate_ingredient_photos: z.object({ ingredients: z.string().max(300).optional() }),
   ask_for_photos: z.object({ instruction: z.string().min(2).max(200), many: z.boolean().optional(), reply: z.string().min(1).max(300) }),
   ask_choice: z.object({ question: z.string().min(1), options: z.array(z.string().min(1)).min(2).max(6), multi: z.boolean().optional() }),
 } as const;

@@ -100,9 +100,12 @@ export async function undo(auditId: number, actor: Actor): Promise<AuditEntry[]>
   return group;
 }
 
+/** Bookkeeping writes (the AI noting what a photo shows) are not "changes" the owner would undo. */
+export const SILENT = ["photo_seen"];
+
 /** Undo the most recent change that isn't itself an undo. */
 export async function undoLast(actor: Actor) {
-  const last = (await store().listAudit(50)).find((e) => !e.undone_at && e.action !== "undo");
+  const last = (await store().listAudit(50)).find((e) => !e.undone_at && e.action !== "undo" && !SILENT.includes(e.action));
   return last ? undo(last.id, actor) : [];
 }
 

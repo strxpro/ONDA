@@ -4,11 +4,13 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { MODEL, anthropic, suggestFlavor } from "../ai";
 import { compatChat, provider, type CompatMessage, type CompatTool } from "../llm";
 import { nowIn } from "../hours";
-import { undoLast } from "../mutations";
+import { SILENT, undoLast } from "../mutations";
 import * as ops from "../ops";
 import { store, type Actor } from "../store";
 import type { Flavor, OpeningHours, PriceItem, Reservation, SpecialDay } from "../types";
 import { RESTORE_LABEL, RESTORE_PARTS, restoreDefaults, type RestorePart } from "../restore";
+import { canGenerateImages, generateIngredientPhotos, ingredientsWithoutPhoto } from "../imagegen";
+import { allPhotos, findPhotos, seeNewPhoto, type PhotoRef } from "../photos";
 import { BOT_SKILL, BOT_SKILL_SHORT } from "./skill";
 import { READ_TOOLS, TOOL_DEFS, TOOL_INPUT, type ToolName } from "./tools";
 
@@ -26,6 +28,8 @@ export type AgentResult = {
   choice?: Choice;
   /** he wants to add photos he has not sent yet: the next ones are for this */
   awaitPhotos?: { instruction: string; many: boolean };
+  /** photos to show him in the chat, to pick the one he means */
+  photoPick?: { refs: PhotoRef[]; all: boolean };
 };
 /** A photo the owner sent with the message, already uploaded. */
 export type Photo = { url: string; width: number; height: number };
@@ -297,6 +301,10 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
       };
     case "set_ingredient_photo":
       return { staged: { tool, args: a, label: `foto dell'ingrediente «${a.ingredient}»` } };
+    case "generate_ingredient_photos": {
+      const list = a.ingredients ? String(a.ingredients).split(",").map((x) => x.trim()).filter(Boolean) : (await ingredientsWithoutPhoto()).slice(0, 6);
+      return { staged: { tool, args: { list }, label: list.length ? `🎨 creare con l'AI le foto di: ${list.join(", ")}` : "tutti gli ingredienti hanno già una foto 👍" } };
+    }
     case "replace_gallery_photo":
       return { staged: { tool, args: a, label: `sostituire ${a.position ? `la foto n. ${a.position}` : a.which ? `la foto «${a.which}»` : "una foto"} del Laboratorio con questa` } };
     case "moderate_comment": {
@@ -385,7 +393,7 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
         staged: { tool, args: a, label: `animazioni: ${JSON.stringify(a)}` },
       };
     case "undo_last": {
-      const last = (await store().listAudit(30)).find((e) => !e.undone_at && e.action !== "undo");
+      const last = (await store().listAudit(30)).find((e) => !e.undone_at && e.action !== "undo" && !SILENT.includes(e.action));
       return {
         staged: {
           tool,
@@ -444,7 +452,15 @@ export async function execute(s: Staged, actor: Actor) {
           photo: (a.photo as Photo | undefined)?.url,
         },
         actor,
-      );
+      ).then(async (r) => {
+        // its ingredients without a photo get one made by the free image AI
+        if (canGenerateImages() && a.ingredients) {
+          const missing = new Set((await ingredientsWithoutPhoto()).map((x) => x.toLowerCase()));
+          const mine = String(a.ingredients).split(/[,;]| e /).map((x) => x.trim()).filter((x) => missing.has(x.toLowerCase()));
+          if (mine.length) await generateIngredientPhotos(mine, actor, 4).catch(() => {});
+        }
+        return r;
+      });
     case "add_menu_item":
       return ops.addMenuItem(
         {
@@ -471,13 +487,20 @@ export async function execute(s: Staged, actor: Actor) {
       );
     case "set_ingredient_photo":
       return ops.setIngredientPhoto(String(a.ingredient), (a.photo as Photo).url, actor);
+    case "generate_ingredient_photos": {
+      const r = await generateIngredientPhotos(a.list as string[], actor);
+      if (!r.made.length && r.failed.length) throw new Error(`il generatore di immagini non risponde (${r.failed.join(", ")})`);
+      return r;
+    }
     case "replace_gallery_photo": {
       const p = a.photo as Photo;
-      return ops.replaceGalleryPhoto({ url: p.url, width: p.width, height: p.height, position: a.position as number | undefined, which: a.which as string | undefined, caption: a.caption as string | undefined }, actor);
+      const r = await ops.replaceGalleryPhoto({ url: p.url, width: p.width, height: p.height, position: a.position as number | undefined, which: a.which as string | undefined, caption: a.caption as string | undefined }, actor);
+      await seeNewPhoto(p.url).catch(() => {});
+      return r;
     }
     case "add_gallery_photo": {
       const p = a.photo as Photo;
-      return ops.addGalleryPhoto(
+      const r = await ops.addGalleryPhoto(
         {
           url: p.url,
           width: p.width,
@@ -486,6 +509,8 @@ export async function execute(s: Staged, actor: Actor) {
         },
         actor,
       );
+      await seeNewPhoto(p.url).catch(() => {});
+      return r;
     }
     case "moderate_comment":
       for (const id of a.ids as string[]) await ops.moderateComment(id, a.approve as boolean, actor);
@@ -574,6 +599,14 @@ export async function runAgent(userText: string, photo?: Photo): Promise<AgentRe
     const args = parsed.data as Record<string, unknown>;
     if (name === "ask_choice") return { done: { text: String(args.question), lang, staged: [], choice: args as Choice } };
     if (name === "ask_for_photos") return { done: { text: String(args.reply), lang, staged: [], awaitPhotos: { instruction: String(args.instruction), many: Boolean(args.many) } } };
+    // "the photo with the blue background": show him the candidates in the chat to pick
+    if (name === "pick_photo" || (name === "replace_gallery_photo" && !args.position && args.which)) {
+      const which = String(args.which ?? "").trim();
+      const refs = which ? await findPhotos(which) : await allPhotos();
+      return { done: { text: "", lang, staged: [], photoPick: { refs: refs.length ? refs : await allPhotos(), all: !which || !refs.length } } };
+    }
+    if (name === "generate_ingredient_photos" && !canGenerateImages())
+      return { done: { text: { it: "Per creare le foto mi serve una chiave gratuita di Cloudflare (CF_ACCOUNT_ID + CF_API_TOKEN). Intanto puoi mandarmi tu la foto 📷", pl: "Do tworzenia zdjęć potrzebuję darmowego klucza Cloudflare (CF_ACCOUNT_ID + CF_API_TOKEN). Na razie możesz wysłać mi zdjęcie 📷", en: "To create photos I need a free Cloudflare key (CF_ACCOUNT_ID + CF_API_TOKEN). Meanwhile you can send me a photo 📷", es: "Para crear fotos necesito una clave gratuita de Cloudflare. Mientras, mándame tú la foto 📷", de: "Zum Erstellen brauche ich einen kostenlosen Cloudflare-Schlüssel. Schick mir solange ein Foto 📷", fr: "Pour créer des photos il me faut une clé Cloudflare gratuite. En attendant, envoie-moi une photo 📷" }[lang], lang, staged: [] } };
     if ((READ_TOOLS as readonly string[]).includes(name)) return { result: JSON.stringify(await runRead(name as (typeof READ_TOOLS)[number], args)) };
     const r = await stage(name, args, lang, photo);
     if ("choice" in r) return { done: { text: r.choice.question, lang, staged: [], choice: r.choice } };

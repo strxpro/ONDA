@@ -1,13 +1,75 @@
 import "server-only";
 
-import { Bot, InlineKeyboard, type Context } from "grammy";
+import { Bot, InlineKeyboard, InputFile, type Context } from "grammy";
+import type { InputMediaPhoto } from "grammy/types";
+import { AllBusyError } from "../llm";
+import { allPhotos, jpegOf, replacePhoto, type PhotoRef } from "../photos";
 import { store, type Actor } from "../store";
-import { patchRow } from "../mutations";
+import { patchRow, undoLast } from "../mutations";
 import { saveImage } from "../upload";
 import { detectLang, execute, runAgent, type AgentResult, type Lang, type Photo, type Staged } from "./agent";
 import { transcribe } from "./transcribe";
 
 type Strings = { heard: string; confirm: string; cancel: string; done: string; cancelled: string; expired: string; error: string; working: string; ok: string; own: string; typeIt: string };
+type PhotoStrings = { isIt: string; which: string; all: string; send: string; swapped: string; undo: string; undone: string; busy: string; none: string };
+const P: Record<Lang, PhotoStrings> = {
+  it: { isIt: "È questa? Tocca il numero 👇", which: "Quale? Tocca il numero 👇", all: "📚 Mostra tutte", send: "📷 Ok! Mandami la nuova foto per la n.", swapped: "✅ Fatto, foto cambiata sul sito!", undo: "↩️ Annulla", undone: "↩️ Annullato, è tornata quella di prima.", busy: "😅 Le AI gratuite sono tutte occupate in questo momento. Riprova tra un minuto!", none: "Non ci sono foto." },
+  pl: { isIt: "Czy to to? Kliknij numer 👇", which: "Które? Kliknij numer 👇", all: "📚 Pokaż wszystkie", send: "📷 Dobra! Wyślij mi nowe zdjęcie zamiast nr", swapped: "✅ Gotowe, zdjęcie zmienione na stronie!", undo: "↩️ Cofnij", undone: "↩️ Cofnięte, wróciło poprzednie.", busy: "😅 Wszystkie darmowe AI są teraz zajęte. Spróbuj za minutkę!", none: "Nie ma zdjęć." },
+  en: { isIt: "Is it this one? Tap the number 👇", which: "Which one? Tap the number 👇", all: "📚 Show all", send: "📷 OK! Send me the new photo for no.", swapped: "✅ Done, the photo is changed on the website!", undo: "↩️ Undo", undone: "↩️ Undone, the old one is back.", busy: "😅 All the free AIs are busy right now. Try again in a minute!", none: "No photos." },
+  es: { isIt: "¿Es esta? Toca el número 👇", which: "¿Cuál? Toca el número 👇", all: "📚 Ver todas", send: "📷 ¡Vale! Mándame la nueva foto para la n.", swapped: "✅ ¡Hecho, foto cambiada en la web!", undo: "↩️ Deshacer", undone: "↩️ Deshecho, vuelve la anterior.", busy: "😅 Las IA gratuitas están ocupadas. ¡Inténtalo en un minuto!", none: "No hay fotos." },
+  de: { isIt: "Ist es dieses? Tippe die Nummer 👇", which: "Welches? Tippe die Nummer 👇", all: "📚 Alle zeigen", send: "📷 OK! Schick mir das neue Foto für Nr.", swapped: "✅ Erledigt, Foto auf der Website getauscht!", undo: "↩️ Rückgängig", undone: "↩️ Rückgängig, das alte ist zurück.", busy: "😅 Alle kostenlosen KIs sind gerade belegt. Versuch es in einer Minute!", none: "Keine Fotos." },
+  fr: { isIt: "C'est celle-ci ? Touche le numéro 👇", which: "Laquelle ? Touche le numéro 👇", all: "📚 Tout voir", send: "📷 OK ! Envoie-moi la nouvelle photo pour la n°", swapped: "✅ C'est fait, photo changée sur le site !", undo: "↩️ Annuler", undone: "↩️ Annulé, l'ancienne est revenue.", busy: "😅 Toutes les IA gratuites sont occupées. Réessaie dans une minute !", none: "Pas de photos." },
+};
+
+/** Send photos numbered from `from` (albums of up to 10), each as a small JPEG with its number. */
+async function sendNumbered(ctx: Context, refs: PhotoRef[], from = 1) {
+  for (let i = 0; i < refs.length; i += 10) {
+    const chunk = refs.slice(i, i + 10);
+    const files = await Promise.all(chunk.map((r) => jpegOf(r.url).catch(() => null)));
+    const media: InputMediaPhoto[] = [];
+    chunk.forEach((r, k) => {
+      const f = files[k];
+      if (f) media.push({ type: "photo", media: new InputFile(f, `${from + i + k}.jpg`), caption: `${from + i + k} · ${r.label}` });
+    });
+    if (media.length === 1) await ctx.replyWithPhoto(media[0].media as InputFile, { caption: media[0].caption });
+    else if (media.length) await ctx.replyWithMediaGroup(media);
+  }
+}
+
+/** Number buttons (5 per row) + "show all". */
+function pickKeyboard(id: string, n: number, t: PhotoStrings, withAll: boolean) {
+  const kb = new InlineKeyboard();
+  for (let i = 0; i < n; i++) {
+    kb.text(String(i + 1), `pp:${id}:${i}`);
+    if (i % 5 === 4) kb.row();
+  }
+  kb.row();
+  if (withAll) kb.text(t.all, `pa:${id}`);
+  kb.text("❌", `no:${id}`);
+  return kb;
+}
+
+async function showPick(ctx: Context, refs: PhotoRef[], all: boolean, lang: Lang, photo: Photo | undefined) {
+  const t = P[lang];
+  if (!refs.length) return void (await ctx.reply(t.none));
+  await typing(ctx, () => sendNumbered(ctx, refs), "upload_photo");
+  const p = await store().createPending({
+    telegram_user_id: ctx.from!.id,
+    chat_id: ctx.chat!.id,
+    tool: "photo_pick",
+    args: { refs, lang, photo: photo ?? null },
+    summary: refs.length === 1 ? t.isIt : t.which,
+    expires_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+  });
+  await ctx.reply(refs.length === 1 ? t.isIt : t.which, { reply_markup: pickKeyboard(p.id, refs.length, t, !all) });
+}
+
+/** Swap it and offer an undo. */
+async function swapPhoto(ctx: Context, ref: PhotoRef, photo: Photo, lang: Lang) {
+  const t = P[lang];
+  await typing(ctx, () => replacePhoto(ref, photo, actorOf(ctx)), "upload_photo");
+  await ctx.reply(`${t.swapped}\n(${ref.label})`, { reply_markup: new InlineKeyboard().text(t.undo, `ud:${lang}`) });
+}
 const L: Record<Lang, Strings> = {
   it: { heard: "🎙️ Ho capito:", confirm: "✅ Conferma", cancel: "❌ Annulla", done: "✅ Fatto! Il sito è aggiornato.", cancelled: "❌ Annullato, non ho cambiato niente.", expired: "⏱️ Richiesta scaduta, ripeti pure.", error: "😕 Qualcosa è andato storto:", working: "Un attimo…", ok: "👌 Fatto, questi", own: "✏️ Scrivo io", typeIt: "✏️ Scrivimi la risposta:" },
   pl: { heard: "🎙️ Zrozumiałem:", confirm: "✅ Potwierdź", cancel: "❌ Anuluj", done: "✅ Gotowe! Strona jest zaktualizowana.", cancelled: "❌ Anulowano, nic nie zmieniłem.", expired: "⏱️ Prośba wygasła, powtórz proszę.", error: "😕 Coś poszło nie tak:", working: "Chwileczkę…", ok: "👌 Gotowe, te", own: "✏️ Napiszę sam", typeIt: "✏️ Napisz mi odpowiedź:" },
@@ -51,10 +113,17 @@ async function handle(ctx: Context, text: string, photo?: Photo) {
   try {
     result = await typing(ctx, () => runAgent(text, photo));
   } catch (e) {
-    await ctx.reply(`${L.it.error} ${errText(e)}`);
+    // never a technical error: every free model was busy (or something hiccuped) — a calm "try again"
+    console.error("[agent]", e instanceof AllBusyError ? e.message : e);
+    await ctx.reply(P[detectLang(text)].busy);
     return;
   }
   const t = L[result.lang];
+
+  if (result.photoPick) {
+    await showPick(ctx, result.photoPick.refs, result.photoPick.all, result.lang, photo);
+    return;
+  }
 
   if (result.awaitPhotos) {
     // the next photo(s) he sends are for this
@@ -146,10 +215,17 @@ export function getBot() {
       );
       // a photo without a caption, after he said he would send one: it is for that
       const waiting = !ctx.message.caption ? await store().latestPending(ctx.from!.id, "await_photo") : null;
+      // …and when he already picked WHICH photo to change, it is swapped right away
+      if (waiting?.args.target) {
+        await store().setPendingStatus(waiting.id, "confirmed");
+        await swapPhoto(ctx, waiting.args.target as PhotoRef, saved, (waiting.args.lang as Lang) ?? "it");
+        return;
+      }
       if (waiting && !waiting.args.many) await store().setPendingStatus(waiting.id, "confirmed");
       await handle(ctx, waiting ? `${String(waiting.args.instruction)} (the photo he announced)` : (ctx.message.caption ?? ""), saved);
     } catch (e) {
-      await ctx.reply(`${L.it.error} ${errText(e)}`);
+      console.error("[photo]", e);
+      await ctx.reply(P.it.busy);
     }
   });
 
@@ -200,6 +276,21 @@ export function getBot() {
       return;
     }
 
+    if (kind === "ud") {
+      // undo the photo swap
+      await ctx.answerCallbackQuery();
+      const lang = ((id as Lang) || "it") as Lang;
+      try {
+        await undoLast(actorOf(ctx));
+        await ctx.editMessageReplyMarkup().catch(() => {});
+        await ctx.reply(P[lang].undone);
+      } catch (e) {
+        console.error("[undo]", e);
+        await ctx.reply(P[lang].busy);
+      }
+      return;
+    }
+
     const p = await store().getPending(id);
     const lang = ((p?.args.lang as Lang) ?? "it") as Lang;
     const t = L[lang];
@@ -213,6 +304,32 @@ export function getBot() {
     if (kind === "no") {
       await store().setPendingStatus(id, "cancelled");
       await ctx.editMessageText(`${p.summary}\n\n${t.cancelled}`);
+      return;
+    }
+    if (kind === "pa") {
+      // show every photo, numbered
+      await store().setPendingStatus(id, "confirmed");
+      await ctx.editMessageReplyMarkup().catch(() => {});
+      await showPick(ctx, await allPhotos(), true, lang, (p.args.photo as Photo | null) ?? undefined);
+      return;
+    }
+    if (kind === "pp") {
+      const ref = ((p.args.refs as PhotoRef[]) ?? [])[Number(idx)];
+      if (!ref) return;
+      await store().setPendingStatus(id, "confirmed");
+      await ctx.editMessageText(`${p.summary} → ${Number(idx) + 1}`).catch(() => {});
+      const photo = p.args.photo as Photo | null;
+      if (photo) return void (await swapPhoto(ctx, ref, photo, lang));
+      // the next photo he sends replaces this one
+      await store().createPending({
+        telegram_user_id: ctx.from.id,
+        chat_id: ctx.chat!.id,
+        tool: "await_photo",
+        args: { target: ref, lang, instruction: "replace", many: false },
+        summary: ref.label,
+        expires_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+      });
+      await ctx.reply(`${P[lang].send} ${Number(idx) + 1} (${ref.label}) 👇`);
       return;
     }
     const options = (p.args.options as string[]) ?? [];
