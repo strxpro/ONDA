@@ -171,7 +171,7 @@ export const whenIn = (iso: string, lang?: string | null) => new Date(iso).toLoc
 
 /* ─── customers' addresses (private table "contacts") ─────────────────────── */
 
-export type Contact = { ref_id: string; kind: "reservation" | "comment"; email: string; name: string | null; lang: string | null };
+export type Contact = { ref_id: string; kind: "reservation" | "comment" | "message"; email: string; name: string | null; lang: string | null; note?: string | null };
 
 export async function saveContact(c: Contact) {
   try {

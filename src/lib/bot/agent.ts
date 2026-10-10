@@ -558,7 +558,7 @@ export async function execute(s: Staged, actor: Actor) {
       const who = await contactOf(String(a.refId));
       if (!who) throw new Error("cliente senza e-mail");
       const r = who.kind === "reservation" ? ((await store().get("reservations", who.ref_id)) as Reservation | null) : null;
-      const c = who.kind === "comment" ? ((await store().get("comments", who.ref_id)) as Comment | null) : null;
+      const c = who.kind === "comment" ? ((await store().get("comments", who.ref_id)) as Comment | null) : who.kind === "message" && who.note ? ({ message: who.note, name: who.name ?? "", locale: who.lang } as unknown as Comment) : null;
       const lang = who.lang ?? r?.locale ?? c?.locale ?? "it";
       const kind = { confirmed: "order_confirmed", declined: "order_declined", ready: "order_ready", custom: "custom" }[String(a.template)] as MailKind;
       return sendMail({ to: who.email, kind, lang, name: who.name ?? r?.name ?? c?.name ?? "", items: r?.items, when: r ? whenIn(r.pickup_at, lang) : undefined, quote: c?.message, text: a.text as string | undefined });

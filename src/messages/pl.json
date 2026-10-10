@@ -261,6 +261,24 @@
       "lactoseFree": "Bez laktozy",
       "guessed": "Orientacyjnie, na podstawie składników — zawsze zapytaj przy ladzie.",
       "ask": "Przy poważnych alergiach zawsze zapytaj przy ladzie."
+    },
+    "contact": {
+      "cta": "Napisz do nas",
+      "title": "Napisz do nas",
+      "subtitle": "Pytanie, impreza, słodki pomysł? Jesteśmy tu.",
+      "tabs": {
+        "message": "Wiadomość",
+        "gelato": "Zarezerwuj lody",
+        "cake": "Tort lodowy"
+      },
+      "langNote": "Pisz po polsku — przetłumaczymy automatycznie. Odpowiemy też po polsku 🌍",
+      "name": "Twoje imię",
+      "email": "Twój e-mail (do odpowiedzi)",
+      "message": "O co chcesz zapytać?",
+      "send": "Wyślij",
+      "thanks": "Wiadomość dotarła! 🍦",
+      "replyNote": "Odpowiemy e-mailem, w Twoim języku.",
+      "error": "Ups, nie wysłało się. Spróbuj za chwilę."
     }
   }
 }

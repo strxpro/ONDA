@@ -38,8 +38,8 @@ function romeISO(date: string, time: string) {
  * gelato layers from today's flavors, coating, decorations, a message on top) or just get in touch (call, WhatsApp,
  * a short message). Either way the owner gets it on Telegram. Price: confirmed by the shop.
  */
-export function CakeOrder({ onClose }: { onClose: () => void }) {
-  useScrollLock();
+export function CakeOrder({ onClose, embedded = false }: { onClose: () => void; embedded?: boolean }) {
+  useScrollLock(!embedded);
   const { data, locale } = useSite();
   const ui = useTranslations("ui.cake");
   const [tab, setTab] = useState<"build" | "contact">("build");
@@ -52,10 +52,11 @@ export function CakeOrder({ onClose }: { onClose: () => void }) {
   const bySlug = (slug: string) => flavors.find((f) => f.slug === slug);
   const phone = data.settings.phone?.replace(/[^\d+]/g, "") ?? "";
   useEffect(() => {
+    if (embedded) return;
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
-  }, [onClose]);
+  }, [onClose, embedded]);
 
   const minDate = new Date(Date.now() + 2 * 86_400_000).toLocaleDateString("sv-SE", { timeZone: "Europe/Rome" });
   const summary = () =>
@@ -116,18 +117,20 @@ export function CakeOrder({ onClose }: { onClose: () => void }) {
   );
 
   return (
-    <motion.div className="fixed inset-0 z-[98] grid place-items-center overflow-y-auto overscroll-contain bg-chocolate/45 p-3 backdrop-blur-md sm:p-4" data-lenis-prevent initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} role="dialog" aria-modal="true" aria-label={ui("title")}>
+    <motion.div className={embedded ? "contents" : "fixed inset-0 z-[98] grid place-items-center overflow-y-auto overscroll-contain bg-chocolate/45 p-3 backdrop-blur-md sm:p-4"} data-lenis-prevent initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={embedded ? undefined : onClose} role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true} aria-label={ui("title")}>
       <motion.div
-        className="relative w-full max-w-4xl rounded-[2.5rem] bg-cream p-5 shadow-float sm:p-8"
-        initial={{ y: 120, scale: 0.88, rotate: -3 }}
-        animate={{ y: 0, scale: 1, rotate: 0 }}
+        className={embedded ? "relative w-full" : "relative w-full max-w-4xl rounded-[2.5rem] bg-cream p-5 shadow-float sm:p-8"}
+        initial={embedded ? { y: 30, opacity: 0 } : { y: 120, scale: 0.88, rotate: -3 }}
+        animate={embedded ? { y: 0, opacity: 1 } : { y: 0, scale: 1, rotate: 0 }}
         exit={{ y: 120, scale: 0.88, opacity: 0 }}
         transition={{ type: "spring", stiffness: 240, damping: 22 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <button type="button" onClick={onClose} aria-label="×" className="absolute top-4 right-4 z-10 grid size-10 place-items-center rounded-full bg-white transition-transform hover:rotate-90">
-          <X weight="bold" className="size-5" />
-        </button>
+        {!embedded && (
+          <button type="button" onClick={onClose} aria-label="×" className="absolute top-4 right-4 z-10 grid size-10 place-items-center rounded-full bg-white transition-transform hover:rotate-90">
+            <X weight="bold" className="size-5" />
+          </button>
+        )}
         <h3 className="pr-12 font-display text-3xl leading-tight sm:text-5xl">{ui("title")}</h3>
         {/* two ways */}
         <div className="mt-4 flex w-max gap-1 rounded-full bg-white p-1 shadow-soft">

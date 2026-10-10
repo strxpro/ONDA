@@ -261,6 +261,24 @@
       "lactoseFree": "Lactose-free",
       "guessed": "Indicative, from the ingredients — always ask at the counter.",
       "ask": "With serious allergies, always ask at the counter."
+    },
+    "contact": {
+      "cta": "Write to us",
+      "title": "Write to us",
+      "subtitle": "A question, a party, a sweet idea? We're here.",
+      "tabs": {
+        "message": "Message",
+        "gelato": "Book gelato",
+        "cake": "Gelato cake"
+      },
+      "langNote": "Write in your own language — we translate it automatically, and answer in yours 🌍",
+      "name": "Your name",
+      "email": "Your e-mail (for the reply)",
+      "message": "What would you like to ask?",
+      "send": "Send",
+      "thanks": "Message received! 🍦",
+      "replyNote": "We'll answer by e-mail, in your language.",
+      "error": "Oops, it didn't go. Try again in a moment."
     }
   }
 }

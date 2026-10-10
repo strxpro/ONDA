@@ -261,6 +261,24 @@
       "lactoseFree": "Sans lactose",
       "guessed": "Indicatifs, d'après les ingrédients : demande toujours au comptoir.",
       "ask": "En cas d'allergie grave, demande toujours au comptoir."
+    },
+    "contact": {
+      "cta": "Écris-nous",
+      "title": "Écris-nous",
+      "subtitle": "Une question, une fête, une idée gourmande ? On est là.",
+      "tabs": {
+        "message": "Message",
+        "gelato": "Réserver une glace",
+        "cake": "Gâteau glacé"
+      },
+      "langNote": "Écris dans ta langue : on traduit automatiquement et on te répond dans la tienne 🌍",
+      "name": "Ton prénom",
+      "email": "Ton e-mail (pour la réponse)",
+      "message": "Que veux-tu nous demander ?",
+      "send": "Envoyer",
+      "thanks": "Message bien reçu ! 🍦",
+      "replyNote": "On te répond par e-mail, dans ta langue.",
+      "error": "Oups, ça n'est pas parti. Réessaie dans un instant."
     }
   }
 }

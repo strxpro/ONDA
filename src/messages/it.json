@@ -261,6 +261,24 @@
       "lactoseFree": "Senza lattosio",
       "guessed": "Indicativi, dagli ingredienti: chiedi sempre al banco.",
       "ask": "Per allergie gravi chiedi sempre al banco."
+    },
+    "contact": {
+      "cta": "Scrivici",
+      "title": "Scrivici",
+      "subtitle": "Una domanda, una festa, un'idea golosa? Siamo qui.",
+      "tabs": {
+        "message": "Messaggio",
+        "gelato": "Prenota il gelato",
+        "cake": "Torta gelato"
+      },
+      "langNote": "Scrivi pure nella tua lingua: la traduciamo noi, in automatico. E ti rispondiamo nella tua 🌍",
+      "name": "Il tuo nome",
+      "email": "La tua e-mail (per la risposta)",
+      "message": "Cosa vuoi chiederci?",
+      "send": "Invia",
+      "thanks": "Messaggio arrivato! 🍦",
+      "replyNote": "Ti rispondiamo per e-mail, nella tua lingua.",
+      "error": "Ops, non è partito. Riprova tra poco."
     }
   }
 }

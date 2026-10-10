@@ -237,7 +237,7 @@ async function answerMail(ctx: Context, text: string) {
     const who = await contactOf(refId);
     if (!who) throw new Error("no contact");
     const r = who.kind === "reservation" ? ((await store().get("reservations", refId)) as Reservation | null) : null;
-    const c = who.kind === "comment" ? ((await store().get("comments", refId)) as { message: string } | null) : null;
+    const c = who.kind === "comment" ? ((await store().get("comments", refId)) as { message: string } | null) : who.kind === "message" && who.note ? { message: who.note } : null;
     const lang = who.lang ?? r?.locale ?? "it";
     const sent = await typing(ctx, () => sendMail({ to: who.email, kind: "custom", lang, name: who.name ?? r?.name ?? "", items: r?.items, when: r ? whenIn(r.pickup_at, lang) : undefined, quote: c?.message, text }));
     await ctx.reply(`📧 Inviata a ${who.email} («${sent.subject}»), in ${lang.toUpperCase()} ✨`);
@@ -583,6 +583,14 @@ export async function notifyComment(c: { id: string; name: string; message: stri
 }
 
 /** Tell the owner about a new pre-order (gelato by the kilo, treats…), with ✅ / ❌ buttons. */
+/** A visitor wrote to the shop (contact card): in Italian for the owner, with the original, and a reply button. */
+export async function notifyMessage(m: { id: string; name: string; email: string; lang: string; original: string; italian: string }) {
+  const flag = { it: "🇮🇹", pl: "🇵🇱", en: "🇬🇧", es: "🇪🇸", de: "🇩🇪", fr: "🇫🇷" }[m.lang] ?? "🌍";
+  const same = m.lang === "it" || m.original.trim() === m.italian.trim();
+  const text = `✉️ Nuovo messaggio dal sito ${flag}\n\n«${m.italian}»${same ? "" : `\n\n📝 Originale (${m.lang.toUpperCase()}): «${m.original}»`}\n\n— ${m.name} · ${m.email}\n\n💬 Rispondi in italiano (scritto o a voce): arriva al cliente per e-mail, tradotto nella sua lingua.`;
+  await toAdmins(text, new InlineKeyboard().text("📧 Rispondi", `ms:${m.id}:0`));
+}
+
 export async function notifyReservation(text: string, id: string, hasEmail = false) {
   const kb = new InlineKeyboard().text("✅ Conferma", `rs:${id}:ok`).text("❌ Rifiuta", `rs:${id}:no`);
   if (hasEmail) kb.row().text("🍨 È pronta", `rs:${id}:ready`).text("📧 Scrivi un'e-mail", `ms:${id}:0`);

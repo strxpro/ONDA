@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { t } from "@/lib/shared";
 import { useSite } from "../providers/SiteData";
 import { LangSwitch } from "../ui/LangSwitch";
+import { PrivacyLink } from "./Privacy";
 import { Logo } from "../ui/Logo";
 
 const SOCIAL_ICON = { facebook: FacebookLogo, instagram: InstagramLogo } as const;
@@ -50,8 +51,11 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-14 flex flex-wrap items-center justify-between gap-3 border-t border-cream/15 pt-6 text-sm opacity-80">
-          <p>
-            © {new Date().getFullYear()} {s.name}
+          <p className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <span>
+              © {new Date().getFullYear()} {s.name}
+            </span>
+            <PrivacyLink />
           </p>
           <p>
             {ui("credit")}: <strong>Shardana Nuragici</strong>

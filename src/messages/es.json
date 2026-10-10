@@ -261,6 +261,24 @@
       "lactoseFree": "Sin lactosa",
       "guessed": "Orientativos, según los ingredientes: pregunta siempre en el mostrador.",
       "ask": "Con alergias graves, pregunta siempre en el mostrador."
+    },
+    "contact": {
+      "cta": "Escríbenos",
+      "title": "Escríbenos",
+      "subtitle": "¿Una pregunta, una fiesta, una idea golosa? Aquí estamos.",
+      "tabs": {
+        "message": "Mensaje",
+        "gelato": "Reservar helado",
+        "cake": "Tarta helada"
+      },
+      "langNote": "Escribe en tu idioma: lo traducimos automáticamente y te respondemos en el tuyo 🌍",
+      "name": "Tu nombre",
+      "email": "Tu e-mail (para la respuesta)",
+      "message": "¿Qué quieres preguntarnos?",
+      "send": "Enviar",
+      "thanks": "¡Mensaje recibido! 🍦",
+      "replyNote": "Te respondemos por e-mail, en tu idioma.",
+      "error": "Vaya, no se ha enviado. Inténtalo en un momento."
     }
   }
 }

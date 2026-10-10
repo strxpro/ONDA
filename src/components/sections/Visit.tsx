@@ -2,15 +2,17 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { Bicycle, Storefront, NavigationArrow, Phone, ShoppingBag } from "@phosphor-icons/react";
+import { Bicycle, ChatCircleDots, NavigationArrow, Phone, ShoppingBag, Storefront } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { hhmm, isOpenNow, nowIn } from "@/lib/hours";
+import { sfx } from "@/lib/sound";
 import { t } from "@/lib/shared";
 import { useSite } from "../providers/SiteData";
 import { LogoMark } from "../ui/Logo";
 import { Title } from "../ui/Title";
+import { ContactCard } from "./ContactCard";
 
 /** A postcard of the square, and the shop-door sign that flips APERTO / CHIUSO by itself. */
 export function Visit() {
@@ -163,20 +165,34 @@ function MapEmbed() {
   );
 }
 
-/** A polaroid of the shop front, the real photo. */
+/** A polaroid of the shop front, the real photo; tap it: the contact card opens out of a scoop. */
 function ShopPhoto() {
   const ui = useTranslations("ui.map");
+  const uc = useTranslations("ui.contact");
+  const [from, setFrom] = useState<DOMRect | null | false>(false);
   return (
+    <>
+    {from !== false && <ContactCard from={from} onClosed={() => setFrom(false)} />}
     <motion.figure
+      onClick={(e) => (sfx.whoosh(), setFrom(e.currentTarget.getBoundingClientRect()))}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setFrom(e.currentTarget.getBoundingClientRect())}
+      aria-label={uc("title")}
       initial={{ y: 40, opacity: 0, rotate: 12 }}
       whileInView={{ y: 0, opacity: 1, rotate: 4 }}
       whileHover={{ rotate: 1.5, y: -6, scale: 1.03 }}
       viewport={{ once: true }}
       transition={{ type: "spring", stiffness: 110, damping: 14, delay: 0.2 }}
-      className="relative z-10 mx-auto mt-6 w-[80%] max-w-[380px] rounded-sm bg-[#fffdf8] p-2.5 pb-10 shadow-[0_30px_50px_-20px_rgba(20,60,50,0.55)] md:mr-[-2rem] md:ml-auto md:w-[60%]"
+      className="group relative z-10 mx-auto mt-6 w-[80%] cursor-pointer max-w-[380px] rounded-sm bg-[#fffdf8] p-2.5 pb-10 shadow-[0_30px_50px_-20px_rgba(20,60,50,0.55)] md:mr-[-2rem] md:ml-auto md:w-[60%]"
     >
       <img src="/img/shop.webp" alt={ui("photo")} width={680} height={383} className="aspect-[16/10] w-full rounded-[2px] object-cover" loading="lazy" />
       <figcaption className="absolute right-3 bottom-2 left-3 font-script text-xl text-chocolate/80">{ui("photo")} · Via Amsicora 2</figcaption>
+      {/* a sticker: "write to us" */}
+      <span className="absolute -top-4 -left-4 flex rotate-[-8deg] items-center gap-1.5 rounded-full bg-[#F0527F] px-3.5 py-2 text-sm font-black text-white shadow-lg transition-transform group-hover:scale-110 group-hover:rotate-0">
+        <ChatCircleDots weight="fill" className="size-4" /> {uc("cta")}
+      </span>
     </motion.figure>
+    </>
   );
 }

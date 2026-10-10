@@ -21,7 +21,7 @@ const ROW_SCHEMA: Record<TableName, z.ZodType<Row>> = {
   reviews: Review,
   comments: Comment,
   reservations: Reservation,
-  contacts: z.object({ ref_id: z.string(), kind: z.enum(["reservation", "comment"]), email: z.string().email(), name: z.string().nullable().optional(), lang: z.string().nullable().optional(), created_at: z.string().optional() }).passthrough(),
+  contacts: z.object({ ref_id: z.string(), kind: z.enum(["reservation", "comment", "message"]), email: z.string().email(), name: z.string().nullable().optional(), lang: z.string().nullable().optional(), note: z.string().nullable().optional(), created_at: z.string().optional() }).passthrough(),
 } as Record<TableName, z.ZodType<Row>>;
 
 export type Ctx = Actor & { action: string; batchId?: string };

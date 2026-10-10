@@ -261,6 +261,24 @@
       "lactoseFree": "Laktosefrei",
       "guessed": "Richtwerte aus den Zutaten – frag immer an der Theke.",
       "ask": "Bei schweren Allergien frag immer an der Theke."
+    },
+    "contact": {
+      "cta": "Schreib uns",
+      "title": "Schreib uns",
+      "subtitle": "Eine Frage, eine Feier, eine süße Idee? Wir sind da.",
+      "tabs": {
+        "message": "Nachricht",
+        "gelato": "Eis reservieren",
+        "cake": "Eistorte"
+      },
+      "langNote": "Schreib in deiner Sprache – wir übersetzen automatisch und antworten in deiner 🌍",
+      "name": "Dein Name",
+      "email": "Deine E-Mail (für die Antwort)",
+      "message": "Was möchtest du fragen?",
+      "send": "Senden",
+      "thanks": "Nachricht angekommen! 🍦",
+      "replyNote": "Wir antworten per E-Mail, in deiner Sprache.",
+      "error": "Hoppla, das hat nicht geklappt. Versuch es gleich nochmal."
     }
   }
 }

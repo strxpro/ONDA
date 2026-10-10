@@ -81,8 +81,9 @@ export function OrderCard() {
   );
 }
 
-function OrderForm({ onClose }: { onClose: () => void }) {
-  useScrollLock();
+/** The pre-order form; `embedded` = inside another pop-up (the shop's contact card): no overlay of its own. */
+export function OrderForm({ onClose, embedded = false }: { onClose: () => void; embedded?: boolean }) {
+  useScrollLock(!embedded);
   const { data, locale } = useSite();
   const ui = useTranslations("ui.order");
   const items = data.prices.filter((p) => p.is_active && p.price_group === "vaschette");
@@ -105,10 +106,11 @@ function OrderForm({ onClose }: { onClose: () => void }) {
   const customPrice = Math.round(perKg * (grams / 1000) * 10) / 10;
 
   useEffect(() => {
+    if (embedded) return;
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
-  }, [onClose]);
+  }, [onClose, embedded]);
 
   const toggle = (slug: string) => {
     sfx.pop();
@@ -147,19 +149,21 @@ function OrderForm({ onClose }: { onClose: () => void }) {
 
   const field = "w-full rounded-2xl border-2 border-chocolate/10 bg-white px-4 py-3 font-bold outline-none focus:border-pink";
   return (
-    <motion.div className="fixed inset-0 z-[96] grid place-items-center bg-chocolate/40 p-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} role="dialog" aria-modal="true" aria-label={ui("formTitle")}>
+    <motion.div className={embedded ? "contents" : "fixed inset-0 z-[96] grid place-items-center bg-chocolate/40 p-4 backdrop-blur-md"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={embedded ? undefined : onClose} role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true} aria-label={ui("formTitle")}>
       <motion.div
         data-lenis-prevent
-        className="relative max-h-[92svh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-[2rem] bg-cream p-6 shadow-float"
-        initial={{ y: 120, scale: 0.85, rotate: -4 }}
-        animate={{ y: 0, scale: 1, rotate: 0 }}
+        className={embedded ? "relative w-full" : "relative max-h-[92svh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-[2rem] bg-cream p-6 shadow-float"}
+        initial={embedded ? { y: 30, opacity: 0 } : { y: 120, scale: 0.85, rotate: -4 }}
+        animate={embedded ? { y: 0, opacity: 1 } : { y: 0, scale: 1, rotate: 0 }}
         exit={{ y: 120, scale: 0.85, opacity: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 22 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <button type="button" onClick={onClose} aria-label="×" className="absolute top-4 right-4 grid size-10 place-items-center rounded-full bg-white transition-transform hover:rotate-90">
-          <X weight="bold" className="size-5" />
-        </button>
+        {!embedded && (
+          <button type="button" onClick={onClose} aria-label="×" className="absolute top-4 right-4 grid size-10 place-items-center rounded-full bg-white transition-transform hover:rotate-90">
+            <X weight="bold" className="size-5" />
+          </button>
+        )}
         {state === "done" ? (
           <div className="py-10 text-center">
             <motion.div initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 260, damping: 10 }} className="mx-auto grid size-20 place-items-center rounded-full bg-[#4FA845] text-white">
