@@ -5,7 +5,7 @@
 import { Bicycle, ChatCircleDots, NavigationArrow, Phone, ShoppingBag, Storefront } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { hhmm, isOpenNow, nowIn } from "@/lib/hours";
 import { sfx } from "@/lib/sound";
 import { t } from "@/lib/shared";
@@ -22,6 +22,9 @@ export function Visit() {
   const weekdays = ui.raw("weekdays") as string[];
   const [today, setToday] = useState<number | null>(null);
   const [open, setOpen] = useState<boolean | null>(null);
+  // the contact card: opens out of the button that was tapped (its rect is where the scoop starts)
+  const [contactFrom, setContactFrom] = useState<DOMRect | null | false>(false);
+  const openContact = (el: Element) => (sfx.whoosh(), setContactFrom(el.getBoundingClientRect()));
   useEffect(() => {
     const check = () => {
       setToday(nowIn(s.timezone).weekday);
@@ -70,7 +73,7 @@ export function Visit() {
             </svg>
             <p className="absolute right-32 bottom-3 left-4 truncate font-script text-2xl leading-tight text-chocolate/80">{s.address}</p>
           </motion.div>
-          <ShopPhoto />
+          <ShopPhoto onOpen={openContact} />
           </div>
 
           {/* door sign + hours card */}
@@ -145,7 +148,9 @@ export function Visit() {
                   <NavigationArrow weight="duotone" className="size-6" /> {ui("navigate")}
                 </a>
               )}
+              <ContactButton onOpen={openContact} />
             </div>
+            {contactFrom !== false && <ContactCard from={contactFrom} onClosed={() => setContactFrom(false)} />}
           </div>
         </div>
       </div>
@@ -165,19 +170,36 @@ function MapEmbed() {
   );
 }
 
-/** A polaroid of the shop front, the real photo; tap it: the contact card opens out of a scoop. */
-function ShopPhoto() {
+/** The big "write to us" button next to call / directions: wobbles now and then so it gets noticed. */
+function ContactButton({ onOpen }: { onOpen: (el: Element) => void }) {
+  const uc = useTranslations("ui.contact");
+  return (
+    <motion.button
+      type="button"
+      onClick={(e) => onOpen(e.currentTarget)}
+      animate={{ rotate: [0, -4, 4, -2, 0], scale: [1, 1.06, 1] }}
+      transition={{ duration: 0.9, repeat: Infinity, repeatDelay: 3.5 }}
+      whileHover={{ scale: 1.06 }}
+      whileTap={{ scale: 0.94 }}
+      className="btn-candy relative bg-mint"
+    >
+      <span className="absolute -inset-1 animate-ping rounded-full border-2 border-[#2EC4A0]/50 [animation-duration:2.4s]" aria-hidden />
+      <ChatCircleDots weight="duotone" className="size-6" /> {uc("cta")}
+    </motion.button>
+  );
+}
+
+/** A polaroid of the shop front, the real photo, with a big "write to us" sticker; tap: the contact card opens. */
+function ShopPhoto({ onOpen }: { onOpen: (el: Element) => void }) {
   const ui = useTranslations("ui.map");
   const uc = useTranslations("ui.contact");
-  const [from, setFrom] = useState<DOMRect | null | false>(false);
+  const sticker = useRef<HTMLSpanElement>(null);
   return (
-    <>
-    {from !== false && <ContactCard from={from} onClosed={() => setFrom(false)} />}
     <motion.figure
-      onClick={(e) => (sfx.whoosh(), setFrom(e.currentTarget.getBoundingClientRect()))}
+      onClick={() => sticker.current && onOpen(sticker.current)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setFrom(e.currentTarget.getBoundingClientRect())}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && sticker.current && onOpen(sticker.current)}
       aria-label={uc("title")}
       initial={{ y: 40, opacity: 0, rotate: 12 }}
       whileInView={{ y: 0, opacity: 1, rotate: 4 }}
@@ -188,11 +210,16 @@ function ShopPhoto() {
     >
       <img src="/img/shop.webp" alt={ui("photo")} width={680} height={383} className="aspect-[16/10] w-full rounded-[2px] object-cover" loading="lazy" />
       <figcaption className="absolute right-3 bottom-2 left-3 font-script text-xl text-chocolate/80">{ui("photo")} · Via Amsicora 2</figcaption>
-      {/* a sticker: "write to us" */}
-      <span className="absolute -top-4 -left-4 flex rotate-[-8deg] items-center gap-1.5 rounded-full bg-[#F0527F] px-3.5 py-2 text-sm font-black text-white shadow-lg transition-transform group-hover:scale-110 group-hover:rotate-0">
-        <ChatCircleDots weight="fill" className="size-4" /> {uc("cta")}
-      </span>
+      {/* the big sticker: "write to us" — the pop-up grows out of it */}
+      <motion.span
+        ref={sticker}
+        animate={{ rotate: [-8, -3, -8], scale: [1, 1.08, 1] }}
+        transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -top-6 -left-5 flex items-center gap-2 rounded-full bg-[#F0527F] px-5 py-3 text-base font-black text-white shadow-[0_10px_24px_-6px_rgba(240,82,127,0.7)] ring-4 ring-white sm:text-lg"
+      >
+        <ChatCircleDots weight="fill" className="size-6" /> {uc("cta")}
+        <span className="absolute -inset-1.5 animate-ping rounded-full border-2 border-[#F0527F]/60 [animation-duration:2.2s]" aria-hidden />
+      </motion.span>
     </motion.figure>
-    </>
   );
 }

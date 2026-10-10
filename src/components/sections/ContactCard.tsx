@@ -4,7 +4,7 @@
 import { Cake, ChatCircleDots, CheckCircle, IceCream, PaperPlaneTilt, Translate } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { sfx } from "@/lib/sound";
 import { useSite } from "../providers/SiteData";
 import { ScoopModal } from "../ui/ScoopModal";
@@ -21,6 +21,24 @@ type Tab = "message" | "gelato" | "cake";
 export function ContactCard({ from, onClosed }: { from: DOMRect | null; onClosed: () => void }) {
   const ui = useTranslations("ui.contact");
   const [tab, setTab] = useState<Tab>("message");
+  // the hot buttons stick to the top while the card scrolls; once stuck they get a soft shadow
+  const bar = useRef<HTMLDivElement>(null);
+  const sentinel = useRef<HTMLDivElement>(null);
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setStuck(!e.isIntersecting), { root: el.closest("[data-lenis-prevent]"), threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  /** switching: glide back up so the new form starts right under the buttons */
+  const pick = (k: Tab) => {
+    sfx.pop();
+    setTab(k);
+    const box = bar.current?.closest("[data-lenis-prevent]") as HTMLElement | null;
+    if (box && bar.current && box.scrollTop > bar.current.offsetTop) box.scrollTo({ top: bar.current.offsetTop, behavior: "smooth" });
+  };
   const tabs: [Tab, typeof ChatCircleDots, string][] = [
     ["message", ChatCircleDots, "#FF8FB8"],
     ["gelato", IceCream, "#FFE066"],
@@ -39,10 +57,11 @@ export function ContactCard({ from, onClosed }: { from: DOMRect | null; onClosed
       </div>
       <div className="px-5 pb-8 sm:px-8">
         {/* hot buttons */}
-        <div className="sticky top-0 z-10 -mx-5 flex flex-wrap gap-2 bg-cream/95 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8">
+        <div ref={sentinel} className="h-px" aria-hidden />
+        <div ref={bar} className={`sticky top-0 z-10 -mx-5 grid grid-cols-3 gap-1.5 bg-cream/95 px-3 py-2.5 backdrop-blur transition-shadow duration-300 sm:-mx-8 sm:flex sm:flex-wrap sm:gap-2 sm:px-8 sm:py-3 ${stuck ? "shadow-[0_10px_24px_-14px_rgba(75,42,32,0.45)]" : ""}`}>
           {tabs.map(([k, Icon, c]) => (
-            <button key={k} type="button" onClick={() => (sfx.pop(), setTab(k))} aria-pressed={tab === k} className={`relative flex items-center gap-2 rounded-full px-4 py-2.5 font-bold transition-colors ${tab === k ? "text-chocolate" : "bg-white text-chocolate/70"}`}>
-              {tab === k && <motion.span layoutId="contact-tab" className="absolute inset-0 rounded-full" style={{ background: c }} transition={{ type: "spring", stiffness: 420, damping: 30 }} />}
+            <button key={k} type="button" onClick={() => pick(k)} aria-pressed={tab === k} className={`relative flex flex-col items-center justify-center gap-0.5 rounded-2xl px-1.5 py-2 text-center text-xs leading-tight font-bold transition-colors sm:flex-row sm:gap-2 sm:rounded-full sm:px-4 sm:py-2.5 sm:text-base ${tab === k ? "text-chocolate" : "bg-white text-chocolate/70"}`}>
+              {tab === k && <motion.span layoutId="contact-tab" className="absolute inset-0 rounded-2xl sm:rounded-full" style={{ background: c }} transition={{ type: "spring", stiffness: 420, damping: 30 }} />}
               <Icon weight="duotone" className="relative size-5" />
               <span className="relative">{ui(`tabs.${k}`)}</span>
             </button>

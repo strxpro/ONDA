@@ -26,8 +26,9 @@ export function ScoopModal({ from, onClosed, label, children, width = 920 }: { f
   useEffect(() => setMounted(true), []);
 
   const target = () => {
-    const w = Math.min(window.innerWidth - 24, width);
-    const h = Math.min(window.innerHeight - 32, 860);
+    const phone = window.innerWidth < 640;
+    const w = Math.min(window.innerWidth - (phone ? 16 : 24), width);
+    const h = Math.min(window.innerHeight - (phone ? 16 : 32), 860);
     return { left: (window.innerWidth - w) / 2, top: (window.innerHeight - h) / 2, width: w, height: h };
   };
   const origin = () => {
@@ -63,7 +64,7 @@ export function ScoopModal({ from, onClosed, label, children, width = 920 }: { f
       .to(f, { ...target(), duration: 0.85 }, 0)
       // the scoop grows past the card's edges: the mask "opens" into the whole card
       .to(f, { WebkitMaskSize: "330% 330%", maskSize: "330% 330%", duration: 0.85, ease: "expo.in" }, 0.12)
-      .set(f, { WebkitMaskImage: "none", maskImage: "none", borderRadius: 36 })
+      .set(f, { WebkitMaskImage: "none", maskImage: "none", borderRadius: window.innerWidth < 640 ? 24 : 36 })
       .fromTo(body.current, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: "expo.out" }, 0.75)
       .fromTo(closeBtn.current, { autoAlpha: 1, scale: 0, rotate: -90 }, { scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2)" }, 0.8);
     const esc = (e: KeyboardEvent) => e.key === "Escape" && close();
@@ -82,7 +83,7 @@ export function ScoopModal({ from, onClosed, label, children, width = 920 }: { f
     <div className="fixed inset-0 z-[95]" role="dialog" aria-modal="true" aria-label={label}>
       <div ref={bg} className="absolute inset-0 bg-chocolate/55 opacity-0 backdrop-blur-md" onClick={close} />
       <div ref={frame} className="fixed overflow-hidden bg-cream shadow-[0_40px_120px_-30px_rgba(0,0,0,0.6)]" style={{ WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "50% 45%", maskPosition: "50% 45%" }}>
-        <div ref={body} data-lenis-prevent className="h-full overflow-y-auto overscroll-contain">
+        <div ref={body} data-lenis-prevent className="h-full overflow-y-auto overscroll-contain scroll-smooth [-webkit-overflow-scrolling:touch]">
           {children}
         </div>
         <button ref={closeBtn} type="button" onClick={close} aria-label="✕" className="absolute top-4 right-4 z-20 grid size-11 place-items-center rounded-full bg-white text-chocolate shadow-soft transition-transform hover:rotate-90">
