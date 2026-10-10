@@ -15,7 +15,7 @@ const MASK = `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://w
  * and grows past its own edges until the whole card shows; ✕ (or Esc, or the backdrop) closes it back into the scoop.
  * The card scrolls on its own, the page behind is locked.
  */
-export function ScoopModal({ from, onClosed, label, children, width = 920 }: { from: DOMRect | null; onClosed: () => void; label: string; children: ReactNode; width?: number }) {
+export function ScoopModal({ from, onClosed, label, children, width = 920, shape = "scoop", color = "#F0527F" }: { from: DOMRect | null; onClosed: () => void; label: string; children: ReactNode; width?: number; shape?: "scoop" | "pill"; color?: string }) {
   useScrollLock();
   const frame = useRef<HTMLDivElement>(null);
   const bg = useRef<HTMLDivElement>(null);
@@ -42,6 +42,16 @@ export function ScoopModal({ from, onClosed, label, children, width = 920 }: { f
     const f = frame.current!;
     const o = origin();
     sfx.whoosh();
+    if (shape === "pill") {
+      // back into the pill it came from: shrinks, rounds off, takes the button's color, fades into it
+      gsap
+        .timeline({ defaults: { ease: "expo.inOut" }, onComplete: onClosed })
+        .to([closeBtn.current, body.current], { autoAlpha: 0, duration: 0.18 }, 0)
+        .to(f, { left: o.left, top: o.top, width: o.width, height: o.height, borderRadius: o.height / 2, backgroundColor: color, duration: 0.7 }, 0.1)
+        .to(f, { autoAlpha: 0, duration: 0.18 }, 0.72)
+        .to(bg.current, { opacity: 0, duration: 0.45 }, 0.35);
+      return;
+    }
     gsap
       .timeline({ defaults: { ease: "expo.inOut" }, onComplete: onClosed })
       .to([closeBtn.current, body.current], { autoAlpha: 0, duration: 0.2 }, 0)
@@ -57,9 +67,22 @@ export function ScoopModal({ from, onClosed, label, children, width = 920 }: { f
     const f = frame.current!;
     const o = origin();
     sfx.whoosh();
-    gsap.set(f, { left: o.left, top: o.top, width: o.width, height: o.height, WebkitMaskImage: MASK, maskImage: MASK, WebkitMaskSize: "100% 100%", maskSize: "100% 100%" });
     gsap.set([body.current, closeBtn.current], { autoAlpha: 0 });
     const tl = gsap.timeline({ defaults: { ease: "expo.inOut" } });
+    if (shape === "pill") {
+      // the button itself grows: a pill in its color stretches into the card, the corners soften, cream fills in
+      const r = window.innerWidth < 640 ? 24 : 36;
+      gsap.set(f, { left: o.left, top: o.top, width: o.width, height: o.height, borderRadius: o.height / 2, backgroundColor: color });
+      tl.to(bg.current, { opacity: 1, duration: 0.4, ease: "power2.out" }, 0)
+        // a little squeeze first, like pressing a button
+        .to(f, { scaleX: 1.06, scaleY: 0.9, duration: 0.12, ease: "power2.out" }, 0)
+        .to(f, { scaleX: 1, scaleY: 1, duration: 0.5, ease: "elastic.out(1, 0.5)" }, 0.12)
+        .to(f, { ...target(), borderRadius: r, duration: 0.75 }, 0.08)
+        .to(f, { backgroundColor: "#FFF7EE", duration: 0.45, ease: "power2.inOut" }, 0.35)
+        .fromTo(body.current, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.45, ease: "expo.out" }, 0.62)
+        .fromTo(closeBtn.current, { autoAlpha: 1, scale: 0, rotate: -90 }, { scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2)" }, 0.68);
+    } else {
+    gsap.set(f, { left: o.left, top: o.top, width: o.width, height: o.height, WebkitMaskImage: MASK, maskImage: MASK, WebkitMaskSize: "100% 100%", maskSize: "100% 100%" });
     tl.to(bg.current, { opacity: 1, duration: 0.45, ease: "power2.out" }, 0)
       .to(f, { ...target(), duration: 0.85 }, 0)
       // the scoop grows past the card's edges: the mask "opens" into the whole card
@@ -67,6 +90,7 @@ export function ScoopModal({ from, onClosed, label, children, width = 920 }: { f
       .set(f, { WebkitMaskImage: "none", maskImage: "none", borderRadius: window.innerWidth < 640 ? 24 : 36 })
       .fromTo(body.current, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: "expo.out" }, 0.75)
       .fromTo(closeBtn.current, { autoAlpha: 1, scale: 0, rotate: -90 }, { scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2)" }, 0.8);
+    }
     const esc = (e: KeyboardEvent) => e.key === "Escape" && close();
     const fit = () => !closing.current && gsap.set(f, target());
     window.addEventListener("keydown", esc);

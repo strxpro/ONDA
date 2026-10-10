@@ -18,13 +18,22 @@ type Tab = "message" | "gelato" | "cake";
  * owner in Italian and the answer comes back in yours — or, with the hot buttons, book gelato or a gelato cake
  * right here, in the same card.
  */
-export function ContactCard({ from, onClosed }: { from: DOMRect | null; onClosed: () => void }) {
+export function ContactCard({ from, onClosed, color = "#F0527F" }: { from: DOMRect | null; onClosed: () => void; color?: string }) {
   const ui = useTranslations("ui.contact");
   const [tab, setTab] = useState<Tab>("message");
   // the hot buttons stick to the top while the card scrolls; once stuck they get a soft shadow
   const bar = useRef<HTMLDivElement>(null);
   const sentinel = useRef<HTMLDivElement>(null);
   const [stuck, setStuck] = useState(false);
+  // the forms below know how tall the sticky buttons are, so their own sticky rows sit right under them
+  const wrap = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const b = bar.current;
+    if (!b) return;
+    const ro = new ResizeObserver(() => wrap.current?.style.setProperty("--sticky-top", `${b.offsetHeight}px`));
+    ro.observe(b);
+    return () => ro.disconnect();
+  }, []);
   useEffect(() => {
     const el = sentinel.current;
     if (!el) return;
@@ -45,7 +54,7 @@ export function ContactCard({ from, onClosed }: { from: DOMRect | null; onClosed
     ["cake", Cake, "#6FE0C4"],
   ];
   return (
-    <ScoopModal from={from} onClosed={onClosed} label={ui("title")} width={tab === "cake" ? 1040 : 900}>
+    <ScoopModal from={from} onClosed={onClosed} label={ui("title")} width={tab === "cake" ? 1040 : 900} shape="pill" color={color}>
       {/* the shop, as a header */}
       <div className="relative h-44 overflow-hidden sm:h-56">
         <img src="/img/shop.webp" alt="" className="h-full w-full object-cover" />
@@ -55,7 +64,7 @@ export function ContactCard({ from, onClosed }: { from: DOMRect | null; onClosed
           <p className="mt-1 font-semibold text-chocolate/70">{ui("subtitle")}</p>
         </div>
       </div>
-      <div className="px-5 pb-8 sm:px-8">
+      <div ref={wrap} className="px-5 pb-8 sm:px-8">
         {/* hot buttons */}
         <div ref={sentinel} className="h-px" aria-hidden />
         <div ref={bar} className={`sticky top-0 z-10 -mx-5 grid grid-cols-3 gap-1.5 bg-cream/95 px-3 py-2.5 backdrop-blur transition-shadow duration-300 sm:-mx-8 sm:flex sm:flex-wrap sm:gap-2 sm:px-8 sm:py-3 ${stuck ? "shadow-[0_10px_24px_-14px_rgba(75,42,32,0.45)]" : ""}`}>

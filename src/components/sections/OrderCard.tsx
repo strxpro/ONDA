@@ -174,7 +174,8 @@ export function OrderForm({ onClose, embedded = false }: { onClose: () => void; 
         ) : (
           <form onSubmit={submit} className="space-y-4">
             <h3 className="pr-10 font-display text-3xl font-bold">{ui("formTitle")}</h3>
-            <div>
+            {/* "what shall I prepare?": the sizes follow you while you scroll the form */}
+            <div className="sticky z-[5] -mx-2 rounded-2xl bg-cream/95 px-2 pt-1 pb-3 backdrop-blur" style={{ top: "var(--sticky-top, 0px)" }}>
               <p className="font-script text-xl text-chocolate/70">{ui("what")}</p>
               <div className="mt-3 flex flex-wrap gap-x-2 gap-y-4">
                 {items.map((p) => {

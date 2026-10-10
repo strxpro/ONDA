@@ -24,7 +24,8 @@ export function Visit() {
   const [open, setOpen] = useState<boolean | null>(null);
   // the contact card: opens out of the button that was tapped (its rect is where the scoop starts)
   const [contactFrom, setContactFrom] = useState<DOMRect | null | false>(false);
-  const openContact = (el: Element) => (sfx.whoosh(), setContactFrom(el.getBoundingClientRect()));
+  const [contactColor, setContactColor] = useState("#F0527F");
+  const openContact = (el: Element) => (setContactColor(getComputedStyle(el).backgroundColor), setContactFrom(el.getBoundingClientRect()));
   useEffect(() => {
     const check = () => {
       setToday(nowIn(s.timezone).weekday);
@@ -150,7 +151,7 @@ export function Visit() {
               )}
               <ContactButton onOpen={openContact} />
             </div>
-            {contactFrom !== false && <ContactCard from={contactFrom} onClosed={() => setContactFrom(false)} />}
+            {contactFrom !== false && <ContactCard from={contactFrom} color={contactColor} onClosed={() => setContactFrom(false)} />}
           </div>
         </div>
       </div>
