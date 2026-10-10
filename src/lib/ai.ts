@@ -119,10 +119,9 @@ const Suggestion = z.object({ ingredients: z.array(z.string()).min(1).max(5), de
  * A new flavor named by voice ("aggiungi il gusto mirto"): its likely ingredients (2–4, short, in Italian) and one warm
  * line of description, so the owner confirms everything with a single ✅. Null when no AI is configured or it fails.
  */
-export async function suggestFlavor(name: string): Promise<{ ingredients: string; description: string } | null> {
+export async function suggestFlavor(name: string, opts: { noMilk?: boolean } = {}): Promise<{ ingredients: string; description: string } | null> {
   if (!hasAI) return null;
-  const sys =
-    "You help an artisan gelato shop in Sardinia. For a new gelato flavor, give its main ingredients as an artisan gelato maker would list them (2-4 items, short, in Italian, lowercase, e.g. 'mirto', 'latte fresco', 'panna') and one short warm description line in Italian (max 90 characters). Keys: ingredients (array of strings), description (string).";
+  const sys = `You help an artisan gelato shop in Sardinia. For a new gelato flavor, give its main ingredients as an artisan gelato maker would list them (2-4 items, short, in Italian, lowercase, e.g. 'mirto', 'latte fresco', 'panna') and one short warm description line in Italian (max 90 characters). ${opts.noMilk ? "It is a SORBET made WITHOUT milk or cream: never list latte, panna, burro or yogurt (use e.g. frutta fresca, acqua, zucchero)." : ""} Keys: ingredients (array of strings), description (string).`;
   try {
     if (provider() !== "anthropic") {
       const out = await compatJson(Suggestion, sys, `Flavor: "${name}"`);

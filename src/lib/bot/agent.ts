@@ -241,6 +241,15 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
       if ("choice" in r) return r;
       const f = r.flavor;
       if (a.category) a = { ...a, category: a.category };
+      if (tool === "update_flavor" && typeof a.no_milk === "boolean") {
+        const noMilk = a.no_milk;
+        const base = [...new Set([...f.tags, ...((a.tags as string[] | undefined) ?? [])])];
+        a = {
+          ...a,
+          tags: noMilk ? [...new Set([...base, "lactose_free"])] : base.filter((t) => t !== "lactose_free" && t !== "vegan"),
+          ...(noMilk ? { allergens: ((a.allergens as string[] | undefined) ?? f.allergens ?? []).filter((x) => x !== "milk") } : {}),
+        };
+      }
       const label =
         tool === "set_flavor_availability"
           ? `${f.name.it}: ${a.available ? "di nuovo disponibile" : "FINITO"}`
@@ -248,9 +257,11 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
             ? `togliere ${f.name.it} dal sito`
             : tool === "set_signature_flavor"
               ? `${f.name.it} diventa il gusto firma (la grande sezione del sito)`
-            : `modificare ${f.name.it} (${Object.keys(a)
-                .filter((k) => k !== "flavor")
-                .join(", ")})`;
+            : typeof a.no_milk === "boolean" && Object.keys(a).filter((k) => !["flavor", "no_milk", "tags", "allergens"].includes(k)).length === 0
+              ? `${f.name.it}: ${a.no_milk ? "senza latte → «senza lattosio» 🥛🚫" : "con latte"}`
+              : `modificare ${f.name.it} (${Object.keys(a)
+                  .filter((k) => !["flavor", "no_milk"].includes(k))
+                  .join(", ")})${a.no_milk ? " · senza latte" : ""}`;
       return {
         staged: {
           tool,
@@ -380,16 +391,28 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
         staged: { tool, args: a, label: `testo ${a.key}: «${a.text}»` },
       };
     case "add_flavor": {
+      // already on the menu ("dodaj ananasowy…" while "Ananas" exists): change that one instead of making a twin
+      const twin = await ops.findFlavor(String(a.name));
+      const norm = (x: string) => x.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      const same = twin && !twin.item.deleted_at && (twin.score >= 0.82 || (norm(String(a.name)).slice(0, 5) === norm(twin.item.name.it).slice(0, 5) && norm(twin.item.name.it).length >= 5));
+      if (same) {
+        const { name: _n, ...rest } = a;
+        return stage("update_flavor", { ...rest, flavor: twin.item.name.it, ...(a.no_milk === true || a.category === "sorbetti" ? { no_milk: true } : {}) }, lang, photo);
+      }
       // he only said the name: suggest ingredients + a line, shown in the same message, confirmed with the same ✅
+      if (a.no_milk === true || a.category === "sorbetti") {
+        a = { ...a, no_milk: true, tags: [...new Set([...((a.tags as string[] | undefined) ?? []), "lactose_free"])] };
+        if (!a.category) a = { ...a, category: "sorbetti" };
+      }
       if (!a.ingredients || !a.description) {
-        const sug = await suggestFlavor(String(a.name));
+        const sug = await suggestFlavor(String(a.name), { noMilk: a.no_milk === true });
         if (sug) a = { ...a, ingredients: a.ingredients ?? sug.ingredients, description: a.description ?? sug.description };
       }
       return {
         staged: {
           tool,
           args: a,
-          label: `nuovo gusto «${a.name}»${a.color ? ` ${a.color}` : ""}${(a.tags as string[] | undefined)?.length ? ` [${(a.tags as string[]).join(", ")}]` : ""}${a.ingredients ? `\n   🥄 ingredienti: ${a.ingredients}` : ""}${a.description ? `\n   ✏️ «${a.description}»` : ""}`,
+          label: `nuovo gusto «${a.name}»${a.category ? ` (${a.category})` : ""}${a.no_milk ? " · senza latte 🥛🚫" : ""}${a.color ? ` ${a.color}` : ""}${(a.tags as string[] | undefined)?.length ? ` [${(a.tags as string[]).join(", ")}]` : ""}${a.ingredients ? `\n   🥄 ingredienti: ${a.ingredients}` : ""}${a.description ? `\n   ✏️ «${a.description}»` : ""}`,
         },
       };
     }

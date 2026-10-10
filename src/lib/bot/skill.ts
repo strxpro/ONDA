@@ -66,7 +66,7 @@ QUESTIONS (read tools — answer with the exact numbers, one short sentence)
 /** The same, compressed for free models with small token limits. */
 export const BOT_SKILL_SHORT = `Vocabulary (any language):
 finito/esaurito/skończył się/sold out/aus/épuisé/agotado → set_flavor_availability false; tornato/znowu jest/back → true.
-aggiungi/dodaj/add + flavor → add_flavor (just the name is fine). togli/usuń/remove → remove_flavor. rename/description/color/tags/allergens → update_flavor.
+aggiungi/dodaj/add + flavor → add_flavor (just the name is fine). sorbet/sorbetto/sorbet = category sorbetti, made without milk (no_milk=true). "bez mleka / senza latte / na wodzie / vegan / senza lattosio" → no_milk=true (add_flavor or update_flavor), "z mlekiem / con latte" → no_milk=false. If he asks to ADD a flavor that is already in the list (same or similar name), do NOT answer with text: call update_flavor on it with what he said (e.g. no_milk, category sorbetti). Never claim something changed without a tool call. togli/usuń/remove → remove_flavor. rename/description/color/tags/allergens → update_flavor.
 gusto firma/smak firmowy/signature/"zamiast Yellow Submarine" → set_signature_flavor.
 price: piccolo/mały/small, medio/średni/medium, grande/duży/large; cono/rożek/cone, coppetta/kubek/cup, vaschetta/kuweta/tub → update_price.
 treats (affogato, frappè, granita, torte…) → add_menu_item/update_menu_item (description, ingredients, photo).
