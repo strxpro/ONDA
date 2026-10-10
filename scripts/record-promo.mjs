@@ -24,7 +24,7 @@ const wav = path.join(tmp, "sfx.wav");
 const song = process.env.SONG ?? "media/beyond-possible.mp3";
 
 // the SFX layer is timed to the presentation film; other routes (ROUTE=/reel) use the music alone
-const route = process.env.ROUTE ?? "/promo";
+const route = "/" + (process.env.ROUTE ?? "promo").replace(/^.*[\/]/, ""); // "reel" or "/reel" (Git Bash may mangle a leading slash)
 const sfx = route === "/promo";
 if (sfx) execFileSync("node", ["scripts/promo-audio.mjs", wav, "29.2"], { stdio: "inherit" });
 
