@@ -134,7 +134,9 @@ export function Flavors() {
                 {groups.map((g) => ({ ...g, list: g.list.filter(lf) })).filter((g) => g.list.length).map((g) => (
                   <div key={g.cat}>
                     <h3 className="flex items-baseline gap-3 border-b border-chocolate/10 pb-3 font-display text-3xl sm:text-4xl">{ui(`categories.${g.cat}`)}
-                      <span className="font-body text-lg font-bold text-chocolate/35 tabular-nums">({g.list.length})</span>
+                      <span className="rounded-full px-3 py-0.5 font-body text-base font-black text-chocolate tabular-nums sm:text-lg" style={{ background: CAT_COLOR[g.cat] }}>
+                        ({g.list.length})
+                      </span>
                     </h3>
                     <TileGrid list={g.list} locale={locale} active={active} onPick={pick} isFresh={isFresh} />
                   </div>
@@ -177,6 +179,8 @@ export function isLactoseFree(f: Flavor) {
   if (f.tags.includes("lactose_free") || f.tags.includes("vegan")) return true;
   return f.category === "sorbetti" && !allergensOf(f).list.includes("milk");
 }
+
+const CAT_COLOR: Record<string, string> = { speciali: "#FFD9A8", crema: "#F2DCC4", frutta: "#FFD3E4", sorbetti: "#C9F4E8" };
 
 function matches(f: Flavor, k: FilterKey) {
   if (k === "all") return true;
@@ -234,7 +238,7 @@ function FilterBar({ filters, counts, value, onChange, noLactose, onNoLactose }:
                         </span>
                       )}
                       <span className="flex-1">
-                        {label(k)} <span className="font-semibold text-chocolate/40 tabular-nums">({counts[k] ?? 0})</span>
+                        {label(k)} <span className="ml-0.5 rounded-full bg-chocolate/8 px-1.5 text-sm font-black text-chocolate/70 tabular-nums">({counts[k] ?? 0})</span>
                       </span>
                       {value === k && <Check weight="bold" className="size-4" />}
                     </button>

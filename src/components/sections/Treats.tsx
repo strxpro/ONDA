@@ -190,9 +190,19 @@ function TreatCard({ item: p, index: i, locale, onClose, onOrderCake }: { item: 
             ))}
           </motion.svg>
           <motion.div className="absolute inset-[10%] overflow-hidden rounded-full border-[6px] border-white shadow-[0_30px_50px_-24px_rgba(75,42,32,0.55)]" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 180, damping: 16, delay: 0.1 }}>
-            <AnimatePresence initial={false} mode="popLayout">
+            {/* the photo shrinks inside the round mask and slides out to the right, the next one follows it in
+                (small), then grows to fill the circle — an endless loop */}
+            <AnimatePresence initial={false}>
               {photos[shown] && (
-                <motion.div key={photos[shown]} className="absolute inset-0" initial={{ opacity: 0, scale: 1.15 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+                <motion.div
+                  key={photos[shown]}
+                  className="absolute inset-0 overflow-hidden rounded-full"
+                  initial={{ x: "-112%", scale: 0.62 }}
+                  // 1) the old one shrinks  2) both slide right together  3) the new one grows to fill the circle
+                  animate={{ x: ["-112%", "-112%", "0%", "0%"], scale: [0.62, 0.62, 0.62, 1] }}
+                  exit={{ x: ["0%", "0%", "112%", "112%"], scale: [1, 0.62, 0.62, 0.62], transition: { duration: 1.4, times: [0, 0.32, 0.72, 1], ease: "easeInOut" } }}
+                  transition={{ duration: 1.4, times: [0, 0.32, 0.72, 1], ease: "easeInOut" }}
+                >
                   <Image src={photos[shown]} alt={t(p.label, locale)} fill sizes="340px" className="object-cover" />
                 </motion.div>
               )}
