@@ -170,25 +170,39 @@ export function Lab() {
 
     if (withSpatula && spat.current && !reduced()) {
       const S = spat.current;
-      const sw = 0.95; // spatula width in D
-      const under = (p: { x: number; y: number; s: number }) => ({ x: (p.x - sw * 0.12) * d, y: (p.y + p.s * SH * 0.86) * d });
+      // the spatula photo (public/img/spatula.webp, 900×237): its bowl is the left ~38%, centered at (19%, 55%).
+      // The scoop rides IN the bowl: the scoop's bottom-center sits on that point, and the spatula is scaled with
+      // the scoop so the bowl is always ~60% of the scoop's width.
+      const AX = 0.19;
+      const AY = 0.55;
+      const base = (0.6 / 0.38) * d; // spatula width (px) when the scoop is full size
+      const bh = base * (237 / 900);
+      /** spatula position so its bowl point lands under the bottom-center of a scoop at p (scale p.s) */
+      const seat = (p: { x: number; y: number; s: number }, lift = 0) => ({
+        x: (p.x + p.s / 2) * d - AX * base,
+        y: (p.y + p.s * SH * 0.86 - lift) * d - AY * bh,
+        scale: p.s,
+      });
+      const at = { x: CENTER.x, y: CENTER.y - 0.42, s: 1 };
       sfx.whoosh();
-      tl.set(S, { ...under(from), x: under(from).x - 0.5 * d, rotate: -10, opacity: 0, width: sw * d })
-        // slide in under the scoop
-        .to(S, { x: under(from).x, opacity: 1, duration: 0.45, ease: "power3.out" })
-        // lift it
-        .to([S, A], { y: `-=${0.14 * d}`, duration: 0.3, ease: "power2.out" })
-        // carry it over the cone, growing to full size
+      gsap.set(A, { zIndex: 50 }); // the scoop sits on top of the bowl
+      tl.set(S, { ...seat(from), x: seat(from).x - 0.45 * d, y: seat(from).y + 0.08 * d, rotate: -14, opacity: 0, width: base, transformOrigin: `${AX * 100}% ${AY * 100}%` })
+        // dig in under the scoop, from below-left, like scooping
+        .to(S, { x: seat(from).x, y: seat(from).y, rotate: -4, opacity: 1, duration: 0.45, ease: "power3.out" })
+        // a little scoop-up flick: both lift, the bowl tilts back
+        .to(S, { y: seat(from, 0.14).y, rotate: 6, duration: 0.3, ease: "power2.out" })
+        .to(A, { y: (from.y - 0.14) * d, duration: 0.3, ease: "power2.out" }, "<")
+        // carry it over the cone, both growing to full size together
         .addLabel("carry")
-        .to(A, { x: CENTER.x * d, y: (CENTER.y - 0.42) * d, scale: 1, duration: 0.75 }, "carry")
-        .to(S, { x: (CENTER.x - sw * 0.12) * d, y: (CENTER.y - 0.42 + SH * 0.86) * d, rotate: -4, duration: 0.75 }, "carry")
+        .to(A, { x: at.x * d, y: at.y * d, scale: 1, duration: 0.8, ease: "power3.inOut" }, "carry")
+        .to(S, { ...seat(at), rotate: 2, duration: 0.8, ease: "power3.inOut" }, "carry")
         .to(B, { ...px(from), duration: 0.85 }, "carry+=0.05")
-        // tip it in
+        // tip it in: the bowl tips forward, the scoop slides off onto the cone
         .addLabel("drop")
-        .to(S, { rotate: 26, duration: 0.25, ease: "power2.in" }, "drop")
-        .to(A, { y: CENTER.y * d, duration: 0.32, ease: "power2.in", onComplete: landing }, "drop+=0.08")
-        // spatula leaves
-        .to(S, { x: `+=${0.9 * d}`, y: `-=${0.35 * d}`, rotate: 40, opacity: 0, duration: 0.5, ease: "power2.in" }, "drop+=0.35");
+        .to(S, { rotate: 28, duration: 0.28, ease: "power2.in" }, "drop")
+        .to(A, { y: CENTER.y * d, duration: 0.32, ease: "power2.in", onComplete: landing }, "drop+=0.1")
+        // the spatula leaves
+        .to(S, { x: `+=${0.9 * d}`, y: `-=${0.35 * d}`, rotate: 40, opacity: 0, duration: 0.5, ease: "power2.in" }, "drop+=0.38");
     } else {
       // on its own: a little hop along an arc into the cone
       tl.to(A, { x: CENTER.x * d, scale: 1, duration: 1.1 }, 0)

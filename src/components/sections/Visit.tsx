@@ -53,20 +53,20 @@ export function Visit() {
               <MapEmbed />
             </div>
             {/* stamp */}
-            <div className="absolute -top-5 -right-3 w-20 rotate-6 rounded-sm border-[3px] border-dotted border-pink bg-[#fffdf8] p-1.5 shadow-md">
+            <div className="absolute -top-9 -right-7 w-16 rotate-6 rounded-sm border-[3px] border-dotted border-pink bg-[#fffdf8] p-1.5 shadow-md">
               <div className="grid aspect-[4/5] place-items-center bg-pink-soft">
                 <LogoMark className="h-12 w-auto" />
               </div>
             </div>
             {/* postmark */}
-            <svg viewBox="0 0 120 60" className="absolute top-4 right-16 w-28 opacity-50" aria-hidden>
+            <svg viewBox="0 0 120 60" className="absolute right-4 bottom-2 w-24 opacity-45" aria-hidden>
               <circle cx="30" cy="30" r="24" fill="none" stroke="#4B2A20" strokeWidth="2" />
               <text x="30" y="34" textAnchor="middle" fontSize="9" fontWeight="700" fill="#4B2A20">S. TERESA</text>
               {[16, 26, 36, 46].map((y) => (
                 <path key={y} d={`M58 ${y} C70 ${y - 6} 82 ${y + 6} 94 ${y} S112 ${y - 6} 118 ${y}`} fill="none" stroke="#4B2A20" strokeWidth="2" />
               ))}
             </svg>
-            <p className="absolute right-4 bottom-3 left-4 font-script text-2xl leading-tight text-chocolate/80">{s.address}</p>
+            <p className="absolute right-32 bottom-3 left-4 truncate font-script text-2xl leading-tight text-chocolate/80">{s.address}</p>
           </motion.div>
           <ShopPhoto />
           </div>
@@ -173,7 +173,7 @@ function ShopPhoto() {
       whileHover={{ rotate: 1.5, y: -6, scale: 1.03 }}
       viewport={{ once: true }}
       transition={{ type: "spring", stiffness: 110, damping: 14, delay: 0.2 }}
-      className="relative z-10 mx-auto -mt-8 w-[80%] max-w-[380px] rounded-sm bg-[#fffdf8] p-2.5 pb-10 shadow-[0_30px_50px_-20px_rgba(20,60,50,0.55)] md:absolute md:-right-12 md:-bottom-36 md:mt-0 md:w-[58%]"
+      className="relative z-10 mx-auto mt-6 w-[80%] max-w-[380px] rounded-sm bg-[#fffdf8] p-2.5 pb-10 shadow-[0_30px_50px_-20px_rgba(20,60,50,0.55)] md:mr-[-2rem] md:ml-auto md:w-[60%]"
     >
       <img src="/img/shop.webp" alt={ui("photo")} width={680} height={383} className="aspect-[16/10] w-full rounded-[2px] object-cover" loading="lazy" />
       <figcaption className="absolute right-3 bottom-2 left-3 font-script text-xl text-chocolate/80">{ui("photo")} · Via Amsicora 2</figcaption>
