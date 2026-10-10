@@ -540,3 +540,34 @@ html.cone-cursor :is(input:not([type="range"]):not([type="checkbox"]):not([type=
   cursor: url("/img/cursor-text.png") 9 17, text;
   cursor: -webkit-image-set(url("/img/cursor-text.png") 1x, url("/img/cursor-text@2x.png") 2x) 9 17, text;
 }
+
+/* skeleton loading: a soft pastel shimmer wherever something is still on its way (pictures, cards…) */
+@keyframes skeleton-shine {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+.skeleton,
+img[data-sk] {
+  background: linear-gradient(100deg, #ffe9f1 20%, #fff7ee 40%, #ffe3c9 60%, #ffe9f1 80%) 0 0 / 250% 100%;
+  animation: skeleton-shine 1.3s linear infinite;
+}
+img[data-sk] { color: transparent; border-radius: 1.25rem; }
+
+/* the preloader's counter: a rainbow that keeps flowing */
+@keyframes rainbow-flow {
+  to { background-position: 200% 0; }
+}
+.rainbow-text {
+  background: linear-gradient(90deg, #ff6f91, #ffaa5c, #ffe066, #a8db7a, #6fe0c4, #9b8cff, #ff6f91) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow-flow 2.4s linear infinite;
+}
+.rainbow-bar {
+  background: linear-gradient(90deg, #ff6f91, #ffaa5c, #ffe066, #a8db7a, #6fe0c4, #9b8cff, #ff6f91) 0 0 / 200% 100%;
+  animation: rainbow-flow 1.6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton, img[data-sk], .rainbow-text, .rainbow-bar { animation: none; }
+}

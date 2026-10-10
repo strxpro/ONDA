@@ -197,7 +197,7 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
   if (done) return null;
 
   return (
-    <div ref={root} className="fixed inset-0 z-[100]" aria-hidden>
+    <div ref={root} className="fixed inset-0 z-[100]" aria-hidden data-no-sk>
       {/* curtain: cream + two colored waves trailing below it */}
       {[
         { c: "#6FE0C4", z: 1 },
@@ -254,12 +254,12 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
           <p className="font-script text-xl text-chocolate/70">gelato artigianale</p>
         </div>
         <div className="w-40 text-right">
-          <p className="font-display text-5xl leading-none font-bold tabular-nums">
+          <p className="rainbow-text font-display text-6xl leading-none font-bold tabular-nums">
             <span className="pl-num">00</span>
-            <span className="text-2xl">%</span>
+            <span className="text-3xl">%</span>
           </p>
-          <div className="mt-3 h-1 overflow-hidden rounded-full bg-chocolate/10">
-            <div className="pl-bar h-full origin-left scale-x-0 rounded-full" style={{ background: "linear-gradient(90deg,#A8DB7A,#FF8FB8,#FFE066)" }} />
+          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-chocolate/10 shadow-[inset_0_1px_2px_rgba(75,42,32,0.15)]">
+            <div className="pl-bar rainbow-bar h-full origin-left rounded-full" style={{ transform: "scaleX(0)" }} />
           </div>
         </div>
       </div>

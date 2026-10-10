@@ -386,7 +386,7 @@ function Detail({ flavor: f, locale, onClose }: { flavor: Flavor; locale: Locale
       </button>
 
       {/* the real scoop, filmed: the spatula curls the gelato into a ball (tinted to the flavor) */}
-      <ScoopClip color={f.color_primary} photo={photo} />
+      <ScoopClip color={f.color_primary} photo={photo} tub={TUB_PHOTOS.has(f.slug) ? `/img/tubs/${f.slug}.webp` : null} />
 
       <div className="min-w-0 flex-1 pr-8">
         <h3 className="font-display text-2xl leading-tight font-bold sm:text-4xl">{t(f.name, locale)}</h3>
@@ -508,10 +508,18 @@ function PriceStrip() {
 }
 
 /** The filmed scoop (frames from a real clip), played once, in a scoop-shaped frame; the flavor's own scoop lands on top. */
-function ScoopClip({ color, photo }: { color: string; photo: string | null }) {
+/** Flavors with their own appetizing photo of the tub (generated for Onda); the others get the scooping film. */
+const TUB_PHOTOS = new Set(["yellow-submarine", "cioccolato", "stracciatella", "banana-bread", "pistacchio", "fragola", "limone", "mango", "nocciola", "fior-di-latte", "caffe", "cocco", "mirtillo", "menta", "anguria", "pesca", "tiramisu", "caramello-salato", "lampone", "vaniglia", "wschod-s-onca"]);
+
+function ScoopClip({ color, photo, tub }: { color: string; photo: string | null; tub: string | null }) {
   const seq = useRef<FrameSequenceHandle>(null);
   const [done, setDone] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
+    if (tub) {
+      const id = window.setTimeout(() => setDone(true), 900);
+      return () => window.clearTimeout(id);
+    }
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       seq.current?.seek(1);
       setDone(true);
@@ -531,8 +539,18 @@ function ScoopClip({ color, photo }: { color: string; photo: string | null }) {
   return (
     <div className="relative w-[40%] max-w-[260px] shrink-0">
       <ScoopFrame color={color} className="w-full">
-        <FrameSequence ref={seq} base="/seq/scoop" count={60} fit="cover" className="absolute inset-0" />
-        <div className="pointer-events-none absolute inset-0 opacity-55 mix-blend-color" style={{ background: color }} />
+        {tub ? (
+          <>
+            {/* skeleton shimmer until the photo is in, then a slow push-in */}
+            {!loaded && <span className="skeleton absolute inset-0" />}
+            <motion.img src={tub} alt="" onLoad={() => setLoaded(true)} className="absolute inset-0 h-full w-full object-cover" initial={{ scale: 1.18, opacity: 0 }} animate={loaded ? { scale: 1.02, opacity: 1 } : {}} transition={{ scale: { duration: 3.2, ease: [0.16, 1, 0.3, 1] }, opacity: { duration: 0.5 } }} />
+          </>
+        ) : (
+          <>
+            <FrameSequence ref={seq} base="/seq/scoop" count={60} fit="cover" className="absolute inset-0" />
+            <div className="pointer-events-none absolute inset-0 opacity-55 mix-blend-color" style={{ background: color }} />
+          </>
+        )}
       </ScoopFrame>
       <AnimatePresence>
         {done && photo && (

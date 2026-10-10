@@ -20,8 +20,8 @@ type Slot = { provider: string; url: string; key?: string; model: string; vision
 const PROVIDERS: { name: string; url: string; env?: string; models: string[]; vision: (model: string) => boolean }[] = [
   { name: "groq", url: "https://api.groq.com/openai/v1", env: "GROQ_API_KEY", models: [process.env.GROQ_MODEL || "openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"], vision: (m) => /qwen3\.8|llama-4|vision/i.test(m) },
   { name: "cerebras", url: "https://api.cerebras.ai/v1", env: "CEREBRAS_API_KEY", models: ["gpt-oss-120b", "qwen-3-235b-a22b-instruct-2507"], vision: () => false },
-  { name: "gemini", url: "https://generativelanguage.googleapis.com/v1beta/openai", env: "GEMINI_API_KEY", models: [process.env.GEMINI_MODEL || "gemini-2.5-flash", "gemini-2.5-flash-lite"], vision: () => true },
-  { name: "openrouter", url: "https://openrouter.ai/api/v1", env: "OPENROUTER_API_KEY", models: ["openai/gpt-oss-120b:free", "meta-llama/llama-3.3-70b-instruct:free", "google/gemma-3-27b-it:free"], vision: (m) => /gemma-3|vision|vl/i.test(m) },
+  { name: "gemini", url: "https://generativelanguage.googleapis.com/v1beta/openai", env: "GEMINI_API_KEY", models: [process.env.GEMINI_MODEL || "gemini-3.5-flash-lite", "gemini-3.8-flash"], vision: () => true },
+  { name: "openrouter", url: "https://openrouter.ai/api/v1", env: "OPENROUTER_API_KEY", models: ["nvidia/nemotron-3-super-120b-a12b:free", "google/gemma-4-31b-it:free", "nvidia/nemotron-3-ultra-550b-a55b:free"], vision: (m) => /gemma|vision|vl|omni/i.test(m) },
   { name: "mistral", url: "https://api.mistral.ai/v1", env: "MISTRAL_API_KEY", models: ["mistral-small-latest"], vision: () => true },
   { name: "xai", url: "https://api.x.ai/v1", env: "XAI_API_KEY", models: [process.env.XAI_MODEL || "grok-4"], vision: () => true },
   { name: "pollinations", url: "https://text.pollinations.ai/openai", models: ["openai"], vision: () => true },

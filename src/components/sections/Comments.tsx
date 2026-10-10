@@ -126,6 +126,15 @@ export function CommentsWall() {
               <Note key={c.id} comment={c} index={i} replies={repliesOf(c.id)} fresh={!firstIds.current!.has(c.id) && !older.some((o) => o.id === c.id)} locale={locale} />
             ))}
           </AnimatePresence>
+          {/* skeleton notes while older comments are on their way */}
+          {loading &&
+            [0, 1].map((k) => (
+              <li key={`sk${k}`} className="space-y-2 rounded-2xl bg-white/60 p-4" aria-hidden>
+                <span className="skeleton block h-3.5 w-11/12 rounded-full" />
+                <span className="skeleton block h-3.5 w-8/12 rounded-full" />
+                <span className="skeleton mt-3 block h-4 w-24 rounded-full" />
+              </li>
+            ))}
         </motion.ul>
       ) : (
         <p className="rounded-3xl border-4 border-dashed border-chocolate/15 p-6 text-center font-script text-2xl text-chocolate/60">{top.length ? ui("none") : ui("empty")}</p>

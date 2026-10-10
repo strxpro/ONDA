@@ -10,6 +10,7 @@ import { Preloader } from "@/components/Preloader";
 import { SiteDataProvider } from "@/components/providers/SiteData";
 import { SmoothScroll } from "@/components/providers/SmoothScroll";
 import { LangWave } from "@/components/LangWave";
+import { SkeletonImages } from "@/components/SkeletonImages";
 import { TabTitle } from "@/components/TabTitle";
 import { Tracker } from "@/components/Tracker";
 import { routing } from "@/i18n/routing";
@@ -69,6 +70,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
             <Tracker />
             <TabTitle />
             <LangWave />
+            <SkeletonImages />
           </SiteDataProvider>
         </NextIntlClientProvider>
         <div className="grain" aria-hidden />
