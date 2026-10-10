@@ -21,7 +21,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Scoop } from "../ice/Scoop";
 
 const MAIN = [
@@ -46,6 +46,12 @@ const MORE = [
 export function AdminNav({ actor, local }: { actor: string; local: boolean }) {
   const path = usePathname();
   const [more, setMore] = useState(false);
+  // the same waffle-cone cursor as the site (desktop)
+  useEffect(() => {
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    document.documentElement.classList.add("cone-cursor");
+    return () => document.documentElement.classList.remove("cone-cursor");
+  }, []);
   const active = (href: string) => (href === "/admin" ? path === "/admin" : path.startsWith(href));
 
   return (

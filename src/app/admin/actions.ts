@@ -5,7 +5,7 @@ import { translate } from "@/lib/ai";
 import { requireAdminAction } from "@/lib/auth";
 import { syncGoogleReviews } from "@/lib/google";
 import { createRow, deleteRow, newBatch, patchRow, reorder, undo } from "@/lib/mutations";
-import { addFlavor, getStats, type NewFlavor } from "@/lib/ops";
+import { addFlavor, getStats, setSignatureFlavor, type NewFlavor } from "@/lib/ops";
 import { TABLES, type Key, type Row, type TableName } from "@/lib/store";
 import { restoreDefaults, type RestorePart } from "@/lib/restore";
 import { saveImage } from "@/lib/upload";
@@ -83,4 +83,8 @@ export async function uploadImageAction(form: FormData) {
 
 export async function restoreDefaultsAction(parts: RestorePart[]) {
   return run(async () => restoreDefaults(parts, await requireAdminAction()));
+}
+
+export async function setSignatureAction(id: string) {
+  return run(async () => setSignatureFlavor(id, await requireAdminAction()));
 }

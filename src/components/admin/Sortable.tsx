@@ -41,7 +41,8 @@ function Row({ id, render }: { id: string; render: (handle: ReactNode) => ReactN
     </button>
   );
   return (
-    <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : undefined }} className={isDragging ? "relative scale-[1.02] opacity-90 shadow-float" : ""}>
+    // the dragged row follows the pointer 1:1 (no transition on it, no extra scale that shifts it sideways)
+    <li ref={setNodeRef} style={{ transform: CSS.Translate.toString(transform), transition: isDragging ? undefined : transition, zIndex: isDragging ? 10 : undefined, willChange: isDragging ? "transform" : undefined }} className={isDragging ? "relative opacity-95 shadow-float" : ""}>
       {render(handle)}
     </li>
   );

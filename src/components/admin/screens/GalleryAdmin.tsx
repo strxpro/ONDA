@@ -1,7 +1,7 @@
 "use client";
 
-import { Trash, UploadSimple } from "@phosphor-icons/react";
-import { useState } from "react";
+import { ArrowsClockwise, MagnifyingGlass, Trash, UploadSimple, X } from "@phosphor-icons/react";
+import { useMemo, useState } from "react";
 import { createRowAction, deleteRowAction, reorderAction, saveRow, uploadImageAction } from "@/app/admin/actions";
 import type { GalleryImage } from "@/lib/shared";
 import { SortableList } from "../Sortable";
@@ -14,6 +14,17 @@ export function GalleryAdmin({ images }: { images: GalleryImage[] }) {
   const toast = useToast();
   const [edit, setEdit] = useState<GalleryImage | null>(null);
   const [uploading, setUploading] = useState(0);
+  const [q, setQ] = useState("");
+  // smart search: every word must appear in the description (any language), accents ignored; "3" finds the 3rd photo
+  const norm = (v: string) => v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const shown = useMemo(() => {
+    const words = norm(q).split(/\s+/).filter(Boolean);
+    if (!words.length) return images;
+    return images.filter((img, i) => {
+      const hay = norm(`${i + 1} ${Object.values(img.alt).join(" ")}`);
+      return words.every((w) => hay.includes(w));
+    });
+  }, [images, q]);
 
   const upload = async (files: FileList) => {
     setUploading(files.length);
@@ -50,10 +61,20 @@ export function GalleryAdmin({ images }: { images: GalleryImage[] }) {
         }
       />
       <p className="mb-3 rounded-2xl bg-lemon-soft p-3 text-sm font-semibold">Le foto vengono ridimensionate e convertite in WebP automaticamente.</p>
+      <label className="mb-3 flex items-center gap-2 rounded-2xl border-2 border-chocolate/10 bg-white px-3 focus-within:border-pink">
+        <MagnifyingGlass weight="bold" className="size-5 shrink-0 text-chocolate/50" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca una foto: «cono», «vetrina», «ragazzo con cappellino», «3»…" className="min-h-12 w-full bg-transparent font-semibold outline-none" />
+        {q && (
+          <button type="button" onClick={() => setQ("")} aria-label="Cancella" className="grid size-8 place-items-center rounded-full bg-chocolate/5">
+            <X weight="bold" className="size-4" />
+          </button>
+        )}
+      </label>
+      {q && !shown.length && <Card><p className="text-chocolate/60">Nessuna foto trovata.</p></Card>}
       <SortableList
-        items={images}
+        items={shown}
         getId={(i) => i.id}
-        onReorder={(ids) => call(() => reorderAction("gallery", ids), "Ordine salvato")}
+        onReorder={(ids) => !q && call(() => reorderAction("gallery", ids), "Ordine salvato")}
         render={(img, handle) => (
           <Card className="!p-2">
             <div className="flex items-center gap-3">
@@ -80,10 +101,32 @@ export function GalleryAdmin({ images }: { images: GalleryImage[] }) {
 function PhotoEditor({ img, onDone }: { img: GalleryImage; onDone: () => void }) {
   const { call } = useAction();
   const [p, setP] = useState(img);
+  const [replacing, setReplacing] = useState(false);
   return (
     <div className="space-y-4">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={p.image_url} alt="" className="mx-auto size-48 rounded-full object-cover" style={{ boxShadow: `0 0 0 6px #fff, 0 0 0 12px ${p.color}` }} />
+      <label className="mx-auto flex w-max cursor-pointer items-center gap-2 rounded-full bg-chocolate/5 px-4 py-2 text-sm font-bold">
+        <ArrowsClockwise weight="bold" className="size-4" /> {replacing ? "Caricamento…" : "Sostituisci la foto"}
+        <input
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setReplacing(true);
+            const fd = new FormData();
+            fd.append("file", file);
+            const res = await uploadImageAction(fd);
+            setReplacing(false);
+            if (res.ok) {
+              const up = res.data as { url: string; width: number; height: number };
+              setP((x) => ({ ...x, image_url: up.url, width: up.width, height: up.height }));
+            }
+          }}
+        />
+      </label>
       <I18nEditor label="Descrizione (anche per chi non vede)" value={p.alt} onChange={(v) => setP({ ...p, alt: v })} />
       <ColorField label="Colore del gelato che cola" value={p.color} onChange={(v) => setP({ ...p, color: v })} />
       <Button

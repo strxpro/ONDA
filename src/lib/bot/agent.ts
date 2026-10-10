@@ -106,6 +106,10 @@ export async function runRead(tool: (typeof READ_TOOLS)[number], args: Record<st
         price_eur: p.price_eur,
         visible: p.is_active,
       }));
+    case "list_gallery": {
+      const rows = ((await store().list("gallery")) as { sort_order: number; alt: Record<string, string> }[]).sort((a, b) => a.sort_order - b.sort_order);
+      return rows.map((g, i) => ({ position: i + 1, shows: g.alt.it || g.alt.en || "(no description)" }));
+    }
     case "list_reservations": {
       const rows = (await store().list("reservations")) as Reservation[];
       const from = Date.now() - 6 * 3_600_000;
@@ -275,7 +279,7 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
     case "set_ingredient_photo":
       return { staged: { tool, args: a, label: `foto dell'ingrediente «${a.ingredient}»` } };
     case "replace_gallery_photo":
-      return { staged: { tool, args: a, label: `sostituire ${a.position ? `la foto n. ${a.position}` : "una foto"} del Laboratorio con questa` } };
+      return { staged: { tool, args: a, label: `sostituire ${a.position ? `la foto n. ${a.position}` : a.which ? `la foto «${a.which}»` : "una foto"} del Laboratorio con questa` } };
     case "moderate_comment": {
       const pending = await ops.pendingComments();
       const q = String(a.comment).toLowerCase();
@@ -449,7 +453,7 @@ export async function execute(s: Staged, actor: Actor) {
       return ops.setIngredientPhoto(String(a.ingredient), (a.photo as Photo).url, actor);
     case "replace_gallery_photo": {
       const p = a.photo as Photo;
-      return ops.replaceGalleryPhoto({ url: p.url, width: p.width, height: p.height, position: a.position as number | undefined, caption: a.caption as string | undefined }, actor);
+      return ops.replaceGalleryPhoto({ url: p.url, width: p.width, height: p.height, position: a.position as number | undefined, which: a.which as string | undefined, caption: a.caption as string | undefined }, actor);
     }
     case "add_gallery_photo": {
       const p = a.photo as Photo;
@@ -502,6 +506,18 @@ type JsonSchema = { type?: string | string[]; properties?: Record<string, JsonSc
  * Small free models often send `null` for an optional field ("caption": null). Some providers validate tool calls
  * against the schema and reject that — so for them every optional property also accepts null…
  */
+/** Free models have small per-minute input limits: shorter descriptions in the tool schemas (meaning stays). */
+function slim(text: unknown, max: number) {
+  const t = String(text ?? "");
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  return cut.slice(0, Math.max(cut.lastIndexOf(". "), cut.lastIndexOf(", "), max * 0.6)).trim() + "…";
+}
+function slimSchema(schema: JsonSchema): JsonSchema {
+  if (!schema.properties) return schema;
+  return { ...schema, properties: Object.fromEntries(Object.entries(schema.properties).map(([k, v]) => [k, { ...v, ...(v.description ? { description: slim(v.description, 60) } : {}) }])) };
+}
+
 function nullableOptionals(schema: JsonSchema): JsonSchema {
   if (!schema.properties) return schema;
   const required = new Set(schema.required ?? []);
@@ -547,7 +563,7 @@ export async function runAgent(userText: string, photo?: Photo): Promise<AgentRe
 
   // free / OpenAI-compatible models (Groq, Gemini, Grok)
   if (provider() !== "anthropic") {
-    const tools: CompatTool[] = TOOL_DEFS.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: nullableOptionals(t.input_schema as JsonSchema) } }));
+    const tools: CompatTool[] = TOOL_DEFS.map((t) => ({ type: "function", function: { name: t.name, description: slim(t.description, 170), parameters: nullableOptionals(slimSchema(t.input_schema as JsonSchema)) } }));
     const chat: CompatMessage[] = [
       { role: "system", content: system },
       { role: "user", content: first },

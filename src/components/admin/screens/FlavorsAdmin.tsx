@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckSquare, MagnifyingGlass, PencilSimple, Plus, Sparkle, Square, Star, Trash, UploadSimple, X } from "@phosphor-icons/react";
+import { CheckSquare, Crown, MagnifyingGlass, PencilSimple, Plus, Sparkle, Square, Star, Trash, UploadSimple, X } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
-import { addFlavorAction, deleteRowAction, reorderAction, saveRow, uploadImageAction } from "@/app/admin/actions";
+import { addFlavorAction, deleteRowAction, reorderAction, saveRow, setSignatureAction, uploadImageAction } from "@/app/admin/actions";
 import { FLAVOR_CATEGORIES, FLAVOR_TAGS, SCOOP_TEXTURES, type Flavor } from "@/lib/shared";
 import { IceCream } from "../../ice/IceCream";
 import { ScoopImg, scoopPhoto } from "../../ice/PhotoStack";
@@ -16,7 +16,7 @@ const TEXTURE_LABEL: Record<string, string> = { smooth: "Liscio", chunks: "Con p
 
 /** "pistàcchio" → "pistacchio": lowercase, no accents — so "tiramisu" finds "Tiramisù". */
 const norm = (v: string) => v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-const VIEWS = { all: "Tutti", on: "Disponibili", off: "Finiti", new: "Novità" } as const;
+const VIEWS = { all: "Tutti", on: "Disponibili", off: "Finiti", new: "Novità", firma: "Gusto firma" } as const;
 
 /**
  * Smart search: every word must match somewhere — the name in any of the six languages, the ingredients,
@@ -149,6 +149,16 @@ export function FlavorsAdmin({ flavors }: { flavors: Flavor[] }) {
               </button>
               <button type="button" onClick={() => setEdit(f)} className="grid size-11 place-items-center rounded-xl text-chocolate/60" aria-label="Modifica">
                 <PencilSimple weight="bold" className="size-5" />
+              </button>
+              {/* the crown: make it the "gusto firma" (the big section of the site) */}
+              <button
+                type="button"
+                onClick={() => !f.tags.includes("signature") && call(() => setSignatureAction(f.id), `${f.name.it} è il gusto firma`)}
+                className={`grid size-11 place-items-center rounded-xl transition-colors ${f.tags.includes("signature") ? "bg-lemon text-chocolate" : "text-chocolate/35 hover:bg-lemon-soft hover:text-chocolate"}`}
+                aria-label="Gusto firma"
+                title={f.tags.includes("signature") ? "Gusto firma" : "Rendi gusto firma"}
+              >
+                <Crown weight={f.tags.includes("signature") ? "fill" : "bold"} className="size-5" />
               </button>
               <button type="button" onClick={() => removeOne(f)} className="grid size-11 place-items-center rounded-xl text-cherry/70 hover:bg-cherry/10" aria-label="Elimina">
                 <Trash weight="bold" className="size-5" />

@@ -14,7 +14,7 @@ export const TEXT_KEYS = ["hero_title", "hero_subtitle", "cta_flavors", "cta_dir
 const s = (description: string) => ({ type: "string", description });
 const obj = (properties: Record<string, unknown>, required: string[] = []): Anthropic.Beta.BetaTool["input_schema"] => ({ type: "object", properties, required, additionalProperties: false });
 
-export const READ_TOOLS = ["get_stats", "list_flavors", "list_prices", "get_hours", "list_comments", "list_reservations"] as const;
+export const READ_TOOLS = ["get_stats", "list_flavors", "list_prices", "get_hours", "list_comments", "list_reservations", "list_gallery"] as const;
 
 const usePhoto = { type: "boolean", description: "true to use the photo the owner sent with this message" };
 const category = { type: "string", enum: [...FLAVOR_CATEGORIES], description: "crema = creamy, frutta = fruit, speciali = specials, sorbetti = sorbets" };
@@ -28,6 +28,7 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
   { name: "list_flavors", description: "List flavors with availability.", input_schema: obj({ onlyAvailable: { type: "boolean" } }) },
   { name: "list_prices", description: "List the price board.", input_schema: obj({}) },
   { name: "get_hours", description: "Weekly opening hours and upcoming special days.", input_schema: obj({}) },
+  { name: "list_gallery", description: "The photos of the gallery (Il Laboratorio): position (1 = the one on the cone) and what each shows.", input_schema: obj({}) },
   { name: "list_reservations", description: "Upcoming pre-orders from the website (gelato by the kilo, tubs, treats): pickup time, what, name, phone, status.", input_schema: obj({}) },
   { name: "list_comments", description: "Visitors' comments waiting for approval (they appear on the site only once approved).", input_schema: obj({}) },
   {
@@ -113,8 +114,8 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
   },
   {
     name: "replace_gallery_photo",
-    description: "Replace one photo of the gallery ('Il Laboratorio') with the photo the owner sent: 'change a photo in the lab', 'swap the first photo'. position = which one (1 = first); omit = any (the oldest).",
-    input_schema: obj({ position: { type: "integer", minimum: 1 }, caption: s("optional short description of the photo") }),
+    description: "Replace one photo of the gallery ('Il Laboratorio') with the photo the owner sent: 'change a photo in the lab', 'swap the first photo', 'the one with the boy in a cap'. position = which one (1 = first) OR which = words describing the photo to replace (matched against the photo descriptions); neither = the oldest.",
+    input_schema: obj({ position: { type: "integer", minimum: 1 }, which: s("words describing the photo to replace, e.g. 'ragazzo con cappellino'"), caption: s("optional short description of the NEW photo") }),
   },
   {
     name: "add_gallery_photo",
@@ -201,6 +202,7 @@ export const TOOL_INPUT = {
   get_hours: z.object({}),
   list_comments: z.object({}),
   list_reservations: z.object({}),
+  list_gallery: z.object({}),
   set_flavor_availability: z.object({ flavor: z.string().min(1), available: z.boolean() }),
   add_flavor: z.object({ name: z.string().min(1).max(60), description: z.string().max(300).optional(), ingredients: z.string().max(200).optional(), category: z.enum(FLAVOR_CATEGORIES).optional(), use_photo: z.boolean().optional(), color: hexOpt, tags, featured: z.boolean().optional() }),
   update_flavor: z.object({ flavor: z.string().min(1), new_name: z.string().max(60).optional(), description: z.string().max(300).optional(), ingredients: z.string().max(200).optional(), category: z.enum(FLAVOR_CATEGORIES).optional(), use_photo: z.boolean().optional(), color: hexOpt, tags, featured: z.boolean().optional() }),
@@ -208,7 +210,7 @@ export const TOOL_INPUT = {
   update_menu_item: z.object({ item: z.string().min(1), new_name: z.string().max(60).optional(), description: z.string().max(200).optional(), ingredients: z.string().max(200).optional(), visible: z.boolean().optional(), use_photo: z.boolean().optional() }),
   add_gallery_photo: z.object({ caption: z.string().max(200).optional() }),
   set_ingredient_photo: z.object({ ingredient: z.string().min(1).max(60) }),
-  replace_gallery_photo: z.object({ position: z.number().int().min(1).max(50).optional(), caption: z.string().max(200).optional() }),
+  replace_gallery_photo: z.object({ position: z.number().int().min(1).max(50).optional(), which: z.string().max(120).optional(), caption: z.string().max(200).optional() }),
   moderate_comment: z.object({ comment: z.string().min(1), approve: z.boolean() }),
   set_text: z.object({ key: z.enum(TEXT_KEYS), text: z.string().min(1).max(600) }),
   remove_flavor: z.object({ flavor: z.string().min(1) }),

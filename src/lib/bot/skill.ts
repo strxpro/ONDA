@@ -29,7 +29,7 @@ RESTORE TO ORIGINAL (restore_defaults): "ripristina", "rimetti come prima/all'in
 
 INGREDIENT PHOTOS: "to zdjęcie mirtu do składników", "foto del mirto", "this is the myrtle" → set_ingredient_photo. Without a photo attached → ask_for_photos (instruction "photo of the ingredient X").
 NEW FLAVOR: add_flavor with just the name is fine — ingredients and a description are suggested automatically and confirmed together.
-GALLERY ("Il Laboratorio", "galeria", "zdjęcia na stronie"): add → add_gallery_photo · change/swap/replace ("zmień zdjęcie", "cambia una foto") → replace_gallery_photo.
+GALLERY ("Il Laboratorio", "galeria", "zdjęcia na stronie"): add → add_gallery_photo · change/swap/replace ("zmień zdjęcie", "cambia una foto") → replace_gallery_photo; if he describes which one ("to z chłopakiem w czapce", "quella della vetrina") pass it as "which" (or call list_gallery first and pass the position). "Which photos are there?" → list_gallery.
 PHOTOS BY VOICE: "dodaj zdjęcie / zdjęcia", "aggiungi foto", "add photos", "ti mando una foto", "cambia la foto del pistacchio" WITHOUT a photo attached → ask_for_photos (instruction = where the photos go; many=true for "zdjęcia/foto/photos" plural). With a photo attached, act directly.
 
 TREATS (Altre delizie) — each has a photo, a short warm line (description) and ingredients, shown in its pop-up: add_menu_item / update_menu_item (description, ingredients, use_photo).

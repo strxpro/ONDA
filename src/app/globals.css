@@ -525,3 +525,15 @@ html[data-langswap] [data-nav] {
   opacity: 0.5;
   transition-duration: 0.18s;
 }
+
+/* the cursor is a real waffle cone (its tip is the hotspot) — a native cursor, so it never lags behind */
+html.cone-cursor,
+html.cone-cursor * {
+  cursor: url("/img/cursor-cone.png") 2 2, auto;
+  cursor: -webkit-image-set(url("/img/cursor-cone.png") 1x, url("/img/cursor-cone@2x.png") 2x) 2 2, auto;
+}
+html.cone-cursor input,
+html.cone-cursor textarea,
+html.cone-cursor [contenteditable] {
+  cursor: text;
+}

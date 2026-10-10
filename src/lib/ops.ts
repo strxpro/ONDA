@@ -261,10 +261,12 @@ export async function setIngredientPhoto(name: string, url: string, actor: Actor
 }
 
 /** Swap one gallery photo for a new one: by position (1 = first shown), else the oldest. */
-export async function replaceGalleryPhoto(input: { url: string; width?: number; height?: number; position?: number; caption?: string }, actor: Actor) {
-  const all = ((await store().list("gallery")) as { id: string; sort_order: number }[]).sort((a, b) => a.sort_order - b.sort_order);
+export async function replaceGalleryPhoto(input: { url: string; width?: number; height?: number; position?: number; which?: string; caption?: string }, actor: Actor) {
+  const all = ((await store().list("gallery")) as { id: string; sort_order: number; alt: Record<string, string> }[]).sort((a, b) => a.sort_order - b.sort_order);
   if (!all.length) return addGalleryPhoto(input, actor);
-  const target = input.position && all[input.position - 1] ? all[input.position - 1] : all[all.length - 1];
+  // by position, else by what it shows ("the one with the boy in a cap"), else the oldest
+  const byWords = input.which ? rank(input.which, all, (g) => Object.values(g.alt ?? {}))[0] : undefined;
+  const target = input.position && all[input.position - 1] ? all[input.position - 1] : byWords && byWords.score > 0.3 ? byWords.item : all[all.length - 1];
   const tr = input.caption ? await translate({ alt: input.caption }) : {};
   return patchRow("gallery", target.id, { image_url: input.url, width: input.width ?? null, height: input.height ?? null, ...(tr.alt ? { alt: tr.alt } : {}) }, ctx(actor, "replace_gallery_photo"));
 }
