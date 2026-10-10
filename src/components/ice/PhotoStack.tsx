@@ -26,7 +26,8 @@ export function scoopPhoto(f: { slug: string; image_url?: string | null; color_p
 /** A shape for a flavor without a photo: picked from its texture, varied by its name — always the same for it. */
 function scoopShape(slug: string, texture?: string) {
   const h = [...slug].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
-  const pool = texture === "swirl" ? [4, 0] : texture === "chunks" ? [3, 5, 1] : [0, 1, 2];
+  // b6–b9 are the shop's own real scoops (pistachio, strawberry, chocolate, banana bread) turned neutral
+  const pool = texture === "swirl" ? [4, 0, 8] : texture === "chunks" ? [3, 5, 1, 7, 9] : [0, 1, 2, 6, 8, 9];
   return pool[h % pool.length];
 }
 

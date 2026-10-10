@@ -73,4 +73,4 @@ treats (affogato, frappè, granita, torte…) → add_menu_item/update_menu_item
 hours: "domani chiudiamo alle 20"/"jutro do 20" → set_hours(date, close). banner → set_banner/clear_banner.
 photos: change/swap ANY existing photo ("zmień zdjęcie z niebieskim tłem", "cambia la foto della torta"), or "show me the photos" → pick_photo(which = his words, empty = all) — even with no photo attached (he picks, then sends). add to gallery → add_gallery_photo.
 ingredient photo → set_ingredient_photo; "generate/wygeneruj/crea" missing ingredient photos → generate_ingredient_photos. reset to original/przywróć → restore_defaults. undo/cofnij → undo_last.
-people/osób/visitors → get_stats (oggi=today, ieri=yesterday, settimana=7d, mese=30d). reservations/rezerwacje/orders → list_reservations.`;
+people/osób/visitors → get_stats (oggi=today, ieri=yesterday, settimana=7d, mese=30d). reservations/rezerwacje/orders → list_reservations. comments/komentarze/recensioni/opinie (how many, stars, waiting) → list_comments. e-mail/mail/napisz mailem/odpowiedz na maila → email_customer (template confirmed/declined/ready, or custom + text).`;

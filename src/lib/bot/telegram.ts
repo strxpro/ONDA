@@ -5,6 +5,8 @@ import type { InputMediaPhoto } from "grammy/types";
 import { AllBusyError } from "../llm";
 import { allPhotos, jpegOf, replacePhoto, type PhotoRef } from "../photos";
 import { replyToComment, translateComment } from "../comments";
+import { canMail, contactOf, sendMail, whenIn } from "../mail";
+import type { Reservation } from "../types";
 import { store, type Actor } from "../store";
 import { patchRow, undoLast } from "../mutations";
 import { saveImage } from "../upload";
@@ -183,6 +185,27 @@ async function answerTypedChoice(ctx: Context, text: string) {
   return true;
 }
 
+/** The owner's own words to a customer (after "📧 Scrivi un'e-mail"): polished, translated, sent in Onda's template. */
+async function answerMail(ctx: Context, text: string) {
+  const p = await store().latestPending(ctx.from!.id, "mail_custom");
+  if (!p) return false;
+  await store().setPendingStatus(p.id, "confirmed");
+  try {
+    const refId = String(p.args.refId);
+    const who = await contactOf(refId);
+    if (!who) throw new Error("no contact");
+    const r = who.kind === "reservation" ? ((await store().get("reservations", refId)) as Reservation | null) : null;
+    const c = who.kind === "comment" ? ((await store().get("comments", refId)) as { message: string } | null) : null;
+    const lang = who.lang ?? r?.locale ?? "it";
+    const sent = await typing(ctx, () => sendMail({ to: who.email, kind: "custom", lang, name: who.name ?? r?.name ?? "", items: r?.items, when: r ? whenIn(r.pickup_at, lang) : undefined, quote: c?.message, text }));
+    await ctx.reply(`📧 Inviata a ${who.email} («${sent.subject}»), in ${lang.toUpperCase()} ✨`);
+  } catch (e) {
+    console.error("[mail custom]", e);
+    await ctx.reply(P.it.busy);
+  }
+  return true;
+}
+
 /** The owner's answer to a visitor's comment (after he tapped "💬 Rispondi"). */
 async function answerCommentReply(ctx: Context, text: string) {
   const p = await store().latestPending(ctx.from!.id, "comment_reply");
@@ -212,6 +235,7 @@ export function getBot() {
       await ctx.reply("Ciao! Scrivimi o mandami un vocale, in qualsiasi lingua: «Il pistacchio è finito», «Quante persone oggi?», «Cono medio 3,80», «Aggiungi il gusto mirto»…");
       return;
     }
+    if (await answerMail(ctx, ctx.message.text)) return;
     if (await answerCommentReply(ctx, ctx.message.text)) return;
     if (await answerTypedChoice(ctx, ctx.message.text)) return;
     await handle(ctx, ctx.message.text);
@@ -259,6 +283,7 @@ export function getBot() {
         return;
       }
       await ctx.reply(`${L[detectLang(text)].heard} «${text}»`);
+      if (await answerMail(ctx, text)) return;
       if (await answerCommentReply(ctx, text)) return;
       if (await answerTypedChoice(ctx, text)) return;
       await handle(ctx, text);
@@ -307,13 +332,48 @@ export function getBot() {
     }
     if (kind === "rs") {
       await ctx.answerCallbackQuery();
-      const status = idx === "ok" ? "confirmed" : "declined";
+      const status = idx === "ok" ? "confirmed" : idx === "ready" ? "confirmed" : "declined";
       try {
-        await patchRow("reservations", id, { status }, { ...actorOf(ctx), action: `reservation_${status}` });
-        await ctx.editMessageText(`${ctx.callbackQuery.message && "text" in ctx.callbackQuery.message ? ctx.callbackQuery.message.text : ""}\n\n${status === "confirmed" ? "✅ Confermata" : "❌ Rifiutata"}`);
+        const r = (await store().get("reservations", id)) as Reservation | null;
+        if (idx !== "ready") await patchRow("reservations", id, { status }, { ...actorOf(ctx), action: `reservation_${status}` });
+        // the customer hears it by e-mail, in their language
+        let mailed = "";
+        const who = await contactOf(id);
+        if (who && r && canMail()) {
+          const kind = idx === "ok" ? "order_confirmed" : idx === "ready" ? "order_ready" : "order_declined";
+          try {
+            await sendMail({ to: who.email, kind, lang: who.lang ?? r.locale, name: r.name, items: r.items, when: whenIn(r.pickup_at, who.lang ?? r.locale) });
+            mailed = ` · 📧 e-mail inviata a ${who.email}`;
+          } catch (e) {
+            console.error("[mail]", e);
+            mailed = " · ⚠️ e-mail non inviata";
+          }
+        }
+        const label = idx === "ok" ? "✅ Confermata" : idx === "ready" ? "🍨 Avvisato: è pronta" : "❌ Rifiutata";
+        const old = ctx.callbackQuery.message && "text" in ctx.callbackQuery.message ? ctx.callbackQuery.message.text : "";
+        const kb = who ? new InlineKeyboard().text("🍨 È pronta", `rs:${id}:ready`).text("📧 Scrivi un'e-mail", `ms:${id}:0`) : undefined;
+        await ctx.editMessageText(`${old}\n\n${label}${mailed}`, { reply_markup: kb });
       } catch (e) {
-        await ctx.reply(`${L.it.error} ${errText(e)}`);
+        console.error("[reservation]", e);
+        await ctx.reply(P.it.busy);
       }
+      return;
+    }
+    if (kind === "ms") {
+      // the next text or voice message becomes a pretty e-mail to this customer, in their language
+      await ctx.answerCallbackQuery();
+      const who = await contactOf(id);
+      if (!who) return void (await ctx.reply("Questo cliente non ha lasciato un'e-mail."));
+      if (!canMail()) return void (await ctx.reply("Per mandare e-mail mi servono SMTP_USER e SMTP_PASS (Gmail + password per le app)."));
+      await store().createPending({
+        telegram_user_id: ctx.from.id,
+        chat_id: ctx.chat!.id,
+        tool: "mail_custom",
+        args: { refId: id, lang: "it" },
+        summary: who.email,
+        expires_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+      });
+      await ctx.reply(`📧 Scrivimi o dimmi a voce cosa vuoi dire a ${who.name ?? who.email}. La metto in una bella e-mail di Onda, nella sua lingua 🌍`);
       return;
     }
 
@@ -453,6 +513,8 @@ export async function notifyComment(c: { id: string; name: string; message: stri
 }
 
 /** Tell the owner about a new pre-order (gelato by the kilo, treats…), with ✅ / ❌ buttons. */
-export async function notifyReservation(text: string, id: string) {
-  await toAdmins(text, new InlineKeyboard().text("✅ Conferma", `rs:${id}:ok`).text("❌ Rifiuta", `rs:${id}:no`));
+export async function notifyReservation(text: string, id: string, hasEmail = false) {
+  const kb = new InlineKeyboard().text("✅ Conferma", `rs:${id}:ok`).text("❌ Rifiuta", `rs:${id}:no`);
+  if (hasEmail) kb.row().text("🍨 È pronta", `rs:${id}:ready`).text("📧 Scrivi un'e-mail", `ms:${id}:0`);
+  await toAdmins(text + (hasEmail ? "\n\n📧 Il cliente riceve un'e-mail (nella sua lingua) quando confermi, rifiuti o scrivi." : ""), kb);
 }

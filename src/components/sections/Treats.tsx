@@ -146,6 +146,18 @@ function TreatCard({ item: p, index: i, locale, onClose, onOrderCake }: { item: 
   const own = p.image_url && !p.image_url.includes("unsplash.com") ? [p.image_url] : [];
   const photos = isCake ? [...own, ...CAKE_PHOTOS.filter((x) => x !== p.image_url)] : p.image_url ? [p.image_url] : [];
   const [shown, setShown] = useState(0);
+  const [paused, setPaused] = useState(false);
+  // the photos change by themselves every few seconds (a tap on a thumbnail stops it there for a while)
+  useEffect(() => {
+    if (photos.length < 2 || paused) return;
+    const id = window.setInterval(() => setShown((k) => (k + 1) % Math.min(6, photos.length)), 3800);
+    return () => window.clearInterval(id);
+  }, [photos.length, paused]);
+  useEffect(() => {
+    if (!paused) return;
+    const id = window.setTimeout(() => setPaused(false), 9000);
+    return () => window.clearTimeout(id);
+  }, [paused, shown]);
   const color = COLORS[Math.max(0, i) % COLORS.length];
   const sp = splash(Math.max(0, i) * 11 + 3);
   const ingredients = t(p.ingredients ?? {}, locale)
@@ -190,7 +202,7 @@ function TreatCard({ item: p, index: i, locale, onClose, onOrderCake }: { item: 
           {photos.length > 1 && (
             <div className="mt-3 flex justify-center gap-1.5">
               {photos.slice(0, 6).map((src, k) => (
-                <button key={src} type="button" onClick={() => (sfx.pop(), setShown(k))} className={`relative size-11 overflow-hidden rounded-full border-2 transition-transform ${k === shown ? "scale-110 border-chocolate" : "border-white"}`} aria-label={`${k + 1}`}>
+                <button key={src} type="button" onClick={() => (sfx.pop(), setShown(k), setPaused(true))} className={`relative size-11 overflow-hidden rounded-full border-2 transition-transform ${k === shown ? "scale-110 border-chocolate" : "border-white"}`} aria-label={`${k + 1}`}>
                   <Image src={src} alt="" fill sizes="44px" className="object-cover" />
                 </button>
               ))}

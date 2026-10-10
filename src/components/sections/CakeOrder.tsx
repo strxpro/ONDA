@@ -12,8 +12,7 @@ import { ScoopImg, scoopPhoto, thumb } from "../ice/PhotoStack";
 import { useSite } from "../providers/SiteData";
 import { useScrollLock } from "../ui/useScrollLock";
 
-/** Gelato cakes in Onda's style (generated for the shop) until its own photos are uploaded. */
-export const CAKE_PHOTOS = [1, 2, 3, 4].map((n) => `/img/cake/torta-${n}.webp`);
+export { CAKE_PHOTOS } from "@/lib/assets";
 
 const SHAPES = ["round", "heart", "square"] as const;
 const PEOPLE = [6, 8, 10, 12, 16] as const;
@@ -81,6 +80,7 @@ export function CakeOrder({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({
           name: f.get("name"),
           phone: f.get("phone"),
+          email: String(f.get("email") ?? "") || undefined,
           items: items.slice(0, 500),
           pickup_at: romeISO(String(f.get("date") || minDate), String(f.get("time") || "17:00")),
           notes: String(f.get("notes") ?? "") || undefined,
@@ -171,6 +171,7 @@ export function CakeOrder({ onClose }: { onClose: () => void }) {
               <div className="grid gap-2 sm:grid-cols-2">
                 <input name="name" required maxLength={60} placeholder={ui("name")} className={field} />
                 <input name="phone" required type="tel" maxLength={30} placeholder={ui("phone")} className={field} />
+                <input name="email" type="email" maxLength={120} placeholder={ui("email")} autoComplete="email" className={`${field} sm:col-span-2`} />
               </div>
               <input type="hidden" name="date" value={minDate} />
               <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
@@ -236,7 +237,7 @@ export function CakeOrder({ onClose }: { onClose: () => void }) {
                         <p className="mb-2 text-sm font-bold text-chocolate/60">
                           {ui("flavorsHint")} · {cake.flavors.length}/3
                         </p>
-                        <div className="grid max-h-[38vh] grid-cols-5 gap-x-1.5 gap-y-3 overflow-y-auto pr-1" data-lenis-prevent>
+                        <div className="grid max-h-[38vh] grid-cols-5 gap-x-1.5 gap-y-3 overflow-y-auto px-1.5 pt-2 pb-2" data-lenis-prevent>
                           {flavors.map((f) => {
                             const on = cake.flavors.includes(f.slug);
                             const full = !on && cake.flavors.length >= 3;
@@ -288,6 +289,7 @@ export function CakeOrder({ onClose }: { onClose: () => void }) {
                         <div className="grid gap-2 sm:grid-cols-2">
                           <input name="name" required maxLength={60} placeholder={ui("name")} className={field} />
                           <input name="phone" required type="tel" maxLength={30} placeholder={ui("phone")} className={field} />
+                          <input name="email" type="email" maxLength={120} placeholder={ui("email")} autoComplete="email" className={`${field} sm:col-span-2`} />
                         </div>
                         <textarea name="notes" maxLength={400} rows={2} placeholder={ui("notes")} className={`${field} resize-none font-semibold`} />
                         <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
@@ -364,7 +366,7 @@ function CakeView({ cake, flavors }: { cake: Cake; flavors: Flavor[] }) {
   const x0 = 200 - rx;
   const x1 = 200 + rx;
   const PY = 268; // where the cake stands on the plate
-  const layers = [{ key: `base-${cake.base}`, color: BASES[cake.base], h: 22 }, ...flavors.map((f) => ({ key: f.slug, color: f.color_primary, h: Math.max(24, 60 / Math.max(1, flavors.length)) }))];
+  const layers: { key: string; color: string; h: number; tex?: string }[] = [{ key: `base-${cake.base}`, color: BASES[cake.base], h: 22 }, ...flavors.map((f) => ({ key: f.slug, color: f.color_primary, h: Math.max(24, 60 / Math.max(1, flavors.length)), tex: thumb(scoopPhoto(f)) ?? undefined }))];
   const bodyH = layers.reduce((a, l) => a + l.h, 0) + 12;
   const TY = PY - bodyH;
   const coat = COATS[cake.coat];
@@ -437,6 +439,22 @@ function CakeView({ cake, flavors }: { cake: Cake; flavors: Flavor[] }) {
           <filter id="cake-soft" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="6" />
           </filter>
+          {/* real gelato on the sides: the middle of each flavor's own scoop photo, as a texture */}
+          {layers.map((l) =>
+            l.tex ? (
+              <pattern key={l.key} id={`tex-${l.key}`} patternUnits="userSpaceOnUse" width="400" height="520">
+                <rect width="400" height="520" fill={l.color} />
+                {/* only the middle of the scoop (no edges, no seams): one big copy behind the whole cake */}
+                <image href={l.tex} x="-140" y="-40" width="680" height="560" preserveAspectRatio="xMidYMid slice" />
+              </pattern>
+            ) : null,
+          )}
+          {/* the base: crumbs and pores (sponge, cocoa biscuit, brownie, crumble) */}
+          <filter id="cake-crumb" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency={cake.base === "sponge" ? 0.55 : cake.base === "crumble" ? 0.9 : 0.35} numOctaves="2" seed="7" />
+            <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.25" />
+            <feComposite in2="SourceGraphic" operator="in" />
+          </filter>
         </defs>
 
         {/* the porcelain stand + the cake's shadow on it */}
@@ -452,17 +470,11 @@ function CakeView({ cake, flavors }: { cake: Cake; flavors: Flavor[] }) {
                 const yb = y;
                 y -= l.h;
                 return (
-                  <motion.path
-                    key={l.key + i}
-                    d={band(y, yb)}
-                    fill={l.color}
-                    stroke={darken(l.color, 0.1)}
-                    strokeWidth="0.8"
-                    initial={{ y: -90, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ opacity: 0, y: -50 }}
-                    transition={{ type: "spring", stiffness: 260, damping: 17 }}
-                  />
+                  <motion.g key={l.key + i} initial={{ y: -90, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0, y: -50 }} transition={{ type: "spring", stiffness: 260, damping: 17 }}>
+                    <path d={band(y, yb)} fill={l.tex ? `url(#tex-${l.key})` : l.color} stroke={darken(l.color, 0.12)} strokeWidth="0.8" />
+                    {/* the base gets its crumbs, darker */}
+                    {!l.tex && <path d={band(y, yb)} fill={darken(l.color, 0.35)} opacity="0.55" filter="url(#cake-crumb)" />}
+                  </motion.g>
                 );
               });
             })()}

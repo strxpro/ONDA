@@ -38,6 +38,7 @@ function fresh(): Db {
       reviews: seed.reviews,
       comments: [],
       reservations: [],
+      contacts: [],
     },
     audit: [],
     pageViews: [],

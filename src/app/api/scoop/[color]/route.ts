@@ -18,7 +18,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ color: s
   if (!/^[0-9a-fA-F]{6}$/.test(hex)) return new Response("bad color", { status: 400 });
   const sp = new URL(req.url).searchParams;
   const small = sp.get("s") === "sm";
-  const b = Math.max(0, Math.min(5, Number(sp.get("b") ?? 0) || 0)); // which scoop shape (public/img/ice/bases/b0…b5)
+  const b = Math.max(0, Math.min(9, Number(sp.get("b") ?? 0) || 0)); // which scoop shape (public/img/ice/bases/b0…b9)
   const key = `${hex.toLowerCase()}:${small ? "sm" : "lg"}:${b}`;
   const headers = { "content-type": "image/webp", "cache-control": "public, max-age=31536000, immutable" };
   const hit = cache.get(key);

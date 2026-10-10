@@ -120,7 +120,7 @@ export function CommentsWall() {
       )}
 
       {visible.length ? (
-        <motion.ul layout className="columns-1 gap-4 sm:columns-2 [&>li]:mb-4 [&>li]:break-inside-avoid">
+        <motion.ul layout className="grid items-start gap-x-4 gap-y-5 pt-3 sm:grid-cols-2">
           <AnimatePresence initial={false}>
             {visible.map((c, i) => (
               <Note key={c.id} comment={c} index={i} replies={repliesOf(c.id)} fresh={!firstIds.current!.has(c.id) && !older.some((o) => o.id === c.id)} locale={locale} />
@@ -462,7 +462,7 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
     setState("sending");
     try {
       const body = new FormData();
-      const fields = { name: f.get("name"), message, website: f.get("website") || "", flavor_slug: flavor ?? "", sticker, rating, locale, elapsed: Date.now() - openedAt.current };
+      const fields = { name: f.get("name"), email: f.get("email") || "", message, website: f.get("website") || "", flavor_slug: flavor ?? "", sticker, rating, locale, elapsed: Date.now() - openedAt.current };
       for (const [k, v] of Object.entries(fields)) if (v !== "" && v != null) body.append(k, String(v));
       if (pic) body.append("photo", pic.blob, "photo.jpg");
       const res = await fetch("/api/comments", { method: "POST", body });
@@ -573,6 +573,14 @@ function CommentForm({ open, onClose }: { open: boolean; onClose: () => void }) 
                     required
                     maxLength={40}
                     placeholder={ui("name")}
+                    className="w-full rounded-2xl border-2 border-chocolate/10 bg-white px-4 py-3 font-bold outline-none focus:border-pink"
+                  />
+                  <input
+                    name="email"
+                    type="email"
+                    maxLength={120}
+                    autoComplete="email"
+                    placeholder={ui("email")}
                     className="w-full rounded-2xl border-2 border-chocolate/10 bg-white px-4 py-3 font-bold outline-none focus:border-pink"
                   />
                   <textarea

@@ -56,6 +56,14 @@ export async function replyToComment(id: string, text: string, actor: Actor) {
   const tr = await translate({ reply: text }).catch(() => ({}) as Record<string, never>);
   const reply = (tr as { reply?: Record<string, string> }).reply ?? { it: text };
   await patchRow("comments", id, { reply, reply_at: new Date().toISOString(), status: "approved" }, { ...actor, action: "comment_reply" });
+  // the visitor left an e-mail: tell them, in their language
+  const { canMail, contactOf, sendMail } = await import("./mail");
+  const who = await contactOf(id);
+  const c = (await store().get("comments", id)) as Comment | null;
+  if (who && c && canMail()) {
+    const lang = who.lang ?? c.locale ?? "it";
+    await sendMail({ to: who.email, kind: "comment_reply", lang, name: c.name, quote: c.message, reply: (reply as Record<string, string>)[lang] ?? text }).catch((e) => console.error("[mail]", e));
+  }
 }
 
 /** Refresh the cached page in a request of its own (work done after a response cannot revalidate). */

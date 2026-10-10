@@ -15,7 +15,8 @@
       "lactose_free": "Bez laktozy",
       "new": "Nowość",
       "signature": "Firmowe",
-      "title": "Filtruj smaki"
+      "title": "Filtruj smaki",
+      "noneLactose": "Dziś nie ma smaków bez laktozy — zapytaj przy ladzie!"
     },
     "weekdays": [
       "Poniedziałek",
@@ -121,7 +122,8 @@
       "newOne": "Nowy!",
       "showReplies": "Pokaż odpowiedzi",
       "hideReplies": "Ukryj odpowiedzi",
-      "none": "Brak komentarzy w tym filtrze."
+      "none": "Brak komentarzy w tym filtrze.",
+      "email": "E-mail (opcjonalnie) — damy znać o odpowiedzi"
     },
     "categories": {
       "crema": "Kremowe",
@@ -167,7 +169,8 @@
       "custom": "Na wagę",
       "weight": "Waga",
       "perKgNote": "co 50 g",
-      "popular": "najczęściej"
+      "popular": "najczęściej",
+      "email": "E-mail (opcjonalnie) — wyślemy potwierdzenie"
     },
     "map": {
       "load": "Pokaż mapę",
@@ -248,7 +251,8 @@
       "contactIntro": "Wolisz porozmawiać? Zadzwoń, napisz na WhatsAppie albo zostaw wiadomość.",
       "writeUs": "Napisz do nas",
       "messagePh": "Na kiedy, dla ilu osób, jakie smaki…",
-      "waText": "Cześć! Chciałbym zamówić tort lodowy."
+      "waText": "Cześć! Chciałbym zamówić tort lodowy.",
+      "email": "E-mail (opcjonalnie) — wyślemy potwierdzenie"
     },
     "allergens": {
       "title": "Alergeny",

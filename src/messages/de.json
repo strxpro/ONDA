@@ -15,7 +15,8 @@
       "lactose_free": "Laktosefrei",
       "new": "Neu",
       "signature": "Signature",
-      "title": "Sorten filtern"
+      "title": "Sorten filtern",
+      "noneLactose": "Heute keine laktosefreien Sorten — frag an der Theke!"
     },
     "weekdays": [
       "Montag",
@@ -121,7 +122,8 @@
       "newOne": "Neu!",
       "showReplies": "Antworten zeigen",
       "hideReplies": "Antworten ausblenden",
-      "none": "Hier gibt es noch keine Kommentare."
+      "none": "Hier gibt es noch keine Kommentare.",
+      "email": "E-Mail (optional) — wir sagen Bescheid, wenn jemand antwortet"
     },
     "categories": {
       "crema": "Cremig",
@@ -167,7 +169,8 @@
       "custom": "Nach Gewicht",
       "weight": "Gewicht",
       "perKgNote": "in 50-g-Schritten",
-      "popular": "am beliebtesten"
+      "popular": "am beliebtesten",
+      "email": "E-Mail (optional) — für die Bestätigung"
     },
     "map": {
       "load": "Karte anzeigen",
@@ -248,7 +251,8 @@
       "contactIntro": "Lieber reden? Ruf uns an, schreib uns per WhatsApp oder hinterlass eine Nachricht.",
       "writeUs": "Schreib uns",
       "messagePh": "Für wann, für wie viele, welche Sorten…",
-      "waText": "Hallo! Ich möchte eine Eistorte bestellen."
+      "waText": "Hallo! Ich möchte eine Eistorte bestellen.",
+      "email": "E-Mail (optional) — für die Bestätigung"
     },
     "allergens": {
       "title": "Allergene",

@@ -7,10 +7,11 @@ import { nowIn } from "../hours";
 import { SILENT, undoLast } from "../mutations";
 import * as ops from "../ops";
 import { store, type Actor } from "../store";
-import type { Flavor, OpeningHours, PriceItem, Reservation, SpecialDay } from "../types";
+import type { Comment, Flavor, OpeningHours, PriceItem, Reservation, SpecialDay } from "../types";
 import { RESTORE_LABEL, RESTORE_PARTS, restoreDefaults, type RestorePart } from "../restore";
 import { canGenerateImages, generateIngredientPhotos, ingredientsWithoutPhoto } from "../imagegen";
 import { allPhotos, findPhotos, seeNewPhoto, type PhotoRef } from "../photos";
+import { contactOf, sendMail, whenIn, type Contact, type MailKind } from "../mail";
 import { BOT_SKILL, BOT_SKILL_SHORT } from "./skill";
 import { READ_TOOLS, TOOL_DEFS, TOOL_INPUT, type ToolName } from "./tools";
 
@@ -142,15 +143,28 @@ export async function runRead(tool: (typeof READ_TOOLS)[number], args: Record<st
         .slice(0, 20)
         .map((r) => ({ pickup: new Date(r.pickup_at).toLocaleString("it-IT", { timeZone: "Europe/Rome", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }), what: r.items, name: r.name, phone: r.phone, notes: r.notes, status: r.status }));
     }
-    case "list_comments":
-      return (await ops.pendingComments()).map((c) => ({
-        author: c.name,
-        text: c.message,
-        stars: c.rating,
-        private_feedback: c.rating != null && c.rating <= 3,
-        favorite: c.flavor_slug,
-        when: c.created_at,
-      }));
+    case "list_comments": {
+      // the whole picture: how many are on the site, stars, likes, photos, replies, what waits for him
+      const all = (await store().list("comments")) as (Comment & { likes?: number; photo_url?: string | null; parent_id?: string | null; reply?: unknown })[];
+      const live = all.filter((c) => c.status === "approved");
+      const top = live.filter((c) => !c.parent_id);
+      const rated = top.filter((c) => c.rating);
+      const pending = all.filter((c) => c.status === "pending").sort((a, b) => a.created_at.localeCompare(b.created_at));
+      const short = (c: Comment) => ({ author: c.name, text: c.message, stars: c.rating, when: c.created_at });
+      return {
+        published_comments: top.length,
+        visitor_replies: live.length - top.length,
+        waiting_for_approval: pending.length,
+        private_feedback_1_3_stars: all.filter((c) => c.rating != null && c.rating <= 3).length,
+        rejected: all.filter((c) => c.status === "rejected").length,
+        average_stars: rated.length ? Math.round((rated.reduce((a, c) => a + (c.rating ?? 0), 0) / rated.length) * 10) / 10 : null,
+        with_photo: top.filter((c) => c.photo_url).length,
+        total_likes: live.reduce((a, c) => a + (c.likes ?? 0), 0),
+        answered_by_owner: top.filter((c) => c.reply).length,
+        latest: top.sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5).map(short),
+        pending: pending.slice(0, 10).map((c) => ({ ...short(c), private_feedback: c.rating != null && c.rating <= 3 })),
+      };
+    }
     case "get_hours": {
       const [h, sd] = await Promise.all([store().list("opening_hours"), store().list("special_days")]);
       return {
@@ -159,6 +173,24 @@ export async function runRead(tool: (typeof READ_TOOLS)[number], args: Record<st
       };
     }
   }
+}
+
+/* ─── customers with an e-mail ───────────────────────────────────────────── */
+
+async function recentCustomers() {
+  const contacts = ((await store().list("contacts").catch(() => [])) as Contact[]).sort((x, y) => String((y as { created_at?: string }).created_at ?? "").localeCompare(String((x as { created_at?: string }).created_at ?? "")));
+  const res = (await store().list("reservations")) as Reservation[];
+  return contacts.slice(0, 60).map((c) => {
+    const r = res.find((x) => x.id === c.ref_id);
+    return { refId: c.ref_id, email: c.email, lang: c.lang, label: `${c.name ?? r?.name ?? c.email}${r ? ` (${r.items.slice(0, 30)})` : ""}`, hay: [c.name, c.email, r?.name, r?.phone, r?.items].filter(Boolean).join(" ").toLowerCase() };
+  });
+}
+
+async function findCustomer(q: string) {
+  const list = await recentCustomers();
+  const words = q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/\s+/).filter((w) => w.length > 1);
+  const hit = list.find((c) => words.every((w) => c.hay.normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(w))) ?? list.find((c) => words.some((w) => w.length > 2 && c.hay.includes(w)));
+  return hit ?? null;
 }
 
 /* ─── staging (resolve names → ids, or ask) ───────────────────────────────── */
@@ -301,6 +333,13 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
       };
     case "set_ingredient_photo":
       return { staged: { tool, args: a, label: `foto dell'ingrediente «${a.ingredient}»` } };
+    case "email_customer": {
+      const who = await findCustomer(String(a.who));
+      if (!who)
+        return { choice: { question: { it: "Non trovo un cliente con un'e-mail con quel nome. Chi?", pl: "Nie widzę klienta z e-mailem o tej nazwie. Kto?", en: "I can't find a customer with an e-mail by that name. Who?", es: "No encuentro ese cliente con e-mail. ¿Quién?", de: "Keinen Kunden mit E-Mail gefunden. Wer?", fr: "Je ne trouve pas ce client avec e-mail. Qui ?" }[lang], options: (await recentCustomers()).slice(0, 4).map((c) => c.label).concat(["OK"]).slice(0, 4) } };
+      const template = (a.template as string | undefined) ?? (a.text ? "custom" : "confirmed");
+      return { staged: { tool, args: { refId: who.refId, template, text: a.text }, label: `📧 e-mail a ${who.label} (${who.email}, ${String(who.lang ?? "it").toUpperCase()}): ${template === "custom" ? `«${a.text}»` : template}${template !== "custom" && a.text ? ` + «${a.text}»` : ""}` } };
+    }
     case "generate_ingredient_photos": {
       const list = a.ingredients ? String(a.ingredients).split(",").map((x) => x.trim()).filter(Boolean) : (await ingredientsWithoutPhoto()).slice(0, 6);
       return { staged: { tool, args: { list }, label: list.length ? `🎨 creare con l'AI le foto di: ${list.join(", ")}` : "tutti gli ingredienti hanno già una foto 👍" } };
@@ -487,6 +526,15 @@ export async function execute(s: Staged, actor: Actor) {
       );
     case "set_ingredient_photo":
       return ops.setIngredientPhoto(String(a.ingredient), (a.photo as Photo).url, actor);
+    case "email_customer": {
+      const who = await contactOf(String(a.refId));
+      if (!who) throw new Error("cliente senza e-mail");
+      const r = who.kind === "reservation" ? ((await store().get("reservations", who.ref_id)) as Reservation | null) : null;
+      const c = who.kind === "comment" ? ((await store().get("comments", who.ref_id)) as Comment | null) : null;
+      const lang = who.lang ?? r?.locale ?? c?.locale ?? "it";
+      const kind = { confirmed: "order_confirmed", declined: "order_declined", ready: "order_ready", custom: "custom" }[String(a.template)] as MailKind;
+      return sendMail({ to: who.email, kind, lang, name: who.name ?? r?.name ?? c?.name ?? "", items: r?.items, when: r ? whenIn(r.pickup_at, lang) : undefined, quote: c?.message, text: a.text as string | undefined });
+    }
     case "generate_ingredient_photos": {
       const r = await generateIngredientPhotos(a.list as string[], actor);
       if (!r.made.length && r.failed.length) throw new Error(`il generatore di immagini non risponde (${r.failed.join(", ")})`);

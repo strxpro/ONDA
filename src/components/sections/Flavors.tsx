@@ -16,6 +16,7 @@ import { useSite } from "../providers/SiteData";
 import { FrameSequence, type FrameSequenceHandle } from "../ui/FrameSequence";
 import { RollingPrice } from "../ui/RollingPrice";
 import { ScoopFrame } from "../ui/ScoopFrame";
+import { tubPhoto } from "@/lib/assets";
 import { AllergenIcon, allergenLabel, allergensOf, LactoseFreeBadge } from "../ui/Allergens";
 import { TagIcon } from "../ui/TagIcon";
 import { Title } from "../ui/Title";
@@ -61,7 +62,7 @@ export function Flavors() {
   const news = all.filter((f) => f.is_available_today && f.tags.includes("new"));
   const filters = FILTERS.filter((k) => k === "all" || all.some((f) => matches(f, k)));
   const [noLactose, setNoLactose] = useState(false);
-  const lf = (f: Flavor) => !noLactose || f.tags.includes("lactose_free");
+  const lf = (f: Flavor) => !noLactose || isLactoseFree(f);
   const filtered = all.filter((f) => matches(f, filter) && lf(f));
 
   // flavors that appear while the page is open (added by voice from Telegram) arrive with a "puff"
@@ -123,7 +124,7 @@ export function Flavors() {
         </div>
 
         {/* the menu, with a playful filter */}
-        <FilterBar filters={filters} value={filter} onChange={pickFilter} noLactose={noLactose} onNoLactose={(v) => ((anchor.current = gridTop.current?.getBoundingClientRect().top ?? null), setNoLactose(v))} />
+        <FilterBar filters={filters} counts={Object.fromEntries(filters.map((k) => [k, all.filter((f) => matches(f, k) && lf(f)).length])) as Record<FilterKey, number>} value={filter} onChange={pickFilter} noLactose={noLactose} onNoLactose={(v) => ((anchor.current = gridTop.current?.getBoundingClientRect().top ?? null), setNoLactose(v))} />
         <div ref={gridTop} />
         {/* the list swaps in place (no empty moment that would make the page jump), then fades in */}
         <AnimatePresence initial={false}>
@@ -132,13 +133,18 @@ export function Flavors() {
               <div className="mt-2 space-y-12 sm:space-y-16">
                 {groups.map((g) => ({ ...g, list: g.list.filter(lf) })).filter((g) => g.list.length).map((g) => (
                   <div key={g.cat}>
-                    <h3 className="flex items-baseline gap-3 border-b border-chocolate/10 pb-3 font-display text-3xl sm:text-4xl">{ui(`categories.${g.cat}`)}</h3>
+                    <h3 className="flex items-baseline gap-3 border-b border-chocolate/10 pb-3 font-display text-3xl sm:text-4xl">{ui(`categories.${g.cat}`)}
+                      <span className="font-body text-lg font-bold text-chocolate/35 tabular-nums">({g.list.length})</span>
+                    </h3>
                     <TileGrid list={g.list} locale={locale} active={active} onPick={pick} isFresh={isFresh} />
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : filtered.length ? (
               <TileGrid list={filtered} locale={locale} active={active} onPick={pick} isFresh={isFresh} />
+            ) : null}
+            {noLactose && !filtered.length && (
+              <p className="mt-6 rounded-3xl border-4 border-dashed border-chocolate/15 p-6 text-center font-script text-2xl text-chocolate/60">{ui("filters.noneLactose")}</p>
             )}
           </motion.div>
         </AnimatePresence>
@@ -166,6 +172,12 @@ const FILTERS = ["all", "new", "crema", "frutta", "sorbetti", "speciali", "vegan
 type FilterKey = (typeof FILTERS)[number];
 const FILTER_COLOR: Record<FilterKey, string> = { all: "#4B2A20", new: "#F0527F", crema: "#E3B98A", frutta: "#FF8FB8", sorbetti: "#6FE0C4", speciali: "#FFAA5C", vegan: "#A8DB7A", gluten_free: "#FFE066" };
 const CATS = ["crema", "frutta", "sorbetti", "speciali"];
+/** Lactose-free: marked so by the owner, vegan, or a fruit sorbet with no milk in its ingredients. */
+export function isLactoseFree(f: Flavor) {
+  if (f.tags.includes("lactose_free") || f.tags.includes("vegan")) return true;
+  return f.category === "sorbetti" && !allergensOf(f).list.includes("milk");
+}
+
 function matches(f: Flavor, k: FilterKey) {
   if (k === "all") return true;
   if (CATS.includes(k)) return f.category === k;
@@ -178,13 +190,13 @@ function matches(f: Flavor, k: FilterKey) {
  */
 const FILTER_SCOOP: Partial<Record<FilterKey, string>> = { all: PHOTO.scoops.fragola, crema: PHOTO.scoops.cioccolato, frutta: PHOTO.scoops.fragola, sorbetti: "/api/scoop/FFF3A0?b=0", speciali: PHOTO.scoops["yellow-submarine"], new: PHOTO.scoops.pistacchio };
 
-function FilterBar({ filters, value, onChange, noLactose, onNoLactose }: { filters: readonly FilterKey[]; value: FilterKey; onChange: (k: FilterKey) => void; noLactose: boolean; onNoLactose: (v: boolean) => void }) {
+function FilterBar({ filters, counts, value, onChange, noLactose, onNoLactose }: { filters: readonly FilterKey[]; counts: Record<FilterKey, number>; value: FilterKey; onChange: (k: FilterKey) => void; noLactose: boolean; onNoLactose: (v: boolean) => void }) {
   const ui = useTranslations("ui");
   const [open, setOpen] = useState(false);
   const label = (k: FilterKey) => (CATS.includes(k) ? ui(`categories.${k}`) : ui(`filters.${k}`));
   const spring = { type: "spring", stiffness: 380, damping: 32 } as const;
   return (
-    <div className="relative z-30 mt-12 flex flex-row-reverse items-start gap-2 sm:mt-16">
+    <div className="sticky top-24 z-30 mt-12 flex flex-row-reverse items-start gap-2 sm:mt-16">
       {/* the round button keeps its place; the panel grows out of it over the list (nothing below moves) */}
       <div className="relative size-14 shrink-0">
         <AnimatePresence initial={false} mode="popLayout">
@@ -221,7 +233,9 @@ function FilterBar({ filters, value, onChange, noLactose, onNoLactose }: { filte
                           <TagIcon tag={k} className="size-4.5" />
                         </span>
                       )}
-                      <span className="flex-1">{label(k)}</span>
+                      <span className="flex-1">
+                        {label(k)} <span className="font-semibold text-chocolate/40 tabular-nums">({counts[k] ?? 0})</span>
+                      </span>
                       {value === k && <Check weight="bold" className="size-4" />}
                     </button>
                   </motion.li>
@@ -386,7 +400,7 @@ function Detail({ flavor: f, locale, onClose }: { flavor: Flavor; locale: Locale
       </button>
 
       {/* the real scoop, filmed: the spatula curls the gelato into a ball (tinted to the flavor) */}
-      <ScoopClip color={f.color_primary} photo={photo} tub={TUB_PHOTOS.has(f.slug) ? `/img/tubs/${f.slug}.webp` : null} />
+      <ScoopClip color={f.color_primary} photo={photo} tub={tubPhoto(f.slug)} />
 
       <div className="min-w-0 flex-1 pr-8">
         <h3 className="font-display text-2xl leading-tight font-bold sm:text-4xl">{t(f.name, locale)}</h3>
@@ -508,8 +522,6 @@ function PriceStrip() {
 }
 
 /** The filmed scoop (frames from a real clip), played once, in a scoop-shaped frame; the flavor's own scoop lands on top. */
-/** Flavors with their own appetizing photo of the tub (generated for Onda); the others get the scooping film. */
-const TUB_PHOTOS = new Set(["yellow-submarine", "cioccolato", "stracciatella", "banana-bread", "pistacchio", "fragola", "limone", "mango", "nocciola", "fior-di-latte", "caffe", "cocco", "mirtillo", "menta", "anguria", "pesca", "tiramisu", "caramello-salato", "lampone", "vaniglia", "wschod-s-onca"]);
 
 function ScoopClip({ color, photo, tub }: { color: string; photo: string | null; tub: string | null }) {
   const seq = useRef<FrameSequenceHandle>(null);
@@ -581,7 +593,7 @@ function ScoopTile({ flavor: f, locale, index, selected, onPick, puff = false }:
       <span className="absolute inset-x-[6%] top-[8%] bottom-[4%] rounded-full transition-transform duration-500 ease-(--ease-gelato) group-hover:scale-105" style={{ background: `radial-gradient(circle at 50% 35%, #fff, ${lighten(f.color_primary, 0.45)})` }} aria-hidden />
       <img src={thumb(scoopPhoto(f))!} alt="" loading="lazy" decoding="async" draggable={false} className="absolute bottom-[12%] left-1/2 w-[94%] -translate-x-1/2 transition-transform duration-500 ease-(--ease-gelato) group-hover:-translate-y-[6%]" />
       {puff && <Puff color={f.color_primary} />}
-      {f.tags.includes("lactose_free") && (
+      {isLactoseFree(f) && (
         <span className="absolute top-[6%] right-[6%] z-10" title="Senza lattosio">
           <LactoseFreeBadge className="size-7 drop-shadow-[0_3px_4px_rgba(75,42,32,0.3)] sm:size-9" />
         </span>
@@ -646,7 +658,7 @@ function Puff({ color }: { color: string }) {
 function AllergenRow({ flavor: f, locale }: { flavor: Flavor; locale: Locale }) {
   const ui = useTranslations("ui.allergens");
   const { list, guessed } = allergensOf(f);
-  const lactoseFree = f.tags.includes("lactose_free");
+  const lactoseFree = isLactoseFree(f);
   if (!list.length && !lactoseFree) return null;
   return (
     <div className="mt-4">

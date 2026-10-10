@@ -15,7 +15,8 @@
       "lactose_free": "Senza lattosio",
       "new": "Novità",
       "signature": "Firma",
-      "title": "Filtra i gusti"
+      "title": "Filtra i gusti",
+      "noneLactose": "Oggi nessun gusto senza lattosio — chiedi al banco!"
     },
     "weekdays": [
       "Lunedì",
@@ -121,7 +122,8 @@
       "newOne": "Nuovo!",
       "showReplies": "Mostra risposte",
       "hideReplies": "Nascondi risposte",
-      "none": "Nessun commento qui."
+      "none": "Nessun commento qui.",
+      "email": "E-mail (facoltativa) — ti avvisiamo se ti rispondono"
     },
     "categories": {
       "crema": "Creme",
@@ -167,7 +169,8 @@
       "custom": "Su misura",
       "weight": "Peso",
       "perKgNote": "a passi di 50 g",
-      "popular": "la più scelta"
+      "popular": "la più scelta",
+      "email": "E-mail (facoltativa) — per la conferma"
     },
     "map": {
       "load": "Mostra la mappa",
@@ -248,7 +251,8 @@
       "contactIntro": "Preferisci parlarne? Chiamaci, scrivici su WhatsApp o lasciaci un messaggio.",
       "writeUs": "Scrivici",
       "messagePh": "Per quando, per quanti, che gusti…",
-      "waText": "Ciao! Vorrei ordinare una torta gelato."
+      "waText": "Ciao! Vorrei ordinare una torta gelato.",
+      "email": "E-mail (facoltativa) — per la conferma"
     },
     "allergens": {
       "title": "Allergeni",

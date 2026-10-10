@@ -15,7 +15,8 @@
       "lactose_free": "Lactose free",
       "new": "New",
       "signature": "Signature",
-      "title": "Filter flavors"
+      "title": "Filter flavors",
+      "noneLactose": "No lactose-free flavours today — ask at the counter!"
     },
     "weekdays": [
       "Monday",
@@ -121,7 +122,8 @@
       "newOne": "New!",
       "showReplies": "Show replies",
       "hideReplies": "Hide replies",
-      "none": "No comments here yet."
+      "none": "No comments here yet.",
+      "email": "E-mail (optional) — we'll tell you when someone replies"
     },
     "categories": {
       "crema": "Creamy",
@@ -167,7 +169,8 @@
       "custom": "Custom weight",
       "weight": "Weight",
       "perKgNote": "in 50 g steps",
-      "popular": "most chosen"
+      "popular": "most chosen",
+      "email": "E-mail (optional) — for the confirmation"
     },
     "map": {
       "load": "Show the map",
@@ -248,7 +251,8 @@
       "contactIntro": "Rather talk? Call us, message us on WhatsApp or leave us a note.",
       "writeUs": "Write to us",
       "messagePh": "For when, for how many, which flavors…",
-      "waText": "Hi! I'd like to order a gelato cake."
+      "waText": "Hi! I'd like to order a gelato cake.",
+      "email": "E-mail (optional) — for the confirmation"
     },
     "allergens": {
       "title": "Allergens",

@@ -15,7 +15,8 @@
       "lactose_free": "Sans lactose",
       "new": "Nouveau",
       "signature": "Signature",
-      "title": "Filtrer les parfums"
+      "title": "Filtrer les parfums",
+      "noneLactose": "Pas de parfum sans lactose aujourd'hui — demande au comptoir !"
     },
     "weekdays": [
       "Lundi",
@@ -121,7 +122,8 @@
       "newOne": "Nouveau !",
       "showReplies": "Voir les réponses",
       "hideReplies": "Masquer les réponses",
-      "none": "Pas encore de commentaires ici."
+      "none": "Pas encore de commentaires ici.",
+      "email": "E-mail (facultatif) — on te prévient si on te répond"
     },
     "categories": {
       "crema": "Crèmes",
@@ -167,7 +169,8 @@
       "custom": "Sur mesure",
       "weight": "Poids",
       "perKgNote": "par pas de 50 g",
-      "popular": "la plus choisie"
+      "popular": "la plus choisie",
+      "email": "E-mail (facultatif) — pour la confirmation"
     },
     "map": {
       "load": "Afficher la carte",
@@ -248,7 +251,8 @@
       "contactIntro": "Tu préfères en parler ? Appelle-nous, écris-nous sur WhatsApp ou laisse-nous un message.",
       "writeUs": "Écris-nous",
       "messagePh": "Pour quand, pour combien, quels parfums…",
-      "waText": "Bonjour ! Je voudrais commander un gâteau glacé."
+      "waText": "Bonjour ! Je voudrais commander un gâteau glacé.",
+      "email": "E-mail (facultatif) — pour la confirmation"
     },
     "allergens": {
       "title": "Allergènes",

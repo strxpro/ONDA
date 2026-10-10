@@ -128,6 +128,7 @@ function OrderForm({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({
           name: f.get("name"),
           phone: f.get("phone"),
+          email: String(f.get("email") ?? "") || undefined,
           items: `${label}${names.length ? ` — ${names.join(", ")}` : ""}`,
           pickup_at: romeISO(String(f.get("date")), String(f.get("time"))),
           notes: String(f.get("notes") ?? "") || undefined,
@@ -236,6 +237,7 @@ function OrderForm({ onClose }: { onClose: () => void }) {
             <div className="grid gap-2 sm:grid-cols-2">
               <input name="name" required maxLength={60} placeholder={ui("name")} autoComplete="given-name" className={field} />
               <input name="phone" required type="tel" maxLength={30} placeholder={ui("phone")} autoComplete="tel" className={field} />
+              <input name="email" type="email" maxLength={120} placeholder={ui("email")} autoComplete="email" className={`${field} sm:col-span-2`} />
             </div>
             <textarea name="notes" maxLength={400} rows={2} placeholder={ui("notes")} className={`${field} resize-none font-semibold`} />
             <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />

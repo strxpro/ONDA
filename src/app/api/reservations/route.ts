@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { notifyReservation } from "@/lib/bot/telegram";
 import { notifyWhatsApp } from "@/lib/whatsapp";
+import { after } from "next/server";
+import { canMail, saveContact, sendMail, whenIn } from "@/lib/mail";
 import { store } from "@/lib/store";
 
 export const runtime = "nodejs";
@@ -9,6 +11,7 @@ export const runtime = "nodejs";
 const Body = z.object({
   name: z.string().trim().min(1).max(60),
   phone: z.string().trim().regex(/^[+\d][\d\s./-]{4,28}$/),
+  email: z.string().trim().email().max(120).optional(),
   items: z.string().trim().min(1).max(500),
   pickup_at: z.string().datetime({ offset: true }),
   notes: z.string().trim().max(400).optional(),
@@ -42,7 +45,10 @@ export async function POST(req: Request) {
   await store().put("reservations", row);
 
   const when = pickup.toLocaleString("it-IT", { timeZone: "Europe/Rome", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
-  const text = `🍨 Nuova prenotazione\n\n${d.items}\n\n🕒 Ritiro: ${when}\n👤 ${d.name} · 📞 ${d.phone}${d.notes ? `\n📝 ${d.notes}` : ""}`;
-  await Promise.all([notifyReservation(text, row.id), notifyWhatsApp(text)]);
+  const text = `🍨 Nuova prenotazione\n\n${d.items}\n\n🕒 Ritiro: ${when}\n👤 ${d.name} · 📞 ${d.phone}${d.email ? `\n📧 ${d.email}` : ""}${d.notes ? `\n📝 ${d.notes}` : ""}`;
+  if (d.email) await saveContact({ ref_id: row.id, kind: "reservation", email: d.email, name: d.name, lang: d.locale ?? null });
+  await Promise.all([notifyReservation(text, row.id, Boolean(d.email)), notifyWhatsApp(text)]);
+  // "we've got it" in the customer's language, after the answer
+  if (d.email && canMail()) after(() => sendMail({ to: d.email!, kind: "order_received", lang: d.locale, name: d.name, items: d.items, when: whenIn(row.pickup_at, d.locale) }).then(() => undefined, (e) => console.error("[mail]", e)));
   return Response.json({ ok: true });
 }

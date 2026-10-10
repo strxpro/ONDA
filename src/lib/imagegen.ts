@@ -27,7 +27,10 @@ async function cloudflare(prompt: string): Promise<Buffer | null> {
     body: JSON.stringify({ prompt, steps: 8 }),
     signal: AbortSignal.timeout(40_000),
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.error("[imagegen] cloudflare", res.status, (await res.text()).slice(0, 300));
+    return null;
+  }
   const j = (await res.json()) as { result?: { image?: string } };
   return j.result?.image ? Buffer.from(j.result.image, "base64") : null;
 }
@@ -54,13 +57,16 @@ async function pollinations(prompt: string): Promise<Buffer | null> {
 }
 
 export async function generateImage(prompt: string): Promise<Buffer | null> {
-  for (const gen of [cloudflare, huggingface, pollinations]) {
-    try {
-      const img = await gen(prompt);
-      if (img && img.byteLength > 5000) return img;
-    } catch {
-      /* next one */
+  for (let attempt = 0; attempt < 2; attempt++) {
+    for (const gen of [cloudflare, huggingface, pollinations]) {
+      try {
+        const img = await gen(prompt);
+        if (img && img.byteLength > 5000) return img;
+      } catch (e) {
+        console.error("[imagegen]", gen.name, (e as Error).message);
+      }
     }
+    await new Promise((r) => setTimeout(r, 1500));
   }
   return null;
 }

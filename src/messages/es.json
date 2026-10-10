@@ -15,7 +15,8 @@
       "lactose_free": "Sin lactosa",
       "new": "Novedad",
       "signature": "De la casa",
-      "title": "Filtrar sabores"
+      "title": "Filtrar sabores",
+      "noneLactose": "Hoy no hay sabores sin lactosa — ¡pregunta en el mostrador!"
     },
     "weekdays": [
       "Lunes",
@@ -121,7 +122,8 @@
       "newOne": "¡Nuevo!",
       "showReplies": "Ver respuestas",
       "hideReplies": "Ocultar respuestas",
-      "none": "Aquí no hay comentarios."
+      "none": "Aquí no hay comentarios.",
+      "email": "E-mail (opcional) — te avisamos si te responden"
     },
     "categories": {
       "crema": "Cremas",
@@ -167,7 +169,8 @@
       "custom": "A medida",
       "weight": "Peso",
       "perKgNote": "de 50 en 50 g",
-      "popular": "la más elegida"
+      "popular": "la más elegida",
+      "email": "E-mail (opcional) — para la confirmación"
     },
     "map": {
       "load": "Mostrar el mapa",
@@ -248,7 +251,8 @@
       "contactIntro": "¿Prefieres hablarlo? Llámanos, escríbenos por WhatsApp o déjanos un mensaje.",
       "writeUs": "Escríbenos",
       "messagePh": "Para cuándo, para cuántos, qué sabores…",
-      "waText": "¡Hola! Quisiera encargar una tarta helada."
+      "waText": "¡Hola! Quisiera encargar una tarta helada.",
+      "email": "E-mail (opcional) — para la confirmación"
     },
     "allergens": {
       "title": "Alérgenos",

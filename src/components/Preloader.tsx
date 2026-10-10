@@ -5,6 +5,11 @@ import { useEffect, useRef, useState } from "react";
 /* eslint-disable @next/next/no-img-element */
 import { PHOTO, photoGeometry, ScoopImg } from "./ice/PhotoStack";
 import { HERO_SCOOPS } from "./ice/presets";
+import { useSite } from "./providers/SiteData";
+import { CAKE_PHOTOS, CAKE_SPRITES, tubPhoto } from "@/lib/assets";
+import { ingredientPhoto } from "@/lib/ingredients";
+import { t } from "@/lib/shared";
+
 
 const SESSION_KEY = "onda:preloaded";
 /** One flood of color per scoop, in the scoop's own flavor color (pistachio, strawberry, Yellow Submarine). */
@@ -29,6 +34,21 @@ const lenis = () => (window as unknown as { __lenis?: Lenis }).__lenis;
  * then the whole cone flies into the hero, exactly where the hero's cone sits, while a wave lifts the curtain.
  */
 export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
+  const { data, locale } = useSite();
+  // everything a visitor can open without waiting: each flavor's tub photo, the ingredients, the cakes, the cup
+  const extraAssets = () => {
+    const ing = [...data.flavors, ...data.prices]
+      .flatMap((r) => t(r.ingredients ?? {}, locale).split(","))
+      .map((x) => x.trim())
+      .filter(Boolean);
+    return [
+      ...(data.flavors.map((f) => tubPhoto(f.slug)).filter(Boolean) as string[]),
+      ...CAKE_PHOTOS,
+      ...CAKE_SPRITES,
+      "/img/cup.webp",
+      ...new Set(ing.flatMap((n) => [ingredientPhoto(n, 96), ingredientPhoto(n, 320), ingredientPhoto(n)]).filter(Boolean) as string[]),
+    ];
+  };
   const root = useRef<HTMLDivElement>(null);
   const stack = useRef<HTMLDivElement>(null);
   const [done, setDone] = useState(false);
@@ -123,7 +143,18 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
     const onLoad = () => ((parts.load = true), update());
     window.addEventListener("load", onLoad, { once: true });
     const pics = [...document.images].filter((img) => !el.contains(img));
-    parts.total = pics.length;
+    // …and the pictures that only appear later, in the pop-ups (flavor cards, cakes, treats, ingredients)
+    const inDom = new Set(pics.map((p) => p.currentSrc || p.src));
+    const extra = extraAssets().filter((u) => !inDom.has(new URL(u, location.href).href));
+    parts.total = pics.length + extra.length;
+    for (const u of extra) {
+      const im = new Image();
+      im.decoding = "async";
+      const done = () => ((parts.imgs += 1), update());
+      im.onload = done;
+      im.onerror = done;
+      im.src = u;
+    }
     for (const img of pics) {
       const done = () => ((parts.imgs += 1), update());
       if (img.complete) {

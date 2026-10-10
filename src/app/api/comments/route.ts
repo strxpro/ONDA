@@ -4,6 +4,7 @@ import { z } from "zod";
 import { notifyComment } from "@/lib/bot/telegram";
 import { moderate, refreshSiteCache, saveComment, translateComment } from "@/lib/comments";
 import { jpegOf } from "@/lib/photos";
+import { canMail, saveContact, sendMail } from "@/lib/mail";
 import { store } from "@/lib/store";
 import { COMMENT_STICKERS } from "@/lib/types";
 import { saveImage } from "@/lib/upload";
@@ -20,6 +21,7 @@ const Body = z.object({
   locale: z.string().max(5).nullable().optional(),
   /** a reply to this comment */
   parent_id: z.string().uuid().nullable().optional(),
+  email: z.string().trim().email().max(120).optional(),
   /** honeypot: real people never see this field */
   website: z.string().max(0).optional(),
   /** ms the form was open; bots submit instantly */
@@ -84,9 +86,11 @@ export async function POST(req: Request) {
     parent_id: d.parent_id ?? null,
   };
   await saveComment(row);
+  if (d.email) await saveContact({ ref_id: row.id, kind: "comment", email: d.email, name: d.name, lang: d.locale ?? null });
   // after the answer: tell the owner, translate it for the other visitors, refresh the cached page
   after(async () => {
     await notifyComment({ ...row, published: ok });
+    if (d.email && canMail() && (d.rating ?? 5) >= 4) await sendMail({ to: d.email, kind: "comment_thanks", lang: d.locale, name: d.name, quote: d.message }).catch((e) => console.error("[mail]", e));
     if (ok) {
       await translateComment(row.id);
       await refreshSiteCache();

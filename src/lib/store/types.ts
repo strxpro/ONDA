@@ -1,7 +1,7 @@
 import type { SiteData } from "@/lib/types";
 
 /** Content tables the admin and the bot can edit. */
-export const TABLES = ["site_settings", "flavors", "price_items", "opening_hours", "special_days", "announcements", "sections", "gallery", "reviews", "comments", "reservations"] as const;
+export const TABLES = ["site_settings", "flavors", "price_items", "opening_hours", "special_days", "announcements", "sections", "gallery", "reviews", "comments", "reservations", "contacts"] as const;
 export type TableName = (typeof TABLES)[number];
 
 /** Primary key column per table. */
@@ -17,9 +17,10 @@ export const PK: Record<TableName, string> = {
   reviews: "id",
   comments: "id",
   reservations: "id",
+  contacts: "ref_id",
 };
 /** Tables never pushed to visitors' browsers (live events). */
-export const PRIVATE_TABLES: TableName[] = ["reservations"];
+export const PRIVATE_TABLES: TableName[] = ["reservations", "contacts"];
 
 export type Row = Record<string, unknown>;
 export type Key = string | number;

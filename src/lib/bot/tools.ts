@@ -30,7 +30,7 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
   { name: "get_hours", description: "Weekly opening hours and upcoming special days.", input_schema: obj({}) },
   { name: "list_gallery", description: "The photos of the gallery (Il Laboratorio): position (1 = the one on the cone) and what each shows.", input_schema: obj({}) },
   { name: "list_reservations", description: "Upcoming pre-orders from the website (gelato by the kilo, tubs, treats): pickup time, what, name, phone, status.", input_schema: obj({}) },
-  { name: "list_comments", description: "Visitors' comments waiting for approval (they appear on the site only once approved).", input_schema: obj({}) },
+  { name: "list_comments", description: "Comments on the website: how many are published, average stars, likes, photos, replies, how many wait for approval, the latest ones and the pending ones. Use for any question about comments/reviews/opinions on the site (ile komentarzy, quanti commenti).", input_schema: obj({}) },
   {
     name: "set_flavor_availability",
     description: "Mark a flavor as sold out today (available=false) or back in the counter (available=true).",
@@ -117,6 +117,11 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
     name: "replace_gallery_photo",
     description: "Replace gallery photo number N (position, 1 = first) with the photo the owner sent. If he describes the photo with words, use pick_photo instead.",
     input_schema: obj({ position: { type: "integer", minimum: 1 }, which: s("words describing the photo to replace, e.g. 'ragazzo con cappellino'"), caption: s("optional short description of the NEW photo") }),
+  },
+  {
+    name: "email_customer",
+    description: "Send a pretty e-mail (Onda's template, in the customer's own language) to a customer who left an e-mail with an order/cake or a comment: 'mandale una mail che la torta è pronta', 'odpowiedz Annie mailem…', 'confirm Marco's order by e-mail'. template: confirmed / declined / ready (ready-made texts) or custom (then text = what to say, in any language — it gets polished and translated).",
+    input_schema: obj({ who: s("the customer: name, phone or e-mail"), template: { type: "string", enum: ["confirmed", "declined", "ready", "custom"] }, text: s("what to say (for custom, or an extra line)") }, ["who"]),
   },
   {
     name: "pick_photo",
@@ -246,6 +251,7 @@ export const TOOL_INPUT = {
   undo_last: z.object({}),
   restore_defaults: z.object({ parts: z.array(z.enum(["flavors", "prices", "hours", "texts", "sections", "motion"])).optional() }),
   pick_photo: z.object({ which: z.string().max(160).optional() }),
+  email_customer: z.object({ who: z.string().min(1).max(120), template: z.enum(["confirmed", "declined", "ready", "custom"]).optional(), text: z.string().max(1200).optional() }),
   generate_ingredient_photos: z.object({ ingredients: z.string().max(300).optional() }),
   ask_for_photos: z.object({ instruction: z.string().min(2).max(200), many: z.boolean().optional(), reply: z.string().min(1).max(300) }),
   ask_choice: z.object({ question: z.string().min(1), options: z.array(z.string().min(1)).min(2).max(6), multi: z.boolean().optional() }),
