@@ -1,3 +1,4 @@
+import { z } from "zod";
 import "server-only";
 
 import type Anthropic from "@anthropic-ai/sdk";
@@ -27,6 +28,8 @@ export type AgentResult = {
   lang: Lang;
   staged: Staged[];
   choice?: Choice;
+  /** the single instruction the choice belongs to (when he gave several at once) */
+  choiceFor?: string;
   /** he wants to add photos he has not sent yet: the next ones are for this */
   awaitPhotos?: { instruction: string; many: boolean };
   /** photos to show him in the chat, to pick the one he means */
@@ -656,8 +659,49 @@ function dropNulls(input: unknown): unknown {
   return Object.fromEntries(Object.entries(input as Record<string, unknown>).filter(([, v]) => v !== null));
 }
 
-/** Understand one owner message. Reads are answered; writes are staged for confirmation. */
+/**
+ * Several things at once ("small cone 3 €, big one 5 €, cup 4 € and the pistachio is finished"): the message is split
+ * into standalone instructions, each one understood on its own, and all the changes come back together for ONE ✅.
+ * A question about one of them (which cup?) is asked after the others are staged.
+ */
+const MULTI_HINT = /[,;]|\s(i|e|a|oraz|and|y|und|et|poi|potem|anche|też|także|then)\s/i;
+const Split = z.object({ commands: z.array(z.string().min(2)).min(1).max(8) });
+
+async function splitCommands(text: string): Promise<string[]> {
+  if (text.length < 25 || !MULTI_HINT.test(text)) return [text];
+  try {
+    const { compatJson } = await import("../ai");
+    const out = await compatJson(
+      Split,
+      "You split a gelateria owner's message into separate, standalone instructions for his website assistant. Each instruction must be complete on its own: repeat the verb and the context that the owner left implicit (e.g. 'small cone 3 euro, big 5' → 'set the price of the small cone to 3 euro', 'set the price of the big cone to 5 euro'). Keep the owner's language and his exact words, names and numbers. A single instruction → return just it. Questions stay questions. Key: commands (array of strings).",
+      text,
+    );
+    const cmds = out.commands.map((c) => c.trim()).filter(Boolean);
+    return cmds.length ? cmds : [text];
+  } catch {
+    return [text];
+  }
+}
+
+/** Understand one owner message (one or several instructions). Reads are answered; writes are staged for confirmation. */
 export async function runAgent(userText: string, photo?: Photo): Promise<AgentResult> {
+  const parts = photo ? [userText] : await splitCommands(userText);
+  if (parts.length < 2) return runOne(userText, photo);
+  const lang = detectLang(userText);
+  const staged: Staged[] = [];
+  const answers: string[] = [];
+  let special: AgentResult | null = null;
+  for (const part of parts) {
+    const r = await runOne(part, photo);
+    staged.push(...r.staged);
+    if ((r.choice || r.photoPick || r.commentPick || r.awaitPhotos) && !special) special = { ...r, choiceFor: r.choice ? part : undefined };
+    else if (!r.staged.length && r.text && r.text !== "👍") answers.push(r.text);
+  }
+  if (special) return { ...special, lang, staged, text: special.text };
+  return { text: [...answers, ...staged.map((s) => s.label)].join("\n") || "👍", lang, staged };
+}
+
+async function runOne(userText: string, photo?: Photo): Promise<AgentResult> {
   const lang = detectLang(userText);
   const system = provider() === "anthropic" ? await systemPrompt() : await compactPrompt();
   const first = photo ? `[PHOTO ATTACHED]\n${userText || "(no caption)"}` : userText;

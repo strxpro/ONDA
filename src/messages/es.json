@@ -149,7 +149,9 @@
         "lactose_free": "Sin lactosa",
         "vegan": "Veganos",
         "new": "Novedades"
-      }
+      },
+      "howMany": "¿Cuántos sabores?",
+      "wonMany": "Te han tocado:"
     },
     "order": {
       "title": "Helado para llevar",

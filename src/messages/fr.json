@@ -149,7 +149,9 @@
         "lactose_free": "Sans lactose",
         "vegan": "Vegan",
         "new": "Nouveautés"
-      }
+      },
+      "howMany": "Combien de parfums ?",
+      "wonMany": "Tu as tiré :"
     },
     "order": {
       "title": "Glace à emporter",

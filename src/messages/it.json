@@ -149,7 +149,9 @@
         "lactose_free": "Senza lattosio",
         "vegan": "Vegani",
         "new": "Novità"
-      }
+      },
+      "howMany": "Quanti gusti?",
+      "wonMany": "Ti sono usciti:"
     },
     "order": {
       "title": "Gelato da portare a casa",

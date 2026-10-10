@@ -10,7 +10,7 @@ export const MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-5-5";
 export const hasAI = provider() !== null;
 
 /** JSON answer from a free / OpenAI-compatible model, validated with Zod. */
-async function compatJson<T>(schema: z.ZodType<T>, system: string, user: string): Promise<T> {
+export async function compatJson<T>(schema: z.ZodType<T>, system: string, user: string): Promise<T> {
   const r = await compatChat({
     json: true,
     maxTokens: 3000,

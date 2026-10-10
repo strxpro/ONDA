@@ -149,7 +149,9 @@
         "lactose_free": "Laktosefrei",
         "vegan": "Vegan",
         "new": "Neu"
-      }
+      },
+      "howMany": "Wie viele Sorten?",
+      "wonMany": "Du hast gezogen:"
     },
     "order": {
       "title": "Eis zum Mitnehmen",

@@ -149,7 +149,9 @@
         "lactose_free": "Lactose-free",
         "vegan": "Vegan",
         "new": "New"
-      }
+      },
+      "howMany": "How many flavours?",
+      "wonMany": "You got:"
     },
     "order": {
       "title": "Gelato to take home",

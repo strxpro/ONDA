@@ -1,6 +1,6 @@
 "use client";
 
- 
+/* eslint-disable @next/next/no-img-element */
 import { ArrowsClockwise, Sparkle, X } from "@phosphor-icons/react";
 import { AnimatePresence, animate, motion, useMotionValue } from "motion/react";
 import { useTranslations } from "next-intl";
@@ -24,6 +24,7 @@ const CHIPS = [
 ] as const;
 type ChipKey = (typeof CHIPS)[number]["key"];
 const MAX = 12;
+const POINTER_COLORS = ["#F0527F", "#FFC93C", "#2EC4A0"];
 
 /**
  * "Can't decide? Spin the wheel" — a banner with a photo of happy kids at the counter; it opens a wheel of fortune
@@ -96,7 +97,11 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
   const ui = useTranslations("ui.wheel");
   const [chip, setChip] = useState<ChipKey>("all");
   const [spinning, setSpinning] = useState(false);
-  const [winner, setWinner] = useState<Flavor | null>(null);
+  const [winners, setWinners] = useState<Flavor[]>([]);
+  const winner = winners[0] ?? null;
+  // how many scoops to draw (1–3): one pointer per scoop, placed at random around the rim
+  const [count, setCount] = useState(1);
+  const [pointers, setPointers] = useState<number[]>([0]);
   const rot = useMotionValue(0);
   const lastSeg = useRef(-1);
   // a scoop's name: shown while the pointer is on it, and pinned by a tap (stays until another tap or a spin)
@@ -108,6 +113,27 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
     return list.slice(0, MAX);
   }, [flavors, chip]);
   const seg = 360 / items.length;
+  const maxCount = Math.min(3, items.length);
+
+  /** n pointer angles (clockwise from the top), far enough apart to always land on different flavors */
+  const scatter = (n: number) => {
+    if (n === 1) return [Math.random() < 0.5 ? 0 : Math.round((Math.random() - 0.5) * 120)];
+    for (let tries = 0; tries < 200; tries++) {
+      const a = Array.from({ length: n }, () => Math.round(Math.random() * 360));
+      const ok = a.every((x, i) => a.every((y, j) => i === j || Math.min(Math.abs(x - y), 360 - Math.abs(x - y)) >= Math.max(seg * 1.15, 50)));
+      if (ok) return a.sort((x, y) => x - y);
+    }
+    return Array.from({ length: n }, (_, i) => (i * 360) / n);
+  };
+  const pickCount = (n: number) => {
+    sfx.pop();
+    setCount(n);
+    setWinners([]);
+    setPointers(scatter(n));
+  };
+  useEffect(() => {
+    if (count > maxCount) pickCount(maxCount);
+  }, [maxCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === "Escape" && !spinning && onClose();
@@ -117,15 +143,20 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
 
   const spin = () => {
     if (spinning || items.length < 2) return;
-    setWinner(null);
+    setWinners([]);
     setPeek(null);
     setSpinning(true);
     sfx.whoosh();
+    // the pointers jump to new random places too: every spin is different
+    const ptrs = scatter(count);
+    setPointers(ptrs);
     const i = Math.floor(Math.random() * items.length);
     const current = rot.get();
-    // the pointer is at the top: bring the middle of segment i under it, after 5–6 full turns
+    // bring the middle of segment i under the first pointer, after 5–6 full turns
     const base = Math.ceil(current / 360) * 360 + 360 * (5 + Math.floor(Math.random() * 2));
-    const target = base - (i + 0.5) * seg + (Math.random() - 0.5) * seg * 0.5;
+    const target = base + ptrs[0] - (i + 0.5) * seg + (Math.random() - 0.5) * seg * 0.4;
+    /** the flavor under a pointer at clockwise angle p, for a wheel rotated by r */
+    const under = (p: number, r: number) => items[Math.floor((((p - r) % 360) + 360) % 360 / seg) % items.length];
     animate(rot, target, {
       duration: 4.8,
       ease: [0.12, 0.75, 0.15, 1],
@@ -138,10 +169,12 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
       },
       onComplete: () => {
         setSpinning(false);
-        setWinner(items[i]);
+        const won = [...new Set(ptrs.map((p) => under(p, target)))];
+        setWinners(won);
         sfx.sparkle();
         navigator.vibrate?.([20, 40, 20]);
-        window.setTimeout(() => onResult(items[i]), 1900);
+        // one scoop: its card opens by itself; more: tap the one you want to see
+        if (won.length === 1) window.setTimeout(() => onResult(won[0]), 1900);
       },
     });
   };
@@ -175,7 +208,7 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
               key={c.key}
               type="button"
               disabled={spinning}
-              onClick={() => (sfx.pop(), setChip(c.key), setWinner(null))}
+              onClick={() => (sfx.pop(), setChip(c.key), setWinners([]))}
               className={`relative rounded-full px-3.5 py-1.5 text-sm font-bold transition-colors ${chip === c.key ? "text-cream" : "bg-white text-chocolate/75"}`}
             >
               {chip === c.key && <motion.span layoutId="wheel-chip" className="absolute inset-0 rounded-full bg-[#F0527F]" transition={{ type: "spring", stiffness: 420, damping: 30 }} />}
@@ -184,15 +217,37 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
           ))}
         </div>
 
+        {/* how many scoops */}
+        {maxCount > 1 && (
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <span className="font-script text-xl text-chocolate/65">{ui("howMany")}</span>
+            {Array.from({ length: maxCount }, (_, k) => k + 1).map((n) => (
+              <button key={n} type="button" disabled={spinning} onClick={() => pickCount(n)} aria-pressed={count === n} className={`relative flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-black transition-colors ${count === n ? "text-cream" : "bg-white text-chocolate/75"}`}>
+                {count === n && <motion.span layoutId="wheel-count" className="absolute inset-0 rounded-full bg-chocolate" transition={{ type: "spring", stiffness: 420, damping: 30 }} />}
+                <span className="relative flex items-center gap-0.5">
+                  {n}
+                  {Array.from({ length: n }, (_, d) => (
+                    <span key={d} className="ml-0.5 size-2 rounded-full" style={{ background: POINTER_COLORS[d] }} />
+                  ))}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* the wheel */}
         <div className="relative mx-auto mt-6 aspect-square w-full max-w-[420px]">
-          {/* pointer */}
-          <motion.div className="absolute -top-3 left-1/2 z-20 -translate-x-1/2" animate={spinning ? { rotate: [0, -14, 0] } : { rotate: 0 }} transition={spinning ? { duration: 0.18, repeat: Infinity } : {}} style={{ transformOrigin: "50% 0%" }}>
-            <svg viewBox="0 0 40 48" className="w-10 drop-shadow-[0_4px_6px_rgba(75,42,32,0.4)]" aria-hidden>
-              <path d="M20 46 L4 10 A16 16 0 1 1 36 10 Z" fill="#F0527F" />
-              <circle cx="20" cy="15" r="6" fill="#FFF7EE" />
-            </svg>
-          </motion.div>
+          {/* pointers: one per scoop, each flies to its random place around the rim */}
+          {pointers.map((p, n) => (
+            <motion.div key={n} className="pointer-events-none absolute inset-0 z-20" initial={{ rotate: p, scale: 0 }} animate={{ rotate: p, scale: 1 }} transition={{ type: "spring", stiffness: 140, damping: 15 }}>
+              <motion.div className="absolute -top-3 left-1/2 -ml-5" animate={spinning ? { rotate: [0, -14, 0] } : { rotate: 0 }} transition={spinning ? { duration: 0.18, repeat: Infinity, delay: n * 0.05 } : {}} style={{ transformOrigin: "50% 0%" }}>
+                <svg viewBox="0 0 40 48" className="w-10 drop-shadow-[0_4px_6px_rgba(75,42,32,0.4)]" aria-hidden>
+                  <path d="M20 46 L4 10 A16 16 0 1 1 36 10 Z" fill={POINTER_COLORS[n]} />
+                  <circle cx="20" cy="15" r="6" fill="#FFF7EE" />
+                </svg>
+              </motion.div>
+            </motion.div>
+          ))}
           <motion.svg viewBox="-210 -210 420 420" className="h-full w-full drop-shadow-[0_24px_30px_rgba(75,42,32,0.35)]" style={{ rotate: rot }} key={chip}>
             <circle r="208" fill="#4B2A20" />
             {items.map((f, k) => {
@@ -262,12 +317,33 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
               );
             })()}
           </AnimatePresence>
-          {winner && <Confetti colors={[winner.color_primary, winner.color_secondary, "#FFE066", "#FF8FB8", "#6FE0C4"]} />}
+          {winner && <Confetti colors={[...winners.map((w) => w.color_primary), winner.color_secondary, "#FFE066", "#FF8FB8", "#6FE0C4"]} />}
         </div>
 
         <div className="mt-5 min-h-[3.5rem]">
           <AnimatePresence mode="wait">
-            {winner ? (
+            {winners.length > 1 ? (
+              <motion.div key="wins" initial={{ scale: 0.4, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 320, damping: 14 }}>
+                <p className="font-display text-2xl sm:text-3xl">{ui("wonMany")}</p>
+                <div className="mt-2 flex flex-wrap justify-center gap-2">
+                  {winners.map((w, n) => (
+                    <motion.button
+                      key={w.id}
+                      type="button"
+                      onClick={() => onResult(w)}
+                      initial={{ scale: 0, rotate: -20 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 380, damping: 14, delay: 0.1 + n * 0.12 }}
+                      className="flex items-center gap-1.5 rounded-full bg-white py-1 pr-3.5 pl-1 font-bold"
+                      style={{ boxShadow: `0 0 0 3px ${POINTER_COLORS[n]}` }}
+                    >
+                      <img src={thumb(scoopPhoto(w))!} alt="" className="size-8 object-contain" />
+                      {t(w.name, locale)}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            ) : winner ? (
               <motion.p key="win" initial={{ scale: 0.4, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 320, damping: 14 }} className="font-display text-2xl sm:text-3xl">
                 {ui("won")} <span className="text-[#F0527F]">{t(winner.name, locale)}</span>!
               </motion.p>

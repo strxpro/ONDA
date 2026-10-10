@@ -141,6 +141,10 @@ async function handle(ctx: Context, text: string, photo?: Photo) {
   }
   const t = L[result.lang];
 
+  // several instructions at once and one of them needs a question: the others go out first, for one ✅
+  const special = result.choice || result.photoPick || result.commentPick || result.awaitPhotos;
+  if (special && result.staged.length) await sendBatch(ctx, { ...result, text: result.staged.map((s) => s.label).join("\n") });
+
   if (result.photoPick) {
     await showPick(ctx, result.photoPick.refs, result.photoPick.all, result.lang, photo);
     return;
@@ -181,7 +185,7 @@ async function handle(ctx: Context, text: string, photo?: Photo) {
       telegram_user_id: ctx.from!.id,
       chat_id: ctx.chat!.id,
       tool: "choice",
-      args: { original: text, options: result.choice.options, multi, picked: [], lang: result.lang, photo: photo ?? null },
+      args: { original: result.choiceFor ?? text, options: result.choice.options, multi, picked: [], lang: result.lang, photo: photo ?? null },
       summary: result.choice.question,
       expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
     });
@@ -193,7 +197,12 @@ async function handle(ctx: Context, text: string, photo?: Photo) {
     await ctx.reply(result.text);
     return;
   }
+  await sendBatch(ctx, result);
+}
 
+/** The changes to confirm, with ✅ / ❌. */
+async function sendBatch(ctx: Context, result: AgentResult) {
+  const t = L[result.lang];
   const p = await store().createPending({
     telegram_user_id: ctx.from!.id,
     chat_id: ctx.chat!.id,
