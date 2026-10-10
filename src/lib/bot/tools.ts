@@ -126,6 +126,11 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
     input_schema: obj({ who: s("the customer: name, phone or e-mail"), template: { type: "string", enum: ["confirmed", "declined", "ready", "custom"] }, text: s("what to say (for custom, or an extra line)") }, ["who"]),
   },
   {
+    name: "remove_comments",
+    description: "Take comments OFF the website (published or waiting): 'usuń komentarz od Anta', 'togli i commenti di Marco', 'delete the comment that says faj'. Shows the owner the matching comments as a checklist to tick — never ask him in words which ones.",
+    input_schema: obj({ who: s("the author's name, if he said one"), text: s("words from the comment, if he quoted it") }),
+  },
+  {
     name: "pick_photo",
     description: "Find a photo on the website by what it shows and SHOW it to the owner in the chat to pick (then he sends the new one, or uses the photo he already sent): 'change the photo with the blue background', 'show me the photos', 'which photos are in the lab'. Use this (not replace_gallery_photo) whenever the photo is described by words or he wants to see them.",
     input_schema: obj({ which: s("words describing the photo, in any language, e.g. 'niebieskie tło'; empty = show all") }),
@@ -253,6 +258,7 @@ export const TOOL_INPUT = {
   undo_last: z.object({}),
   restore_defaults: z.object({ parts: z.array(z.enum(["flavors", "prices", "hours", "texts", "sections", "motion"])).optional() }),
   pick_photo: z.object({ which: z.string().max(160).optional() }),
+  remove_comments: z.object({ who: z.string().max(60).optional(), text: z.string().max(200).optional() }),
   email_customer: z.object({ who: z.string().min(1).max(120), template: z.enum(["confirmed", "declined", "ready", "custom"]).optional(), text: z.string().max(1200).optional() }),
   generate_ingredient_photos: z.object({ ingredients: z.string().max(300).optional() }),
   ask_for_photos: z.object({ instruction: z.string().min(2).max(200), many: z.boolean().optional(), reply: z.string().min(1).max(300) }),

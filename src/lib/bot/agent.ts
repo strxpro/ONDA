@@ -31,6 +31,8 @@ export type AgentResult = {
   awaitPhotos?: { instruction: string; many: boolean };
   /** photos to show him in the chat, to pick the one he means */
   photoPick?: { refs: PhotoRef[]; all: boolean };
+  /** comments to tick and remove */
+  commentPick?: { items: { id: string; label: string }[] };
 };
 /** A photo the owner sent with the message, already uploaded. */
 export type Photo = { url: string; width: number; height: number };
@@ -675,6 +677,19 @@ export async function runAgent(userText: string, photo?: Photo): Promise<AgentRe
       const which = String(args.which ?? "").trim();
       const refs = which ? await findPhotos(which) : await allPhotos();
       return { done: { text: "", lang, staged: [], photoPick: { refs: refs.length ? refs : await allPhotos(), all: !which || !refs.length } } };
+    }
+    if (name === "remove_comments") {
+      const norm = (x: string) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const who = norm(String(args.who ?? "")).trim();
+      const txt = norm(String(args.text ?? "")).trim();
+      const all = ((await store().list("comments")) as Comment[]).filter((c) => c.status !== "rejected").sort((a, b) => b.created_at.localeCompare(a.created_at));
+      let hits = all.filter((c) => (!who || norm(c.name).includes(who) || who.includes(norm(c.name))) && (!txt || norm(c.message).includes(txt)));
+      if (!hits.length) hits = all; // nothing matched: show them all to pick from
+      const ago = (iso: string) => {
+        const h = Math.round((Date.now() - Date.parse(iso)) / 3_600_000);
+        return h < 1 ? "ora" : h < 48 ? `${h} h` : `${Math.round(h / 24)} g`;
+      };
+      return { done: { text: "", lang, staged: [], commentPick: { items: hits.slice(0, 20).map((c) => ({ id: c.id, label: `«${c.message.slice(0, 34)}» — ${c.name} · ${ago(c.created_at)}${c.status === "pending" ? " ⏳" : ""}` })) } } };
     }
     if (name === "generate_ingredient_photos" && !canGenerateImages())
       return { done: { text: { it: "Per creare le foto mi serve una chiave gratuita di Cloudflare (CF_ACCOUNT_ID + CF_API_TOKEN). Intanto puoi mandarmi tu la foto 📷", pl: "Do tworzenia zdjęć potrzebuję darmowego klucza Cloudflare (CF_ACCOUNT_ID + CF_API_TOKEN). Na razie możesz wysłać mi zdjęcie 📷", en: "To create photos I need a free Cloudflare key (CF_ACCOUNT_ID + CF_API_TOKEN). Meanwhile you can send me a photo 📷", es: "Para crear fotos necesito una clave gratuita de Cloudflare. Mientras, mándame tú la foto 📷", de: "Zum Erstellen brauche ich einen kostenlosen Cloudflare-Schlüssel. Schick mir solange ein Foto 📷", fr: "Pour créer des photos il me faut une clé Cloudflare gratuite. En attendant, envoie-moi une photo 📷" }[lang], lang, staged: [] } };

@@ -120,7 +120,7 @@ export function CommentsWall() {
       )}
 
       {visible.length ? (
-        <motion.ul layout className="grid items-start gap-x-4 gap-y-5 pt-3 sm:grid-cols-2">
+        <ul className="grid items-start gap-x-4 gap-y-5 pt-3 sm:grid-cols-2">
           <AnimatePresence initial={false}>
             {visible.map((c, i) => (
               <Note key={c.id} comment={c} index={i} replies={repliesOf(c.id)} fresh={!firstIds.current!.has(c.id) && !older.some((o) => o.id === c.id)} locale={locale} />
@@ -135,7 +135,7 @@ export function CommentsWall() {
                 <span className="skeleton mt-3 block h-4 w-24 rounded-full" />
               </li>
             ))}
-        </motion.ul>
+        </ul>
       ) : (
         <p className="rounded-3xl border-4 border-dashed border-chocolate/15 p-6 text-center font-script text-2xl text-chocolate/60">{top.length ? ui("none") : ui("empty")}</p>
       )}
@@ -191,11 +191,11 @@ function Note({ comment: c, index: i, replies, fresh, locale }: { comment: Comme
   const photo = flavor ? scoopPhoto(flavor) : null;
   const { text, translated, orig, toggle } = useText(c, locale);
   const [replyOpen, setReplyOpen] = useState(false);
+  const [big, setBig] = useState(false);
   const [showReplies, setShowReplies] = useState(replies.length <= 2);
   const reply = c.reply ? (c.reply[locale as "it"] ?? c.reply.it ?? Object.values(c.reply)[0]) : null;
   return (
     <motion.li
-      layout
       initial={fresh ? { opacity: 0, y: -40, scale: 0.85, rotate: -6 } : { opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0, scale: 1, rotate: i % 2 ? 1.5 : -1.2 }}
       exit={{ opacity: 0, scale: 0.9 }}
@@ -206,16 +206,19 @@ function Note({ comment: c, index: i, replies, fresh, locale }: { comment: Comme
     >
       {/* tape + sticker */}
       <span className="absolute -top-2 left-1/2 h-4 w-14 -translate-x-1/2 rotate-[-4deg] rounded-sm bg-white/70" aria-hidden />
-      <span className="absolute -top-3 -right-2 grid size-9 rotate-12 place-items-center rounded-full bg-cherry text-white shadow">
+      <span className="absolute -top-2.5 right-2.5 z-10 grid size-9 rotate-12 place-items-center rounded-full bg-cherry text-white shadow">
         <Icon weight="fill" className="size-5" />
       </span>
       {fresh && <span className="absolute -top-3 left-3 rounded-full bg-[#4FA845] px-2.5 py-0.5 text-[11px] font-black text-white uppercase shadow">{ui("newOne")}</span>}
 
       {c.photo_url && (
-        <div className="mx-auto mb-3 aspect-[10/9] w-full max-w-[260px] drop-shadow-[0_10px_14px_rgba(75,42,32,0.25)]">
-          <img src={c.photo_url} alt="" loading="lazy" className="h-full w-full object-cover" style={{ maskImage: maskOf(c.id), WebkitMaskImage: maskOf(c.id), maskSize: "100% 100%", WebkitMaskSize: "100% 100%" }} />
-        </div>
+        <button type="button" onClick={() => (sfx.whoosh(), setBig(true))} aria-label="🔍" className="mx-auto mb-3 block aspect-[10/9] w-full max-w-[260px] cursor-zoom-in drop-shadow-[0_10px_14px_rgba(75,42,32,0.25)]">
+          {!big && (
+            <motion.img layoutId={`cphoto-${c.id}`} src={c.photo_url} alt="" loading="lazy" className="h-full w-full object-cover" style={{ maskImage: maskOf(c.id), WebkitMaskImage: maskOf(c.id), maskSize: "100% 100%", WebkitMaskSize: "100% 100%", maskRepeat: "no-repeat", WebkitMaskRepeat: "no-repeat", maskPosition: "50% 45%", WebkitMaskPosition: "50% 45%" }} />
+          )}
+        </button>
       )}
+      {c.photo_url && <PhotoBig open={big} src={c.photo_url} id={c.id} onClose={() => setBig(false)} />}
       {c.rating && c.rating >= 4 ? (
         <span className="mb-1 flex text-amber-400">
           {Array.from({ length: c.rating }, (_, k) => (
@@ -273,6 +276,45 @@ function Note({ comment: c, index: i, replies, fresh, locale }: { comment: Comme
       </AnimatePresence>
       <AnimatePresence>{replyOpen && <ReplyForm parent={c} onDone={() => (setReplyOpen(false), setShowReplies(true))} />}</AnimatePresence>
     </motion.li>
+  );
+}
+
+/** A comment's photo, big: the scoop-shaped frame flies to the middle and its mask opens into the whole photo. */
+function PhotoBig({ open, src, id, onClose }: { open: boolean; src: string; id: string; onClose: () => void }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  useScrollLock(open);
+  useEffect(() => {
+    if (!open) return;
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [open, onClose]);
+  if (!mounted) return null;
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div key="big" className="fixed inset-0 z-[96] grid place-items-center p-4" initial={{ opacity: 1 }} exit={{ opacity: 1 }} role="dialog" aria-modal="true">
+          <motion.div className="absolute inset-0 bg-chocolate/55 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+          <motion.img
+            layoutId={`cphoto-${id}`}
+            src={src}
+            alt=""
+            className="relative max-h-[86svh] max-w-[min(92vw,1000px)] rounded-[24px] object-contain shadow-float"
+            // the mask grows past the edges (CSS variables, so it animates): the scoop "opens" into the photo
+            initial={{ "--ms": "100%" } as never}
+            animate={{ "--ms": "330%" } as never}
+            exit={{ "--ms": "100%" } as never}
+            transition={{ type: "spring", stiffness: 160, damping: 22 }}
+            style={{ "--ms": "100%", WebkitMaskImage: maskOf(id), maskImage: maskOf(id), WebkitMaskSize: "var(--ms) var(--ms)", maskSize: "var(--ms) var(--ms)", WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "50% 45%", maskPosition: "50% 45%" } as React.CSSProperties}
+          />
+          <motion.button type="button" onClick={onClose} aria-label="✕" className="absolute top-5 right-5 grid size-12 place-items-center rounded-full bg-white text-chocolate shadow-soft" initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0, transition: { delay: 0.35, type: "spring", stiffness: 400, damping: 14 } }} exit={{ scale: 0 }}>
+            <X weight="bold" className="size-5" />
+          </motion.button>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body,
   );
 }
 

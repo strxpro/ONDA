@@ -48,10 +48,14 @@ export function Lab() {
   const spat = useRef<HTMLImageElement>(null);
   const items = useRef<(HTMLDivElement | null)[]>([]);
   const order = useRef<number[]>([]); // order[0] = photo on the cone, order[1..] = photos on the arc
+  const hidden = useRef<number[]>([]); // the rest of the gallery, waiting on an "invisible ring" behind the arc
+  const tickN = useRef(0);
   const busy = useRef(false);
   const idleUntil = useRef(0);
   const [lightbox, setLightbox] = useState<{ g: GalleryImage; from: DOMRect } | null>(null);
-  const photos = data.gallery.slice(0, SLOTS + 1);
+  // every photo of the gallery is here: 1 on the cone, up to 8 on the arc, the others hidden until their turn
+  const photos = data.gallery.slice(0, 60);
+  const idsKey = photos.map((g) => g.id).join(",");
   const points = [1, 2, 3].map((i) => t(s.texts[`lab_point_${i}`], locale)).filter(Boolean);
   const reduced = () => m.intensity === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -59,22 +63,58 @@ export function Lab() {
   const posOf = (place: number) => (place === 0 ? CENTER : slot(place - 1));
   const px = (p: { x: number; y: number; s: number }) => ({ x: p.x * D(), y: p.y * D(), scale: p.s });
 
-  /** put every photo where `order` says, instantly */
+  /** put every photo where `order` says, instantly; the hidden ones wait (invisible) on the ring */
   const layout = () => {
     SMALL = (stage.current?.offsetWidth ?? 0) > 820 ? 0.4 : 0.34;
     order.current.forEach((photo, place) => {
       const el = items.current[photo];
-      if (el) gsap.set(el, { ...px(posOf(place)), zIndex: place === 0 ? 20 : 10, transformOrigin: "0 0" });
+      if (el) gsap.set(el, { ...px(posOf(place)), zIndex: place === 0 ? 20 : 10, opacity: 1, transformOrigin: "0 0" });
+    });
+    hidden.current.forEach((photo) => {
+      const el = items.current[photo];
+      if (el) gsap.set(el, { ...px(slot(0)), scale: 0, opacity: 0, zIndex: 5, transformOrigin: "0 0" });
     });
   };
 
+  // the gallery changed (a photo added, replaced, removed): everything gets its place again, the new one pops in
+  const prevIds = useRef<string[]>([]);
   useEffect(() => {
-    order.current = photos.map((_, i) => i);
+    const n = Math.min(photos.length, SLOTS + 1);
+    order.current = photos.slice(0, n).map((_, i) => i);
+    hidden.current = photos.slice(n).map((_, i) => n + i);
     layout();
+    const fresh = photos.findIndex((g, i) => i < n && prevIds.current.length > 0 && !prevIds.current.includes(g.id));
+    prevIds.current = photos.map((g) => g.id);
+    if (fresh >= 0 && items.current[fresh] && !reduced()) gsap.from(items.current[fresh], { scale: 0, opacity: 0, duration: 0.9, ease: "back.out(1.7)", clearProps: "opacity" });
     const ro = new ResizeObserver(layout);
     if (stage.current) ro.observe(stage.current);
     return () => ro.disconnect();
-  }, [photos.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [idsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** one photo on the arc goes back onto the invisible ring, the next waiting one comes out in its place */
+  const cycleHidden = () => {
+    if (busy.current || !hidden.current.length || order.current.length < 2) return;
+    busy.current = true;
+    const place = 1 + Math.floor(Math.random() * (order.current.length - 1));
+    const out = order.current[place];
+    const inn = hidden.current.shift()!;
+    const O = items.current[out];
+    const I = items.current[inn];
+    if (!O || !I) return void (busy.current = false);
+    const at = px(posOf(place));
+    gsap
+      .timeline({
+        onComplete: () => {
+          order.current[place] = inn;
+          hidden.current.push(out);
+          busy.current = false;
+        },
+      })
+      .to(O, { scale: 0, opacity: 0, rotate: 25, duration: 0.55, ease: "back.in(1.6)" })
+      .set(O, { rotate: 0, zIndex: 5 })
+      .set(I, { x: at.x, y: at.y, scale: 0, opacity: 1, rotate: -25, zIndex: 10 })
+      .to(I, { scale: at.scale, rotate: 0, duration: 0.85, ease: "back.out(1.8)" });
+  };
 
   /** swap the photo at arc place `place` with the one on the cone; with the spatula when the visitor asked */
   const bringToCone = (place: number, withSpatula: boolean) => {
@@ -141,13 +181,15 @@ export function Lab() {
     io.observe(el);
     const timer = window.setInterval(() => {
       if (!visible || document.hidden || reduced() || Date.now() < idleUntil.current || lightbox) return;
-      bringToCone(1 + Math.floor(Math.random() * Math.min(SLOTS, photos.length - 1)), false);
+      // with more photos than places: every other beat, a hidden one swaps in on the arc
+      if (hidden.current.length && tickN.current++ % 2 === 1) cycleHidden();
+      else bringToCone(1 + Math.floor(Math.random() * Math.min(SLOTS, order.current.length - 1)), false);
     }, Math.max(6000, (m.galleryInterval ?? 7) * 1000));
     return () => {
       io.disconnect();
       window.clearInterval(timer);
     };
-  }, [photos.length, m.galleryInterval, m.intensity, lightbox]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [idsKey, m.galleryInterval, m.intensity, lightbox]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onItem = (photo: number) => {
     idleUntil.current = Date.now() + 9000;
@@ -182,7 +224,8 @@ export function Lab() {
               items.current[i] = el;
             }}
             className="absolute top-0 left-0 will-change-transform"
-            style={{ width: pct(1, W), aspectRatio: "200 / 190" }}
+            // hidden until placed (no flash of a big photo in the corner)
+            style={{ width: pct(1, W), aspectRatio: "200 / 190", opacity: 0 }}
           >
             <button type="button" onClick={() => onItem(i)} aria-label={t(g.alt, locale)} className="squash group relative block h-full w-full cursor-pointer">
               {/* the scoop's colored lip */}
@@ -210,16 +253,80 @@ export function Lab() {
         </ul>
       )}
 
-      {lightbox && <ScoopLightbox photo={lightbox.g} from={lightbox.from} locale={locale} onClosed={() => setLightbox(null)} />}
+      {lightbox && <ScoopLightbox photo={lightbox.g} all={photos} from={lightbox.from} locale={locale} onClosed={() => setLightbox(null)} />}
     </section>
   );
 }
 
 /** The scoop on the cone opens up: its scoop-shaped mask grows until the whole photo shows. ✕ closes it back. */
-function ScoopLightbox({ photo, from, locale, onClosed }: { photo: GalleryImage; from: DOMRect; locale: Parameters<typeof t>[1]; onClosed: () => void }) {
+function ScoopLightbox({ photo: first, all, from, locale, onClosed }: { photo: GalleryImage; all: GalleryImage[]; from: DOMRect; locale: Parameters<typeof t>[1]; onClosed: () => void }) {
   const frame = useRef<HTMLDivElement>(null);
   const bg = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
+  const moreBtn = useRef<HTMLButtonElement>(null);
+  const gridBox = useRef<HTMLDivElement>(null);
+  const cells = useRef<(HTMLButtonElement | null)[]>([]);
+  const [photo, setPhoto] = useState(first);
+  const [grid, setGrid] = useState(false);
+  const busyRef = useRef(false);
+  // real proportions (portrait tall, landscape wide) for photos saved without their size
+  const [ratio, setRatio] = useState<Record<string, number>>({});
+  useEffect(() => {
+    for (const g of all)
+      if (!(g.width && g.height)) {
+        const im = new window.Image();
+        im.onload = () => setRatio((r) => ({ ...r, [g.id]: im.naturalWidth / im.naturalHeight }));
+        im.src = g.image_url;
+      }
+  }, [all]);
+  // the photo that was open goes first, the others follow
+  const list = [first, ...all.filter((g) => g.id !== first.id)];
+  const labelAll = { it: "Vedi tutta la galleria", pl: "Zobacz całą galerię", en: "See the whole gallery", es: "Ver toda la galería", de: "Ganze Galerie ansehen", fr: "Voir toute la galerie" }[String(locale)] ?? "Vedi tutta la galleria";
+
+  /** single photo → grid: the photo shrinks into the top-left cell, the others bounce up into theirs */
+  const openGrid = () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    sfx.whoosh();
+    setGrid(true);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const f = frame.current!;
+        const idx = list.findIndex((g) => g.id === photo.id);
+        const cell = cells.current[idx];
+        const box = gridBox.current!;
+        box.scrollTop = 0;
+        const r = cell?.getBoundingClientRect();
+        const tl = gsap.timeline({ onComplete: () => void ((busyRef.current = false), gsap.set(f, { autoAlpha: 0 }), cell && gsap.set(cell, { autoAlpha: 1 })) });
+        tl.to([closeBtn.current, moreBtn.current], { scale: 0, duration: 0.2 }, 0);
+        if (r) tl.to(f, { left: r.left, top: r.top, width: r.width, height: r.height, borderRadius: 18, duration: 0.75, ease: "expo.inOut" }, 0);
+        const others = cells.current.filter((c, i) => c && i !== idx);
+        tl.fromTo(others, { y: 120, autoAlpha: 0, scale: 0.85 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.7, ease: "back.out(1.6)", stagger: 0.045 }, 0.25);
+        tl.fromTo(box.querySelector(".grid-close"), { scale: 0 }, { scale: 1, duration: 0.4, ease: "back.out(2)" }, 0.6);
+      }),
+    );
+  };
+
+  /** grid → single: the tapped photo grows back to the big view, the rest sink away */
+  const pick = (g: GalleryImage, i: number) => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    sfx.pop();
+    const f = frame.current!;
+    const r = cells.current[i]!.getBoundingClientRect();
+    setPhoto(g);
+    // the grid's own picture shows at once while the big one loads
+    const small = cells.current[i]!.querySelector("img")?.currentSrc;
+    gsap.set(f, { autoAlpha: 1, left: r.left, top: r.top, width: r.width, height: r.height, borderRadius: 18, backgroundImage: small ? `url("${small}")` : "none", backgroundSize: "cover", backgroundPosition: "center" });
+    gsap.set(cells.current[i], { autoAlpha: 0 });
+    const others = cells.current.filter((c, k) => c && k !== i);
+    gsap
+      .timeline({ onComplete: () => void ((busyRef.current = false), setGrid(false)) })
+      .to(others, { y: 80, autoAlpha: 0, scale: 0.85, duration: 0.45, ease: "power2.in", stagger: 0.02 }, 0)
+      .to(gridBox.current!.querySelector(".grid-close"), { scale: 0, duration: 0.2 }, 0)
+      .to(f, { ...target(), borderRadius: 24, duration: 0.8, ease: "expo.inOut" }, 0.1)
+      .to([closeBtn.current, moreBtn.current], { scale: 1, duration: 0.45, ease: "back.out(2)" }, 0.75);
+  };
 
   const target = () => {
     const w = Math.min(window.innerWidth * 0.92, 1100);
@@ -229,10 +336,15 @@ function ScoopLightbox({ photo, from, locale, onClosed }: { photo: GalleryImage;
 
   const close = () => {
     const f = frame.current!;
+    if (grid) {
+      // from the grid: everything fades out together
+      gsap.timeline({ onComplete: onClosed }).to(gridBox.current, { autoAlpha: 0, scale: 0.96, duration: 0.35 }, 0).to(bg.current, { opacity: 0, duration: 0.4 }, 0.05);
+      return;
+    }
     sfx.whoosh();
     gsap
       .timeline({ defaults: { ease: "expo.inOut" }, onComplete: onClosed })
-      .to(closeBtn.current, { scale: 0, duration: 0.2 }, 0)
+      .to([closeBtn.current, moreBtn.current], { scale: 0, duration: 0.2 }, 0)
       .set(f, { WebkitMaskImage: MASK, maskImage: MASK, WebkitMaskSize: "330% 330%", maskSize: "330% 330%", borderRadius: 0 }, 0)
       .to(f, { WebkitMaskSize: "100% 100%", maskSize: "100% 100%", duration: 0.7, ease: "expo.out" }, 0.05)
       .to(f, { left: from.left, top: from.top, width: from.width, height: from.height, duration: 0.8 }, 0.05)
@@ -243,6 +355,8 @@ function ScoopLightbox({ photo, from, locale, onClosed }: { photo: GalleryImage;
     const f = frame.current!;
     const html = document.documentElement;
     html.style.overflow = "hidden";
+    const lenis = (window as unknown as { __lenis?: { stop(): void; start(): void } }).__lenis;
+    lenis?.stop();
     sfx.whoosh();
     gsap.set(f, { left: from.left, top: from.top, width: from.width, height: from.height, WebkitMaskSize: "100% 100%", maskSize: "100% 100%" });
     const tl = gsap.timeline({ defaults: { ease: "expo.inOut" } });
@@ -251,11 +365,13 @@ function ScoopLightbox({ photo, from, locale, onClosed }: { photo: GalleryImage;
       // the scoop grows past the frame's edges: the mask "opens" into the full photo
       .to(f, { WebkitMaskSize: "330% 330%", maskSize: "330% 330%", duration: 0.9, ease: "expo.in" }, 0.15)
       .set(f, { WebkitMaskImage: "none", maskImage: "none", borderRadius: 24 })
-      .fromTo(closeBtn.current, { scale: 0, rotate: -90 }, { scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2)" }, 0.8);
+      .fromTo(closeBtn.current, { scale: 0, rotate: -90 }, { scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2)" }, 0.8)
+      .fromTo(moreBtn.current, { scale: 0, y: 20 }, { scale: 1, y: 0, duration: 0.55, ease: "back.out(2)" }, 0.9);
     const esc = (e: KeyboardEvent) => e.key === "Escape" && close();
     window.addEventListener("keydown", esc);
     return () => {
       html.style.overflow = "";
+      lenis?.start();
       window.removeEventListener("keydown", esc);
       tl.kill();
     };
@@ -266,15 +382,44 @@ function ScoopLightbox({ photo, from, locale, onClosed }: { photo: GalleryImage;
       <div ref={bg} className="absolute inset-0 bg-chocolate/55 opacity-0 backdrop-blur-md" onClick={close} />
       <div
         ref={frame}
-        className="fixed overflow-hidden shadow-[0_40px_120px_-30px_rgba(0,0,0,0.6)]"
+        className="fixed z-20 overflow-hidden shadow-[0_40px_120px_-30px_rgba(0,0,0,0.6)]"
         style={{ WebkitMaskImage: MASK, maskImage: MASK, WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: "50% 45%", maskPosition: "50% 45%" }}
       >
-        <Image src={photo.image_url} alt={t(photo.alt, locale)} fill sizes="92vw" className="object-cover" priority />
+        <Image key={photo.id} src={photo.image_url} alt={t(photo.alt, locale)} fill sizes="92vw" className="object-cover" priority />
         <button ref={closeBtn} type="button" onClick={close} aria-label="✕" className="absolute top-4 right-4 grid size-12 scale-0 place-items-center rounded-full bg-white/95 text-chocolate shadow-soft transition-colors hover:bg-white">
           <X weight="bold" className="size-5" />
         </button>
-        {t(photo.alt, locale) && <p className="absolute bottom-4 left-5 rounded-full bg-white/90 px-4 py-1.5 font-display text-lg">{t(photo.alt, locale)}</p>}
+        {all.length > 1 && (
+          <button ref={moreBtn} type="button" onClick={openGrid} className="btn-candy absolute bottom-5 left-1/2 -ml-[6.5rem] w-52 scale-0 justify-center bg-lemon text-base whitespace-nowrap">
+            {labelAll}
+          </button>
+        )}
       </div>
+
+      {/* the whole gallery: a masonry grid (portrait photos tall, landscape ones wide), scrolls on its own */}
+      {grid && (
+        <div ref={gridBox} data-lenis-prevent className="fixed inset-0 z-10 overflow-y-auto overscroll-contain px-4 pt-20 pb-10 sm:px-10">
+          <button type="button" onClick={close} aria-label="✕" className="grid-close fixed top-5 right-5 z-10 grid size-12 scale-0 place-items-center rounded-full bg-white text-chocolate shadow-soft">
+            <X weight="bold" className="size-5" />
+          </button>
+          <div className="mx-auto max-w-6xl columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4">
+            {list.map((g, i) => (
+              <button
+                key={g.id}
+                ref={(el) => {
+                  cells.current[i] = el;
+                }}
+                type="button"
+                onClick={() => pick(g, i)}
+                className="relative mb-3 block w-full overflow-hidden rounded-[18px] opacity-0 shadow-soft sm:mb-4"
+                style={{ aspectRatio: g.width && g.height ? `${g.width} / ${g.height}` : ratio[g.id] ? String(ratio[g.id]) : "4 / 3" }}
+              >
+                <Image src={g.image_url} alt={t(g.alt, locale)} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover transition-transform duration-500 hover:scale-105" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>,
     document.body,
   );

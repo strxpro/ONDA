@@ -24,6 +24,24 @@ const P: Record<Lang, PhotoStrings> = {
   fr: { isIt: "C'est celle-ci ? Touche le numéro 👇", which: "Laquelle ? Touche le numéro 👇", all: "📚 Tout voir", send: "📷 OK ! Envoie-moi la nouvelle photo pour la n°", swapped: "✅ C'est fait, photo changée sur le site !", undo: "↩️ Annuler", undone: "↩️ Annulé, l'ancienne est revenue.", busy: "😅 Toutes les IA gratuites sont occupées. Réessaie dans une minute !", none: "Pas de photos." },
 };
 
+const CP: Record<Lang, { q: string; del: string; all: string; done: string; none: string }> = {
+  it: { q: "🗑️ Quali commenti tolgo dal sito? Spunta e conferma 👇", del: "🗑️ Togli quelli spuntati", all: "☑ Tutti", done: "🗑️ Tolti dal sito:", none: "Spuntane almeno uno ☝️" },
+  pl: { q: "🗑️ Które komentarze usunąć ze strony? Zaznacz i potwierdź 👇", del: "🗑️ Usuń zaznaczone", all: "☑ Wszystkie", done: "🗑️ Usunięte ze strony:", none: "Zaznacz chociaż jeden ☝️" },
+  en: { q: "🗑️ Which comments should I remove? Tick and confirm 👇", del: "🗑️ Remove the ticked ones", all: "☑ All", done: "🗑️ Removed from the site:", none: "Tick at least one ☝️" },
+  es: { q: "🗑️ ¿Qué comentarios quito? Marca y confirma 👇", del: "🗑️ Quitar los marcados", all: "☑ Todos", done: "🗑️ Quitados de la web:", none: "Marca al menos uno ☝️" },
+  de: { q: "🗑️ Welche Kommentare soll ich entfernen? Ankreuzen und bestätigen 👇", del: "🗑️ Angekreuzte entfernen", all: "☑ Alle", done: "🗑️ Von der Seite entfernt:", none: "Kreuze mindestens einen an ☝️" },
+  fr: { q: "🗑️ Quels commentaires retirer ? Coche et confirme 👇", del: "🗑️ Retirer ceux cochés", all: "☑ Tous", done: "🗑️ Retirés du site :", none: "Coche-en au moins un ☝️" },
+};
+
+/** A checklist of comments: tap to tick, then remove the ticked ones. */
+function commentKeyboard(id: string, items: { label: string }[], picked: number[], lang: Lang) {
+  const kb = new InlineKeyboard();
+  items.forEach((it, i) => kb.text(`${picked.includes(i) ? "☑" : "☐"} ${it.label}`, `ck:${id}:${i}`).row());
+  if (items.length > 1) kb.text(CP[lang].all, `ca:${id}:0`);
+  kb.text(CP[lang].del, `cx:${id}:0`).row().text("❌", `no:${id}`);
+  return kb;
+}
+
 /** Send photos numbered from `from` (albums of up to 10), each as a small JPEG with its number. */
 async function sendNumbered(ctx: Context, refs: PhotoRef[], from = 1) {
   for (let i = 0; i < refs.length; i += 10) {
@@ -125,6 +143,21 @@ async function handle(ctx: Context, text: string, photo?: Photo) {
 
   if (result.photoPick) {
     await showPick(ctx, result.photoPick.refs, result.photoPick.all, result.lang, photo);
+    return;
+  }
+
+  if (result.commentPick) {
+    const items = result.commentPick.items;
+    if (!items.length) return void (await ctx.reply({ it: "Non ci sono commenti.", pl: "Nie ma komentarzy.", en: "There are no comments.", es: "No hay comentarios.", de: "Keine Kommentare.", fr: "Aucun commentaire." }[result.lang]));
+    const p = await store().createPending({
+      telegram_user_id: ctx.from!.id,
+      chat_id: ctx.chat!.id,
+      tool: "comment_pick",
+      args: { items, picked: items.length === 1 ? [0] : [], lang: result.lang },
+      summary: CP[result.lang].q,
+      expires_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+    });
+    await ctx.reply(CP[result.lang].q, { reply_markup: commentKeyboard(p.id, items, items.length === 1 ? [0] : [], result.lang) });
     return;
   }
 
@@ -405,6 +438,34 @@ export function getBot() {
     if (kind === "no") {
       await store().setPendingStatus(id, "cancelled");
       await ctx.editMessageText(`${p.summary}\n\n${t.cancelled}`);
+      return;
+    }
+    if (kind === "ck" || kind === "ca") {
+      // tick / untick (or all)
+      const items = (p.args.items as { id: string; label: string }[]) ?? [];
+      const picked = new Set((p.args.picked as number[]) ?? []);
+      if (kind === "ca") items.forEach((_, i) => picked.add(i));
+      else {
+        const i = Number(idx);
+        if (picked.has(i)) picked.delete(i);
+        else picked.add(i);
+      }
+      await store().setPendingArgs(id, { ...p.args, picked: [...picked] });
+      await ctx.editMessageReplyMarkup({ reply_markup: commentKeyboard(id, items, [...picked], lang) }).catch(() => {});
+      return;
+    }
+    if (kind === "cx") {
+      const items = (p.args.items as { id: string; label: string }[]) ?? [];
+      const picked = ((p.args.picked as number[]) ?? []).map((i) => items[i]).filter(Boolean);
+      if (!picked.length) return void (await ctx.reply(CP[lang].none));
+      await store().setPendingStatus(id, "confirmed");
+      try {
+        for (const c of picked) await patchRow("comments", c.id, { status: "rejected" }, { ...actorOf(ctx), action: "comment_removed" });
+        await ctx.editMessageText(`${CP[lang].done}\n${picked.map((c) => `• ${c.label}`).join("\n")}`);
+      } catch (e) {
+        console.error("[comments remove]", e);
+        await ctx.reply(P[lang].busy);
+      }
       return;
     }
     if (kind === "pa") {

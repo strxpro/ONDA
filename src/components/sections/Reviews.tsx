@@ -159,41 +159,70 @@ function Note({ review: r, tilt }: { review: Review; tilt: number }) {
 }
 
 /** A smooth curtain of drips (viewBox 1000×300): a thin rim with rounded drips of different lengths. */
-const DRIPS = (() => {
-  const drops = [
-    [40, 70, 34], [130, 150, 26], [215, 95, 40], [320, 190, 30], [410, 110, 44], [505, 160, 28],
-    [590, 85, 38], [690, 205, 32], [790, 120, 42], [880, 175, 28], [960, 90, 30],
-  ];
-  let d = "M0 0 H1000 V36 ";
-  // walk right → left along the rim, dipping into each drip with smooth curves
-  for (const [x, depth, w] of [...drops].reverse()) {
+/** Drips: [center x, tip y, width] — a rim of strawberry gelato running down into icicles with round, heavy tips. */
+const DRIP_SET: [number, number, number][] = [
+  [40, 92, 36], [118, 168, 28], [205, 118, 44], [300, 208, 32], [392, 132, 48], [488, 186, 30],
+  [575, 104, 40], [668, 222, 34], [765, 140, 46], [858, 196, 30], [945, 112, 38],
+];
+const RIM = 40;
+
+/** One continuous outline: the rim, and every drip narrowing a little before its round tip. */
+function dripsPath(set: [number, number, number][], rim: number, grow = 1) {
+  let d = `M0 0 H1000 V${rim} `;
+  for (const [x, depth0, w] of [...set].reverse()) {
+    const depth = rim + (depth0 - rim) * grow;
     const r = w / 2;
-    d += `L${x + r + 14} 36 C${x + r + 4} 36 ${x + r} 46 ${x + r} ${36 + depth * 0.45} `;
-    d += `L${x + r} ${depth} C${x + r} ${depth + r * 1.1} ${x - r} ${depth + r * 1.1} ${x - r} ${depth} `;
-    d += `L${x - r} ${36 + depth * 0.45} C${x - r} 46 ${x - r - 4} 36 ${x - r - 14} 36 `;
+    const neck = r * 0.72; // the drip narrows a bit before its bulb
+    d += `L${x + r + 18} ${rim} C${x + r + 2} ${rim} ${x + r} ${rim + 10} ${x + neck} ${rim + (depth - rim) * 0.55} `;
+    d += `C${x + neck * 0.9} ${depth - r * 1.2} ${x + r * 1.05} ${depth - r * 0.6} ${x + r * 0.98} ${depth - r * 0.15} `;
+    d += `C${x + r * 0.9} ${depth + r * 0.95} ${x - r * 0.9} ${depth + r * 0.95} ${x - r * 0.98} ${depth - r * 0.15} `;
+    d += `C${x - r * 1.05} ${depth - r * 0.6} ${x - neck * 0.9} ${depth - r * 1.2} ${x - neck} ${rim + (depth - rim) * 0.55} `;
+    d += `C${x - r} ${rim + 10} ${x - r - 2} ${rim} ${x - r - 18} ${rim} `;
   }
-  return d + "L0 36 Z";
-})();
+  return d + `L0 ${rim} Z`;
+}
+const FRONT = dripsPath(DRIP_SET, RIM);
+const BACK = dripsPath(DRIP_SET.map(([x, d, w]) => [x + 22, d * 0.82 + 18, w * 1.15] as [number, number, number]), RIM + 14);
 
 /**
- * The page "melts" into the comments: the strawberry-cream backdrop fades in from nothing (no hard edge), and a
- * curtain of soft drips hangs over it, stretching slowly like gelato in the sun. One SVG, GPU-cheap.
+ * The page melts into the comments: a glossy rim of strawberry gelato hangs over the top edge and runs down in
+ * drips with heavy round tips; every few seconds a drop swells, stretches and falls. Two SVG layers + CSS, GPU-cheap.
  */
 function Melt() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,#FFD3E2_0%,#FFC0D4_45%,#FFD9C2_100%)] [mask-image:linear-gradient(to_bottom,transparent_0,rgba(0,0,0,0.6)_160px,#000_380px)]" />
       <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_60%,rgba(255,255,255,0.55),transparent_70%),radial-gradient(50%_40%_at_85%_80%,rgba(255,244,189,0.6),transparent_70%)]" />
-      <svg viewBox="0 0 1000 300" preserveAspectRatio="xMidYMin slice" className="melt-drips absolute inset-x-0 top-0 h-[clamp(200px,24vw,320px)] w-full">
+      <svg viewBox="0 0 1000 300" preserveAspectRatio="xMidYMin slice" className="absolute inset-x-0 -top-px h-[clamp(220px,26vw,340px)] w-full overflow-visible drop-shadow-[0_14px_18px_rgba(214,64,110,0.22)]">
         <defs>
-          <linearGradient id="melt-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#FFC4D6" stopOpacity="0" />
-            <stop offset="0.22" stopColor="#FFC4D6" stopOpacity="0.35" />
-            <stop offset="0.6" stopColor="#FFB6CC" stopOpacity="0.9" />
-            <stop offset="1" stopColor="#FFB0C8" />
+          <linearGradient id="melt-front" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#FF9FBE" />
+            <stop offset="0.55" stopColor="#FF8DB2" />
+            <stop offset="1" stopColor="#F46F9C" />
+          </linearGradient>
+          <linearGradient id="melt-back" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#FFC2D5" />
+            <stop offset="1" stopColor="#FFAFC8" />
           </linearGradient>
         </defs>
-        <path d={DRIPS} fill="url(#melt-fill)" />
+        {/* a lighter layer behind, slower — depth */}
+        <path d={BACK} fill="url(#melt-back)" className="melt-sway" style={{ animationDuration: "9s" }} />
+        <path d={FRONT} fill="url(#melt-front)" className="melt-sway" />
+        {/* the shine: a soft line along the rim and a highlight on every drip */}
+        <path d={`M0 ${RIM - 12} H1000`} stroke="#fff" strokeOpacity=".35" strokeWidth="6" strokeLinecap="round" strokeDasharray="60 26" />
+        {DRIP_SET.map(([x, depth, w], i) => (
+          <g key={i}>
+            <path d={`M${x - w * 0.22} ${RIM + 14} L${x - w * 0.24} ${depth - w * 0.45}`} stroke="#fff" strokeOpacity=".5" strokeWidth={w * 0.14} strokeLinecap="round" />
+            <ellipse cx={x - w * 0.18} cy={depth - w * 0.08} rx={w * 0.12} ry={w * 0.16} fill="#fff" opacity=".7" />
+            {/* a drop that swells at the tip, stretches and falls */}
+            {i % 2 === 0 && (
+              <g className="melt-drop" style={{ animationDelay: `${(i * 1.37) % 5}s`, animationDuration: `${4.2 + (i % 3) * 0.9}s`, transformOrigin: `${x}px ${depth + w * 0.3}px` }}>
+                <path d={`M${x} ${depth + w * 0.05} C${x + w * 0.32} ${depth + w * 0.45} ${x + w * 0.28} ${depth + w * 0.78} ${x} ${depth + w * 0.8} C${x - w * 0.28} ${depth + w * 0.78} ${x - w * 0.32} ${depth + w * 0.45} ${x} ${depth + w * 0.05} Z`} fill="#F46F9C" />
+                <ellipse cx={x - w * 0.08} cy={depth + w * 0.5} rx={w * 0.06} ry={w * 0.09} fill="#fff" opacity=".75" />
+              </g>
+            )}
+          </g>
+        ))}
       </svg>
     </div>
   );

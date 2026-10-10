@@ -17,7 +17,7 @@ const FLOODS = ["#BFE59A", "#FFB3CE", "#FFE37A"];
 const FLOOD_EDGE = "M0 60 C180 10 360 110 540 60 C720 10 900 110 1080 60 C1260 10 1440 110 1620 60 C1800 10 1980 110 2160 60 C2340 10 2520 110 2880 60 V140 H0 Z";
 /** Glitch slices left behind by each flood (deterministic so server and client render the same). */
 const GLITCH = Array.from({ length: 9 }, (_, i) => ({ top: (i * 37 + 11) % 92, h: 1.5 + ((i * 53) % 7), w: 40 + ((i * 29) % 60), left: (i * 41) % 50 }));
-const MAX_WAIT = 14; // seconds: on a very slow connection, open anyway after this
+const MAX_WAIT = 9; // seconds: on a very slow connection, open anyway after this
 
 /** Fired when the curtain starts lifting; the hero starts its intro on it. */
 export const REVEAL_EVENT = "onda:revealed";
@@ -46,7 +46,8 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
       ...CAKE_PHOTOS,
       ...CAKE_SPRITES,
       "/img/cup.webp",
-      ...new Set(ing.flatMap((n) => [ingredientPhoto(n, 96), ingredientPhoto(n, 320), ingredientPhoto(n)]).filter(Boolean) as string[]),
+      // the small bubbles only (the cards show these first); bigger sizes come when needed
+      ...new Set(ing.map((n) => ingredientPhoto(n, 96)).filter(Boolean) as string[]),
     ];
   };
   const root = useRef<HTMLDivElement>(null);
@@ -112,7 +113,8 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
       }
       const from = stack.current.getBoundingClientRect();
       const visible = target && target.top < window.innerHeight * 0.95 && target.bottom > 0 && target.width > 0;
-      const tl = gsap.timeline({ onStart: reveal, onComplete: finish, defaults: { ease: "expo.inOut" } }).timeScale(speed);
+      const tl = gsap.timeline({ onComplete: finish, defaults: { ease: "expo.inOut" } }).timeScale(speed);
+      tl.call(reveal, [], 0.3);
       tl.to(q(".pl-ui"), { autoAlpha: 0, y: -12, duration: 0.35, ease: "power2.in" }, 0);
       if (visible) {
         tl.to(stack.current, { x: target.left - from.left, y: target.top - from.top, scale: target.width / from.width, duration: 1.05 }, 0.05).call(handoff, [], 1.1);
@@ -169,7 +171,7 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
     update();
     const started = performance.now();
 
-    const tl = gsap.timeline();
+    const tl = gsap.timeline().timeScale(1.35); // a bit quicker: the scoops still drop one by one
     // the wafer rises out of the floor, then the scoops drop on it one by one
     tl.fromTo(q(".pl-cone-fill"), { autoAlpha: 1, clipPath: "inset(100% 0% 0% 0%)", y: 60 }, { clipPath: "inset(0% 0% 0% 0%)", y: 0, duration: 0.6, ease: "power3.out" });
     q(".pl-scoop").forEach((s, i) => {

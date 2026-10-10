@@ -523,6 +523,17 @@ section.min-h-svh > .mx-auto {
   50% { transform: scaleY(1.08); }
 }
 .melt-drips { transform-origin: 50% 0; animation: melt 7s ease-in-out infinite; }
+/* the drips stretch and settle; a drop swells at a tip, stretches, falls and fades */
+.melt-sway { transform-box: view-box; transform-origin: 50% 0; animation: melt 7s ease-in-out infinite; }
+@keyframes melt-drop {
+  0%, 30% { transform: translateY(-6px) scale(0.3, 0.3); opacity: 0; }
+  45% { transform: translateY(0) scale(1, 1); opacity: 1; }
+  60% { transform: translateY(6px) scale(0.9, 1.25); opacity: 1; }
+  85% { transform: translateY(120px) scale(0.75, 1.15); opacity: 0.9; }
+  100% { transform: translateY(170px) scale(0.6, 1); opacity: 0; }
+}
+.melt-drop { transform-box: view-box; animation: melt-drop 4.5s cubic-bezier(0.55, 0, 0.85, 0.4) infinite; }
+@media (prefers-reduced-motion: reduce) { .melt-sway, .melt-drop { animation: none; } }
 
 /* the cursors are real gelato: a waffle cone (tip = hotspot), a gelato hand over anything clickable, a gelato "I"
    for text — native cursors, so they never lag behind; their soft shadow is baked into the images */
