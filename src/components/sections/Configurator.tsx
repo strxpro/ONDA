@@ -102,7 +102,7 @@ export function Configurator() {
     if (picks.length >= max) return;
     navigator.vibrate?.(10);
     sfx.pop();
-    setPicks((p) => [...p, { key: Date.now(), id: f.id }]);
+    setPicks((p) => [...p, { key: Date.now() + Math.random(), id: f.id }]);
     // the whole stack gives a little when the scoop lands
     window.setTimeout(() => {
       sfx.plop();
@@ -266,7 +266,8 @@ export function Configurator() {
             {showCard && (
               <motion.div className="fixed inset-0 z-[95] grid place-items-center bg-chocolate/40 p-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCard(false)} role="dialog" aria-modal="true">
                 <motion.div
-                  className="relative w-full max-w-sm rounded-[2.5rem] bg-cream p-6 text-center shadow-float"
+                  className="relative max-h-[92svh] w-full max-w-sm overflow-y-auto overscroll-contain rounded-[2.5rem] bg-cream px-5 pt-14 pb-6 text-center shadow-float sm:p-6 sm:pt-14"
+                  data-lenis-prevent
                   /* above the builder pop-out */
                   initial={{ y: 200, scale: 0.7 }}
                   animate={{ y: 0, scale: 1 }}
@@ -274,7 +275,10 @@ export function Configurator() {
                   transition={{ type: "spring", stiffness: 260, damping: 22 }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <p className="font-display text-3xl font-bold">
+                  <button type="button" onClick={() => setShowCard(false)} aria-label={ui("close")} className="absolute top-4 right-4 z-10 grid size-10 place-items-center rounded-full bg-white shadow-soft transition-transform hover:rotate-90">
+                    <X weight="bold" className="size-5" />
+                  </button>
+                  <p className="font-display text-2xl font-bold sm:text-3xl">
                     {ui(`sizes.${size}`)} · {kind === "coni" ? ui("cone") : ui("cup")}
                   </p>
                   <div className="my-4 flex justify-center">
@@ -288,9 +292,6 @@ export function Configurator() {
                     ))}
                   </ol>
                   <RollingPrice value={item.price_eur} locale={locale} className="mt-3 font-display text-5xl font-bold" />
-                  <button type="button" onClick={() => setShowCard(false)} className="btn-candy mt-5 bg-white">
-                    <X weight="bold" className="size-5" /> {ui("close")}
-                  </button>
                 </motion.div>
               </motion.div>
             )}

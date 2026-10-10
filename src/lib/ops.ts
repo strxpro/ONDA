@@ -288,7 +288,9 @@ export async function pendingComments() {
 }
 
 export async function moderateComment(id: string, approve: boolean, actor: Actor) {
-  return patchRow("comments", id, { status: approve ? "approved" : "rejected" }, ctx(actor, approve ? "comment_approved" : "comment_rejected"));
+  const r = await patchRow("comments", id, { status: approve ? "approved" : "rejected" }, ctx(actor, approve ? "comment_approved" : "comment_rejected"));
+  if (approve) await (await import("./comments")).translateComment(id); // shown in every visitor's language
+  return r;
 }
 
 /** Convert "today"/"yesterday"/"7d"/"30d" into a [from, to) range in the shop's timezone. */

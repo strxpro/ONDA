@@ -1,6 +1,8 @@
 import { after } from "next/server";
 import type { Update } from "grammy/types";
 import { getBot } from "@/lib/bot/telegram";
+import { siteUrl } from "@/lib/env";
+import { consumeDirty } from "@/lib/mutations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +32,11 @@ export async function POST(req: Request) {
       await bot.handleUpdate(update);
     } catch (e) {
       console.error("[telegram] update", update.update_id, e);
+    }
+    // the website changed: refresh its cache in a request of its own (so a reload shows it at once)
+    if (consumeDirty()) {
+      const base = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : siteUrl;
+      await fetch(`${base}/api/revalidate`, { method: "POST", headers: { "x-revalidate-secret": secret } }).catch((e) => console.error("[telegram] revalidate", e));
     }
   });
   return new Response("ok");

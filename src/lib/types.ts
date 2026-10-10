@@ -134,6 +134,16 @@ export const Comment = z.object({
   locale: z.string().max(5).nullable(),
   status: z.enum(["pending", "approved", "rejected"]),
   created_at: z.string(),
+  /** a photo the visitor added (shown in a scoop-shaped frame) */
+  photo_url: z.string().nullable().optional(),
+  likes: z.coerce.number().int().min(0).optional(),
+  /** a visitor's reply to another comment */
+  parent_id: z.string().nullable().optional(),
+  /** the owner's answer, in every language */
+  reply: I18nLoose.nullable().optional(),
+  reply_at: z.string().nullable().optional(),
+  /** the comment itself, translated */
+  message_i18n: I18nLoose.nullable().optional(),
 });
 export type Comment = z.infer<typeof Comment>;
 

@@ -524,18 +524,6 @@ section.min-h-svh > .mx-auto {
 }
 .melt-drips { transform-origin: 50% 0; animation: melt 7s ease-in-out infinite; }
 
-/* language switch: every text dissolves into a soft blur and re-forms in the new language (no page reload) */
-#main,
-[data-nav] {
-  transition: filter 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-}
-html[data-langswap] #main,
-html[data-langswap] [data-nav] {
-  filter: blur(10px) saturate(1.2);
-  opacity: 0.5;
-  transition-duration: 0.18s;
-}
-
 /* the cursors are real gelato: a waffle cone (tip = hotspot), a gelato hand over anything clickable, a gelato "I"
    for text — native cursors, so they never lag behind; their soft shadow is baked into the images */
 html.cone-cursor,

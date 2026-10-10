@@ -4,6 +4,7 @@ import { Bot, InlineKeyboard, InputFile, type Context } from "grammy";
 import type { InputMediaPhoto } from "grammy/types";
 import { AllBusyError } from "../llm";
 import { allPhotos, jpegOf, replacePhoto, type PhotoRef } from "../photos";
+import { replyToComment, translateComment } from "../comments";
 import { store, type Actor } from "../store";
 import { patchRow, undoLast } from "../mutations";
 import { saveImage } from "../upload";
@@ -182,6 +183,21 @@ async function answerTypedChoice(ctx: Context, text: string) {
   return true;
 }
 
+/** The owner's answer to a visitor's comment (after he tapped "💬 Rispondi"). */
+async function answerCommentReply(ctx: Context, text: string) {
+  const p = await store().latestPending(ctx.from!.id, "comment_reply");
+  if (!p) return false;
+  await store().setPendingStatus(p.id, "confirmed");
+  try {
+    await typing(ctx, () => replyToComment(String(p.args.commentId), text, actorOf(ctx)));
+    await ctx.reply("✅ Risposta pubblicata sotto il commento, in tutte le lingue 🌍");
+  } catch (e) {
+    console.error("[comment reply]", e);
+    await ctx.reply(P.it.busy);
+  }
+  return true;
+}
+
 let bot: Bot | null = null;
 
 export function getBot() {
@@ -196,6 +212,7 @@ export function getBot() {
       await ctx.reply("Ciao! Scrivimi o mandami un vocale, in qualsiasi lingua: «Il pistacchio è finito», «Quante persone oggi?», «Cono medio 3,80», «Aggiungi il gusto mirto»…");
       return;
     }
+    if (await answerCommentReply(ctx, ctx.message.text)) return;
     if (await answerTypedChoice(ctx, ctx.message.text)) return;
     await handle(ctx, ctx.message.text);
   });
@@ -242,6 +259,7 @@ export function getBot() {
         return;
       }
       await ctx.reply(`${L[detectLang(text)].heard} «${text}»`);
+      if (await answerCommentReply(ctx, text)) return;
       if (await answerTypedChoice(ctx, text)) return;
       await handle(ctx, text);
     } catch (e) {
@@ -258,10 +276,33 @@ export function getBot() {
       const status = idx === "ok" ? "approved" : "rejected";
       try {
         await patchRow("comments", id, { status }, { ...actorOf(ctx), action: `comment_${status}` });
-        await ctx.editMessageText(`${ctx.callbackQuery.message && "text" in ctx.callbackQuery.message ? ctx.callbackQuery.message.text : ""}\n\n${status === "approved" ? "✅ Pubblicato" : "🗑️ Scartato"}`);
+        const msg = ctx.callbackQuery.message;
+        const old = msg && "text" in msg ? msg.text : msg && "caption" in msg ? msg.caption : "";
+        const done = `${old ?? ""}\n\n${status === "approved" ? "✅ Pubblicato" : "🗑️ Tolto dal sito"}`;
+        const kb = status === "approved" ? new InlineKeyboard().text("💬 Rispondi", `cr:${id}:0`).text("🗑️ Togli", `cm:${id}:no`) : undefined;
+        if (msg && "photo" in msg) await ctx.editMessageCaption({ caption: done.slice(0, 1000), reply_markup: kb });
+        else await ctx.editMessageText(done, { reply_markup: kb });
+        if (status === "approved") await translateComment(id);
       } catch (e) {
-        await ctx.reply(`${L.it.error} ${errText(e)}`);
+        console.error("[comment]", e);
+        await ctx.reply(P.it.busy);
       }
+      return;
+    }
+    if (kind === "cr") {
+      // the next text or voice message is the answer, shown under the comment in every language
+      await ctx.answerCallbackQuery();
+      const c = await store().get("comments", id);
+      if (!c) return;
+      await store().createPending({
+        telegram_user_id: ctx.from.id,
+        chat_id: ctx.chat!.id,
+        tool: "comment_reply",
+        args: { commentId: id, lang: "it" },
+        summary: String(c.message).slice(0, 80),
+        expires_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+      });
+      await ctx.reply(`💬 Scrivimi o dimmi a voce la risposta per ${c.name} («${String(c.message).slice(0, 60)}»). La traduco io in tutte le lingue 🌍`);
       return;
     }
     if (kind === "rs") {
@@ -388,10 +429,27 @@ async function toAdmins(text: string, keyboard?: InlineKeyboard) {
 }
 
 /** Tell the owner on Telegram that a visitor left a comment, with ✅ / 🗑️ buttons. */
-export async function notifyComment(c: { id: string; name: string; message: string; flavor_slug: string | null; rating?: number | null }) {
+export async function notifyComment(c: { id: string; name: string; message: string; flavor_slug: string | null; rating?: number | null; photo_url?: string | null; parent_id?: string | null; published?: boolean }) {
   const stars = c.rating ? ` · ${"★".repeat(c.rating)}${"☆".repeat(5 - c.rating)}` : "";
-  const head = c.rating && c.rating <= 3 ? "🔒 Feedback privato" : "💬 Nuovo commento sul sito";
-  await toAdmins(`${head}${stars}\n\n«${c.message}»\n— ${c.name}${c.flavor_slug ? ` (gusto preferito: ${c.flavor_slug})` : ""}`, new InlineKeyboard().text("✅ Pubblica", `cm:${c.id}:ok`).text("🗑️ Scarta", `cm:${c.id}:no`));
+  const head = c.published
+    ? c.parent_id
+      ? "↩️ Risposta a un commento — già sul sito"
+      : "💬 Nuovo commento — già sul sito (l'AI l'ha controllato)"
+    : c.rating && c.rating <= 3
+      ? "🔒 Feedback privato"
+      : "💬 Nuovo commento da approvare";
+  const text = `${head}${stars}\n\n«${c.message}»\n— ${c.name}${c.flavor_slug ? ` (gusto preferito: ${c.flavor_slug})` : ""}`;
+  const kb = c.published ? new InlineKeyboard().text("💬 Rispondi", `cr:${c.id}:0`).text("🗑️ Togli", `cm:${c.id}:no`) : new InlineKeyboard().text("✅ Pubblica", `cm:${c.id}:ok`).text("🗑️ Scarta", `cm:${c.id}:no`).row().text("💬 Rispondi", `cr:${c.id}:0`);
+  const chat = process.env.ADMIN_TELEGRAM_ID;
+  if (c.photo_url && chat && process.env.TELEGRAM_BOT_TOKEN) {
+    try {
+      await getBot().api.sendPhoto(Number(chat), new InputFile(await jpegOf(c.photo_url)), { caption: text.slice(0, 1000), reply_markup: kb });
+      return;
+    } catch (e) {
+      console.error("[telegram] comment photo", e);
+    }
+  }
+  await toAdmins(text, kb);
 }
 
 /** Tell the owner about a new pre-order (gelato by the kilo, treats…), with ✅ / ❌ buttons. */

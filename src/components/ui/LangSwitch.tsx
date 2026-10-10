@@ -4,7 +4,8 @@ import { CaretDown, Check } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useLocale } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { Link, usePathname } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { LANG_EVENT } from "../LangWave";
 import { LOCALE_NAMES, LOCALES, type Locale } from "@/lib/shared";
 import { Flag } from "./Flag";
 
@@ -14,6 +15,10 @@ export function LangSwitch({ inline = false, dark = false }: { inline?: boolean;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  // the other languages are fetched ahead (on hover / when the menu opens), so the switch is instant
+  const prefetch = () => LOCALES.forEach((l) => l !== locale && router.prefetch(pathname, { locale: l }));
+  const swap = (l: Locale) => l !== locale && window.dispatchEvent(new CustomEvent(LANG_EVENT, { detail: l }));
 
   useEffect(() => {
     if (!open) return;
@@ -36,7 +41,8 @@ export function LangSwitch({ inline = false, dark = false }: { inline?: boolean;
             href={pathname}
             locale={l}
             scroll={false}
-            onClick={() => l !== locale && (document.documentElement.dataset.langswap = "1")}
+            onClick={() => swap(l)}
+            onPointerEnter={prefetch}
             aria-current={l === locale ? "true" : undefined}
             className={`flex items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm font-bold transition-all duration-300 ease-(--ease-gelato) hover:scale-105 ${l === locale ? (dark ? "bg-cream text-chocolate" : "bg-chocolate text-cream") : dark ? "bg-white/10 text-cream" : "bg-white/60"}`}
           >
@@ -52,7 +58,8 @@ export function LangSwitch({ inline = false, dark = false }: { inline?: boolean;
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (prefetch(), setOpen((o) => !o))}
+        onPointerEnter={prefetch}
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={LOCALE_NAMES[locale]}
@@ -79,7 +86,7 @@ export function LangSwitch({ inline = false, dark = false }: { inline?: boolean;
                   href={pathname}
                   locale={l}
                   scroll={false}
-                  onClick={() => (setOpen(false), l !== locale && (document.documentElement.dataset.langswap = "1"))}
+                  onClick={() => (setOpen(false), swap(l))}
                   className={`flex items-center gap-3 rounded-2xl px-2.5 py-2 font-semibold transition-colors hover:bg-white/80 ${l === locale ? "bg-white" : ""}`}
                 >
                   <Flag locale={l} className="size-7" />

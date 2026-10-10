@@ -4,7 +4,7 @@
 import { ArrowRight, Check, FunnelSimple, Sparkle, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { darken, lighten } from "@/lib/color";
 import { ingredientPhoto } from "@/lib/ingredients";
@@ -78,18 +78,25 @@ export function Flavors() {
     if (active) setActive(data.flavors.find((f) => f.id === active.id) ?? null);
   }, [data.flavors]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // a filter: the list changes, and the page glides to its top (instead of the browser jumping somewhere)
+  // a filter: the list changes right under the filter, and the page does not move — the filter stays exactly where
+  // the finger / mouse was (if the list got shorter, the scroll is pinned to it instead of the browser jumping)
   const gridTop = useRef<HTMLDivElement>(null);
+  const anchor = useRef<number | null>(null);
   const pickFilter = (k: FilterKey) => {
+    anchor.current = gridTop.current?.getBoundingClientRect().top ?? null;
     setFilter(k);
-    requestAnimationFrame(() => {
-      const el = gridTop.current;
-      if (!el) return;
-      const lenis = (window as unknown as { __lenis?: { scrollTo: (t: HTMLElement, o: object) => void } }).__lenis;
-      if (lenis) lenis.scrollTo(el, { offset: -110, duration: 0.8 });
-      else el.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
   };
+  useLayoutEffect(() => {
+    const before = anchor.current;
+    anchor.current = null;
+    const el = gridTop.current;
+    if (before == null || !el) return;
+    const delta = el.getBoundingClientRect().top - before;
+    if (Math.abs(delta) < 1) return;
+    const lenis = (window as unknown as { __lenis?: { scrollTo: (t: number, o: object) => void; scroll: number } }).__lenis;
+    if (lenis) lenis.scrollTo(lenis.scroll + delta, { immediate: true, force: true });
+    else window.scrollBy(0, delta);
+  }, [filter, noLactose]);
 
   const pick = (f: Flavor) => {
     navigator.vibrate?.(10);
@@ -116,8 +123,8 @@ export function Flavors() {
         </div>
 
         {/* the menu, with a playful filter */}
-        <FilterBar filters={filters} value={filter} onChange={pickFilter} noLactose={noLactose} onNoLactose={(v) => (setNoLactose(v), pickFilter(filter))} />
-        <div ref={gridTop} className="scroll-mt-28" />
+        <FilterBar filters={filters} value={filter} onChange={pickFilter} noLactose={noLactose} onNoLactose={(v) => ((anchor.current = gridTop.current?.getBoundingClientRect().top ?? null), setNoLactose(v))} />
+        <div ref={gridTop} />
         {/* the list swaps in place (no empty moment that would make the page jump), then fades in */}
         <AnimatePresence initial={false}>
           <motion.div key={filter} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
@@ -177,11 +184,12 @@ function FilterBar({ filters, value, onChange, noLactose, onNoLactose }: { filte
   const label = (k: FilterKey) => (CATS.includes(k) ? ui(`categories.${k}`) : ui(`filters.${k}`));
   const spring = { type: "spring", stiffness: 380, damping: 32 } as const;
   return (
-    <div className="sticky top-20 z-30 mt-12 flex flex-row-reverse items-start gap-2 sm:mt-16">
-      <div className="relative">
+    <div className="relative z-30 mt-12 flex flex-row-reverse items-start gap-2 sm:mt-16">
+      {/* the round button keeps its place; the panel grows out of it over the list (nothing below moves) */}
+      <div className="relative size-14 shrink-0">
         <AnimatePresence initial={false} mode="popLayout">
           {open ? (
-            <motion.div key="panel" layoutId="filter-morph" transition={spring} className="w-60 origin-top-right overflow-hidden rounded-[1.75rem] bg-white/95 shadow-float backdrop-blur-md" style={{ borderRadius: 28 }}>
+            <motion.div key="panel" layoutId="filter-morph" transition={spring} className="absolute top-0 right-0 w-60 origin-top-right overflow-hidden rounded-[1.75rem] bg-white/95 shadow-float backdrop-blur-md" style={{ borderRadius: 28 }}>
               <div className="flex items-center justify-between px-4 pt-3 pb-1">
                 <motion.span layout="position" className="font-display text-lg">{ui("filters.title")}</motion.span>
                 <button type="button" onClick={() => setOpen(false)} aria-label={ui("close")} className="grid size-8 place-items-center rounded-full bg-chocolate/5">

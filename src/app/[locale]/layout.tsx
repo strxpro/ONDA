@@ -9,6 +9,7 @@ import { ParallaxEngine } from "@/components/decor/ParallaxEngine";
 import { Preloader } from "@/components/Preloader";
 import { SiteDataProvider } from "@/components/providers/SiteData";
 import { SmoothScroll } from "@/components/providers/SmoothScroll";
+import { LangWave } from "@/components/LangWave";
 import { TabTitle } from "@/components/TabTitle";
 import { Tracker } from "@/components/Tracker";
 import { routing } from "@/i18n/routing";
@@ -67,6 +68,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
             {motion.cursor && <CursorBlob />}
             <Tracker />
             <TabTitle />
+            <LangWave />
           </SiteDataProvider>
         </NextIntlClientProvider>
         <div className="grain" aria-hidden />

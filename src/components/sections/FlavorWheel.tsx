@@ -99,6 +99,8 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
   const [winner, setWinner] = useState<Flavor | null>(null);
   const rot = useMotionValue(0);
   const lastSeg = useRef(-1);
+  // a scoop's name: shown while the pointer is on it, and pinned by a tap (stays until another tap or a spin)
+  const [peek, setPeek] = useState<{ k: number; pinned: boolean } | null>(null);
 
   const chips = CHIPS.filter((c) => c.key === "all" || flavors.filter(c.test).length >= 2);
   const items = useMemo(() => {
@@ -116,6 +118,7 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
   const spin = () => {
     if (spinning || items.length < 2) return;
     setWinner(null);
+    setPeek(null);
     setSpinning(true);
     sfx.whoosh();
     const i = Math.floor(Math.random() * items.length);
@@ -198,7 +201,18 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
               const y = 138 * Math.sin(mid);
               const size = Math.min(84, 2 * Math.PI * 138 * (seg / 360) * 0.85);
               return (
-                <g key={f.id}>
+                <g
+                  key={f.id}
+                  className="cursor-pointer"
+                  onPointerEnter={(e) => e.pointerType === "mouse" && !spinning && setPeek((p) => (p?.pinned ? p : { k, pinned: false }))}
+                  onPointerLeave={(e) => e.pointerType === "mouse" && setPeek((p) => (p?.pinned ? p : null))}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (spinning) return;
+                    sfx.pop();
+                    setPeek((p) => (p?.pinned && p.k === k ? null : { k, pinned: true }));
+                  }}
+                >
                   <path d={arc(k)} fill={k % 2 ? lighten(f.color_primary, 0.35) : lighten(f.color_primary, 0.15)} stroke="#FFF7EE" strokeWidth="3" />
                   <g transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(k + 0.5) * seg})`}>
                     <image href={thumb(scoopPhoto(f))!} x={-size / 2} y={-size / 2} width={size} height={size} preserveAspectRatio="xMidYMid meet" />
@@ -225,6 +239,29 @@ function WheelModal({ flavors, onClose, onResult }: { flavors: Flavor[]; onClose
           >
             {spinning ? <ArrowsClockwise weight="bold" className="size-8 animate-spin" /> : ui("spin")}
           </motion.button>
+          {/* the name of the scoop under the pointer / tapped */}
+          <AnimatePresence>
+            {peek && items[peek.k] && !spinning && (() => {
+              const a = (((peek.k + 0.5) * seg - 90 + rot.get()) * Math.PI) / 180;
+              const left = 50 + (138 / 210) * 50 * Math.cos(a);
+              const top = 50 + (138 / 210) * 50 * Math.sin(a);
+              const f = items[peek.k];
+              return (
+                <motion.span
+                  key={f.id}
+                  initial={{ opacity: 0, scale: 0.6, y: 6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.7 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 22 }}
+                  className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-[135%] rounded-full bg-chocolate px-3 py-1.5 text-sm font-bold whitespace-nowrap text-cream shadow-float"
+                  style={{ left: `${left}%`, top: `${top}%` }}
+                >
+                  {t(f.name, locale)}
+                  <span className="absolute top-full left-1/2 -ml-1.5 border-x-[6px] border-t-[7px] border-x-transparent border-t-chocolate" />
+                </motion.span>
+              );
+            })()}
+          </AnimatePresence>
           {winner && <Confetti colors={[winner.color_primary, winner.color_secondary, "#FFE066", "#FF8FB8", "#6FE0C4"]} />}
         </div>
 

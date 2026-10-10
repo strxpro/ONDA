@@ -76,7 +76,31 @@ export function SiteDataProvider({ initial, locale, children }: { initial: SiteD
   }, [locale]);
 
   useEffect(() => {
-    const onChange = (table: string, key: string, row: Row | null) => setData((d) => applyChange(d, table, key, row));
+    // the change arrives at once (applied right away), then the whole data is re-read fresh from the server — the
+    // live message can miss big unchanged fields, and the bot often changes several rows in a row
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const refetch = (delay = 350) => {
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        try {
+          const res = await fetch("/api/site", { cache: "no-store" });
+          if (res.ok) setData((await res.json()) as SiteData);
+        } catch {}
+      }, delay);
+    };
+    const onChange = (table: string, key: string, row: Row | null) => {
+      if (table !== "site_settings") setData((d) => applyChange(d, table, key, row));
+      if (table !== "comments") refetch(); // comments (likes, replies) are small and complete in the live message
+
+    };
+    // back on the tab after a while (the live connection may have slept): catch up
+    let hiddenAt = 0;
+    const onVis = () => {
+      if (document.hidden) hiddenAt = Date.now();
+      else if (hiddenAt && Date.now() - hiddenAt > 20_000) refetch(0);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    const stopVis = () => (clearTimeout(timer), document.removeEventListener("visibilitychange", onVis));
 
     if (hasSupabase) {
       // loaded on demand so the Supabase client isn't part of the first paint
@@ -93,12 +117,19 @@ export function SiteDataProvider({ initial, locale, children }: { initial: SiteD
             onChange(table, String(ref[PK[table] ?? "id"]), row);
           });
         }
-        channel.subscribe();
+        // (re)connected: anything missed while offline is read again
+        let first = true;
+        channel.subscribe((status) => {
+          if (status !== "SUBSCRIBED") return;
+          if (!first) refetch(0);
+          first = false;
+        });
         cleanup = () => void sb.removeChannel(channel);
       });
       return () => {
         cancelled = true;
         cleanup();
+        stopVis();
       };
     }
 
@@ -107,7 +138,7 @@ export function SiteDataProvider({ initial, locale, children }: { initial: SiteD
       const e = JSON.parse(m.data) as { table: string; key: string; row: Row | null };
       onChange(e.table, e.key, e.row);
     };
-    return () => es.close();
+    return () => (es.close(), stopVis());
   }, []);
 
   // the owner's own ingredient photos (sent from Telegram) win over the stock ones

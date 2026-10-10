@@ -25,8 +25,18 @@ const ROW_SCHEMA: Record<TableName, z.ZodType<Row>> = {
 
 export type Ctx = Actor & { action: string; batchId?: string };
 
+/** Something public changed in this request — the Telegram webhook (which works after its response, where
+ * revalidateTag is lost) refreshes the page cache itself at the end. */
+let dirty = false;
+export const consumeDirty = () => {
+  const d = dirty;
+  dirty = false;
+  return d;
+};
+
 function publish(table: TableName, key: Key, row: Row | null) {
   if (PRIVATE_TABLES.includes(table)) return;
+  dirty = true;
   emitChange({ table, key: String(key), row });
   try {
     revalidateTag(SITE_TAG);
