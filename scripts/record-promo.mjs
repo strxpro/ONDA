@@ -46,7 +46,7 @@ const ff = spawn(
   "ffmpeg",
   ["-v", "error", "-y", "-f", "image2pipe", "-c:v", "png", "-framerate", String(FPS), "-i", "-", "-i", song,
    ...(sfx ? ["-i", wav] : []),
-   "-filter_complex", sfx ? "[1:a]aresample=48000,volume=1.0[m];[2:a]volume=0.8[f];[m][f]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.95,afade=t=out:st=28.4:d=0.76[a]" : "[1:a]aresample=48000,alimiter=limit=0.95,afade=t=out:st=28.4:d=0.76[a]",
+   "-filter_complex", sfx ? "[1:a]aresample=48000,volume=1.0[m];[2:a]volume=0.8[f];[m][f]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.95,afade=t=out:st=28.4:d=0.76[a]" : `[1:a]aresample=48000,alimiter=limit=0.95,afade=t=out:st=${(duration - 0.8).toFixed(2)}:d=0.8[a]`,
    "-map", "0:v", "-map", "[a]",
    "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-pix_fmt", "yuv420p", "-profile:v", "high", "-r", String(FPS),
    "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", "-t", String(duration), out],
