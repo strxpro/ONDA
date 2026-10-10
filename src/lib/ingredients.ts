@@ -30,7 +30,19 @@ const PHOTOS: [RegExp, string][] = [
   [/dolce|ciast|cake|bizcoch|kuchen|gâteau|gateau/i, "1767065887793-f68f736ea9d6"],
 ];
 
+/** Photos the owner sent for ingredients (stored in site settings as texts["img:<name>"]), checked first. */
+let OWN: [string, string][] = [];
+export const ingredientKey = (name: string) => name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+export function setOwnIngredientPhotos(texts: Record<string, { it?: string }>) {
+  OWN = Object.entries(texts)
+    .filter(([k, v]) => k.startsWith("img:") && v?.it)
+    .map(([k, v]) => [k.slice(4), v.it!]);
+}
+
 export function ingredientPhoto(name: string, size = 240): string | null {
+  const key = ingredientKey(name);
+  const own = OWN.find(([k]) => key === k || key.includes(k) || k.includes(key));
+  if (own) return own[1];
   const hit = PHOTOS.find(([re]) => re.test(name));
   return hit ? U(hit[1], size) : null;
 }

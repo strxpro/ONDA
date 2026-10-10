@@ -112,3 +112,32 @@ export async function flavorLook(name: string, hint?: string): Promise<z.infer<t
     return fallback;
   }
 }
+
+const Suggestion = z.object({ ingredients: z.array(z.string()).min(1).max(5), description: z.string() });
+
+/**
+ * A new flavor named by voice ("aggiungi il gusto mirto"): its likely ingredients (2–4, short, in Italian) and one warm
+ * line of description, so the owner confirms everything with a single ✅. Null when no AI is configured or it fails.
+ */
+export async function suggestFlavor(name: string): Promise<{ ingredients: string; description: string } | null> {
+  if (!hasAI) return null;
+  const sys =
+    "You help an artisan gelato shop in Sardinia. For a new gelato flavor, give its main ingredients as an artisan gelato maker would list them (2-4 items, short, in Italian, lowercase, e.g. 'mirto', 'latte fresco', 'panna') and one short warm description line in Italian (max 90 characters). Keys: ingredients (array of strings), description (string).";
+  try {
+    if (provider() !== "anthropic") {
+      const out = await compatJson(Suggestion, sys, `Flavor: "${name}"`);
+      return { ingredients: out.ingredients.slice(0, 4).join(", "), description: out.description.slice(0, 120) };
+    }
+    const res = await anthropic().messages.parse({
+      model: MODEL,
+      max_tokens: 600,
+      output_config: { effort: "low", format: zodOutputFormat(Suggestion) },
+      system: sys,
+      messages: [{ role: "user", content: `Flavor: "${name}"` }],
+    });
+    const out = res.parsed_output;
+    return out ? { ingredients: out.ingredients.slice(0, 4).join(", "), description: out.description.slice(0, 120) } : null;
+  } catch {
+    return null;
+  }
+}

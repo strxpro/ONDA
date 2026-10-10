@@ -35,7 +35,7 @@ export function TextsAdmin({ settings }: { settings: SiteSettings }) {
   const [s, setS] = useState(settings);
   const set = <K extends keyof SiteSettings>(k: K, v: SiteSettings[K]) => setS((x) => ({ ...x, [k]: v }));
   const setText = (k: string, v: I18nText) => setS((x) => ({ ...x, texts: { ...x.texts, [k]: v } }));
-  const keys = [...Object.keys(TEXT_LABEL), ...Object.keys(s.texts).filter((k) => !(k in TEXT_LABEL))];
+  const keys = [...Object.keys(TEXT_LABEL), ...Object.keys(s.texts).filter((k) => !(k in TEXT_LABEL) && !k.startsWith("img:"))];
 
   return (
     <>

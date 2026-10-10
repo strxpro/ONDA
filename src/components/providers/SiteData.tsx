@@ -4,6 +4,7 @@ import { MotionConfig } from "motion/react";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { hasSupabase } from "@/lib/env";
 import { DEFAULT_MOTION, type Locale, type MotionSettings, type SiteData } from "@/lib/shared";
+import { setOwnIngredientPhotos } from "@/lib/ingredients";
 
 type Ctx = { data: SiteData; locale: Locale; motion: MotionSettings };
 const SiteCtx = createContext<Ctx | null>(null);
@@ -109,6 +110,8 @@ export function SiteDataProvider({ initial, locale, children }: { initial: SiteD
     return () => es.close();
   }, []);
 
+  // the owner's own ingredient photos (sent from Telegram) win over the stock ones
+  useMemo(() => setOwnIngredientPhotos(data.settings.texts as Record<string, { it?: string }>), [data.settings.texts]);
   const value = useMemo(() => ({ data, locale, motion: { ...DEFAULT_MOTION, ...data.settings.motion } }), [data, locale]);
   return (
     <SiteCtx.Provider value={value}>

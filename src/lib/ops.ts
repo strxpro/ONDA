@@ -253,6 +253,13 @@ export async function updateMenuItem(id: string, fields: { name?: string; descri
 
 /* ─── photos ─────────────────────────────────────────────────────────────── */
 
+/** The owner's photo of an ingredient ("questa è la foto del mirto"): used in every flavor/treat card that lists it. */
+export async function setIngredientPhoto(name: string, url: string, actor: Actor) {
+  const st = (await store().get("site_settings", 1)) as { texts: Record<string, unknown> } | null;
+  const key = `img:${name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()}`;
+  return patchRow("site_settings", 1, { texts: { ...(st?.texts ?? {}), [key]: { it: url } } }, ctx(actor, "set_ingredient_photo"));
+}
+
 /** Swap one gallery photo for a new one: by position (1 = first shown), else the oldest. */
 export async function replaceGalleryPhoto(input: { url: string; width?: number; height?: number; position?: number; caption?: string }, actor: Actor) {
   const all = ((await store().list("gallery")) as { id: string; sort_order: number }[]).sort((a, b) => a.sort_order - b.sort_order);

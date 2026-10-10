@@ -1,7 +1,7 @@
 import "server-only";
 
 import type Anthropic from "@anthropic-ai/sdk";
-import { MODEL, anthropic } from "../ai";
+import { MODEL, anthropic, suggestFlavor } from "../ai";
 import { compatChat, provider, type CompatMessage, type CompatTool } from "../llm";
 import { nowIn } from "../hours";
 import { undoLast } from "../mutations";
@@ -148,7 +148,7 @@ async function resolveFlavor(name: string, question: string): Promise<{ flavor: 
 }
 
 export async function stage(tool: ToolName, a: Record<string, unknown>, lang: Lang, photo?: Photo): Promise<Resolved> {
-  if (a.use_photo || tool === "add_gallery_photo" || tool === "replace_gallery_photo") {
+  if (a.use_photo || tool === "add_gallery_photo" || tool === "replace_gallery_photo" || tool === "set_ingredient_photo") {
     if (!photo)
       return {
         choice: {
@@ -272,6 +272,8 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
           label: `nuova foto in galleria${a.caption ? ` «${a.caption}»` : ""}`,
         },
       };
+    case "set_ingredient_photo":
+      return { staged: { tool, args: a, label: `foto dell'ingrediente «${a.ingredient}»` } };
     case "replace_gallery_photo":
       return { staged: { tool, args: a, label: `sostituire ${a.position ? `la foto n. ${a.position}` : "una foto"} del Laboratorio con questa` } };
     case "moderate_comment": {
@@ -307,14 +309,20 @@ export async function stage(tool: ToolName, a: Record<string, unknown>, lang: La
       return {
         staged: { tool, args: a, label: `testo ${a.key}: «${a.text}»` },
       };
-    case "add_flavor":
+    case "add_flavor": {
+      // he only said the name: suggest ingredients + a line, shown in the same message, confirmed with the same ✅
+      if (!a.ingredients || !a.description) {
+        const sug = await suggestFlavor(String(a.name));
+        if (sug) a = { ...a, ingredients: a.ingredients ?? sug.ingredients, description: a.description ?? sug.description };
+      }
       return {
         staged: {
           tool,
           args: a,
-          label: `nuovo gusto «${a.name}»${a.color ? ` ${a.color}` : ""}${(a.tags as string[] | undefined)?.length ? ` [${(a.tags as string[]).join(", ")}]` : ""}`,
+          label: `nuovo gusto «${a.name}»${a.color ? ` ${a.color}` : ""}${(a.tags as string[] | undefined)?.length ? ` [${(a.tags as string[]).join(", ")}]` : ""}${a.ingredients ? `\n   🥄 ingredienti: ${a.ingredients}` : ""}${a.description ? `\n   ✏️ «${a.description}»` : ""}`,
         },
       };
+    }
     case "replace_today_flavors":
       return {
         staged: {
@@ -437,6 +445,8 @@ export async function execute(s: Staged, actor: Actor) {
         },
         actor,
       );
+    case "set_ingredient_photo":
+      return ops.setIngredientPhoto(String(a.ingredient), (a.photo as Photo).url, actor);
     case "replace_gallery_photo": {
       const p = a.photo as Photo;
       return ops.replaceGalleryPhoto({ url: p.url, width: p.width, height: p.height, position: a.position as number | undefined, caption: a.caption as string | undefined }, actor);
