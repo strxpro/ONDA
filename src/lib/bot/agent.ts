@@ -423,6 +423,7 @@ export async function execute(s: Staged, actor: Actor) {
           ...(a.description ? { description_text: a.description as string } : {}),
           ...(a.color ? { color_primary: a.color as string } : {}),
           ...(a.tags ? { tags: a.tags as Flavor["tags"] } : {}),
+          ...(a.allergens ? { allergens: a.allergens as Flavor["allergens"] } : {}),
           ...(a.featured != null ? { is_featured: a.featured as boolean } : {}),
           ...(a.ingredients ? { ingredients_text: a.ingredients as string } : {}),
           ...(a.category ? { category: a.category as Flavor["category"] } : {}),

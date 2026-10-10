@@ -3,7 +3,8 @@
 import { CheckSquare, Crown, MagnifyingGlass, PencilSimple, Plus, Sparkle, Square, Star, Trash, UploadSimple, X } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import { addFlavorAction, deleteRowAction, reorderAction, saveRow, setSignatureAction, uploadImageAction } from "@/app/admin/actions";
-import { FLAVOR_CATEGORIES, FLAVOR_TAGS, SCOOP_TEXTURES, type Flavor } from "@/lib/shared";
+import { ALLERGENS, FLAVOR_CATEGORIES, FLAVOR_TAGS, SCOOP_TEXTURES, type Allergen, type Flavor } from "@/lib/shared";
+import { AllergenIcon, allergenLabel } from "../../ui/Allergens";
 import { IceCream } from "../../ice/IceCream";
 import { ScoopImg, scoopPhoto } from "../../ice/PhotoStack";
 import { Scoop } from "../../ice/Scoop";
@@ -289,6 +290,7 @@ function FlavorEditor({ flavor, onDone }: { flavor: Flavor; onDone: () => void }
         </Field>
       </div>
       <TagPicker value={f.tags} onChange={(v) => set("tags", v)} />
+      <AllergenPicker value={f.allergens ?? []} onChange={(v) => set("allergens", v)} />
 
       <Field label="Foto (facoltativa, sostituisce il disegno)">
         <div className="flex items-center gap-3">
@@ -330,5 +332,23 @@ function FlavorEditor({ flavor, onDone }: { flavor: Flavor; onDone: () => void }
         </Button>
       </div>
     </div>
+  );
+}
+
+/** Allergens the owner confirms — when none are ticked the site reads them from the ingredients and says "probably". */
+function AllergenPicker({ value, onChange }: { value: Allergen[]; onChange: (v: Allergen[]) => void }) {
+  return (
+    <Field label="Allergeni (confermati da te; vuoto = letti dagli ingredienti)">
+      <div className="flex flex-wrap gap-2">
+        {ALLERGENS.map((a) => {
+          const on = value.includes(a);
+          return (
+            <button key={a} type="button" onClick={() => onChange(on ? value.filter((x) => x !== a) : [...value, a])} className={`flex items-center gap-1.5 rounded-full py-1 pr-3 pl-1 text-sm font-bold transition ${on ? "bg-chocolate text-cream" : "bg-white text-chocolate/60"}`}>
+              <AllergenIcon a={a} className={`size-7 ${on ? "" : "opacity-50 grayscale"}`} /> {allergenLabel(a, "it")}
+            </button>
+          );
+        })}
+      </div>
+    </Field>
   );
 }

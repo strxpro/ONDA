@@ -173,6 +173,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "swirl",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(102),
@@ -197,6 +198,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "chunks",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(103),
@@ -221,6 +223,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "smooth",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(104),
@@ -252,6 +255,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "chunks",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(105),
@@ -276,6 +280,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "chunks",
       deleted_at: null,
+      allergens: [],
     },
     // VERIFY with Mauro: a typical artisan line-up so the counter shows ~20 flavors; adjust to the real daily list.
     {
@@ -294,6 +299,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "chunks",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(107),
@@ -311,6 +317,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "smooth",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(108),
@@ -328,6 +335,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "smooth",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(109),
@@ -345,6 +353,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "chunks",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(110),
@@ -362,6 +371,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "smooth",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(111),
@@ -379,6 +389,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "smooth",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(112),
@@ -396,6 +407,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "chunks",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(113),
@@ -413,6 +425,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "swirl",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(114),
@@ -430,6 +443,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "chunks",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(115),
@@ -447,6 +461,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "smooth",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(116),
@@ -464,6 +479,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "smooth",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(117),
@@ -481,6 +497,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "swirl",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(118),
@@ -498,6 +515,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "swirl",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(119),
@@ -515,6 +533,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "smooth",
       deleted_at: null,
+      allergens: [],
     },
     {
       id: id(120),
@@ -532,6 +551,7 @@ export const seed: SiteData = {
       image_url: null,
       scoop_texture: "smooth",
       deleted_at: null,
+      allergens: [],
     },
   ],
 

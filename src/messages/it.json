@@ -223,6 +223,12 @@
       "writeUs": "Scrivici",
       "messagePh": "Per quando, per quanti, che gusti…",
       "waText": "Ciao! Vorrei ordinare una torta gelato."
+    },
+    "allergens": {
+      "title": "Allergeni",
+      "lactoseFree": "Senza lattosio",
+      "guessed": "Indicativi, dagli ingredienti: chiedi sempre al banco.",
+      "ask": "Per allergie gravi chiedi sempre al banco."
     }
   }
 }

@@ -223,6 +223,12 @@
       "writeUs": "Write to us",
       "messagePh": "For when, for how many, which flavors…",
       "waText": "Hi! I'd like to order a gelato cake."
+    },
+    "allergens": {
+      "title": "Allergens",
+      "lactoseFree": "Lactose-free",
+      "guessed": "Indicative, from the ingredients — always ask at the counter.",
+      "ask": "With serious allergies, always ask at the counter."
     }
   }
 }

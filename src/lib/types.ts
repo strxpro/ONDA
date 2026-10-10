@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { FLAVOR_CATEGORIES, FLAVOR_TAGS, PRICE_GROUPS, SCOOP_TEXTURES, SECTION_KEYS } from "./shared";
+import { ALLERGENS, FLAVOR_CATEGORIES, FLAVOR_TAGS, PRICE_GROUPS, SCOOP_TEXTURES, SECTION_KEYS } from "./shared";
 
-export { DEFAULT_LOCALE, DEFAULT_MOTION, FLAVOR_CATEGORIES, FLAVOR_TAGS, LOCALE_NAMES, LOCALES, PRICE_GROUPS, SCOOP_TEXTURES, SECTION_KEYS, t } from "./shared";
-export type { Locale, SectionKey } from "./shared";
+export { ALLERGENS, DEFAULT_LOCALE, DEFAULT_MOTION, FLAVOR_CATEGORIES, FLAVOR_TAGS, LOCALE_NAMES, LOCALES, PRICE_GROUPS, SCOOP_TEXTURES, SECTION_KEYS, t } from "./shared";
+export type { Allergen, Locale, SectionKey } from "./shared";
 
 export const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Expected a #RRGGBB color");
 
@@ -29,6 +29,8 @@ export const Flavor = z.object({
   color_secondary: hex,
   category: z.enum(FLAVOR_CATEGORIES),
   tags: z.array(z.enum(FLAVOR_TAGS)),
+  /** allergens the owner confirmed; empty = read from the ingredients ("probably") */
+  allergens: z.array(z.enum(ALLERGENS)).optional(),
   is_available_today: z.boolean(),
   is_featured: z.boolean(),
   sort_order: z.number().int(),

@@ -223,6 +223,12 @@
       "writeUs": "Napisz do nas",
       "messagePh": "Na kiedy, dla ilu osób, jakie smaki…",
       "waText": "Cześć! Chciałbym zamówić tort lodowy."
+    },
+    "allergens": {
+      "title": "Alergeny",
+      "lactoseFree": "Bez laktozy",
+      "guessed": "Orientacyjnie, na podstawie składników — zawsze zapytaj przy ladzie.",
+      "ask": "Przy poważnych alergiach zawsze zapytaj przy ladzie."
     }
   }
 }

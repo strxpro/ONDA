@@ -223,6 +223,12 @@
       "writeUs": "Écris-nous",
       "messagePh": "Pour quand, pour combien, quels parfums…",
       "waText": "Bonjour ! Je voudrais commander un gâteau glacé."
+    },
+    "allergens": {
+      "title": "Allergènes",
+      "lactoseFree": "Sans lactose",
+      "guessed": "Indicatifs, d'après les ingrédients : demande toujours au comptoir.",
+      "ask": "En cas d'allergie grave, demande toujours au comptoir."
     }
   }
 }

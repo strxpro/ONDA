@@ -223,6 +223,12 @@
       "writeUs": "Escríbenos",
       "messagePh": "Para cuándo, para cuántos, qué sabores…",
       "waText": "¡Hola! Quisiera encargar una tarta helada."
+    },
+    "allergens": {
+      "title": "Alérgenos",
+      "lactoseFree": "Sin lactosa",
+      "guessed": "Orientativos, según los ingredientes: pregunta siempre en el mostrador.",
+      "ask": "Con alergias graves, pregunta siempre en el mostrador."
     }
   }
 }

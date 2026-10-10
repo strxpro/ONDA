@@ -15,6 +15,7 @@ ADD / REMOVE / CHANGE A FLAVOR
 - add: "aggiungi", "nuovo gusto", "dodaj smak", "nowy smak", "add", "new flavor", "neue Sorte", "ajoute", "añade" → add_flavor (the name exactly as said, capitalized; category if obvious: fruit → frutta, sorbet → sorbetti, creamy → crema)
 - remove for good: "togli", "elimina", "usuń", "remove", "delete", "lösche", "supprime", "quita" → remove_flavor
 - rename / describe / color / tags (vegano, senza lattosio, senza glutine, novità, firma) → update_flavor
+- allergens ("il pistacchio contiene frutta a guscio e latte") → update_flavor allergens = the FULL list (milk, eggs, nuts, peanuts, gluten, soy, sesame, sulphites)
 
 PRICES (update_price) — sizes and containers in every language
 - sizes: piccolo/mały/small/klein/petit/pequeño · medio/średni/medium/mittel/moyen/mediano · grande/duży/large/groß/grand/grande
@@ -64,7 +65,7 @@ QUESTIONS (read tools — answer with the exact numbers, one short sentence)
 /** The same, compressed for free models with small token limits. */
 export const BOT_SKILL_SHORT = `Vocabulary (any language):
 finito/esaurito/skończył się/sold out/aus/épuisé/agotado → set_flavor_availability false; tornato/znowu jest/back → true.
-aggiungi/dodaj/add + flavor → add_flavor (just the name is fine). togli/usuń/remove → remove_flavor. rename/description/color/tags → update_flavor.
+aggiungi/dodaj/add + flavor → add_flavor (just the name is fine). togli/usuń/remove → remove_flavor. rename/description/color/tags/allergens → update_flavor.
 gusto firma/smak firmowy/signature/"zamiast Yellow Submarine" → set_signature_flavor.
 price: piccolo/mały/small, medio/średni/medium, grande/duży/large; cono/rożek/cone, coppetta/kubek/cup, vaschetta/kuweta/tub → update_price.
 treats (affogato, frappè, granita, torte…) → add_menu_item/update_menu_item (description, ingredients, photo).

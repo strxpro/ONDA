@@ -223,6 +223,12 @@
       "writeUs": "Schreib uns",
       "messagePh": "Für wann, für wie viele, welche Sorten…",
       "waText": "Hallo! Ich möchte eine Eistorte bestellen."
+    },
+    "allergens": {
+      "title": "Allergene",
+      "lactoseFree": "Laktosefrei",
+      "guessed": "Richtwerte aus den Zutaten – frag immer an der Theke.",
+      "ask": "Bei schweren Allergien frag immer an der Theke."
     }
   }
 }

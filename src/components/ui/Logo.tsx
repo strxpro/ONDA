@@ -25,7 +25,13 @@ export function Logo({ tagline, className = "", light = false, spin = false }: {
       )}
       <span className="flex flex-col leading-none">
         <span className={`font-display text-[1.7rem] leading-[0.85] font-bold tracking-tight ${light ? "text-cream" : "text-chocolate"}`}>
-          onda<span className="text-pink">.</span>
+          {/* every few seconds a little wave runs through the letters ("onda" = wave) */}
+          {"onda".split("").map((c, i) => (
+            <span key={i} className="logo-wave inline-block" style={{ animationDelay: `${i * 0.09}s` }}>
+              {c}
+            </span>
+          ))}
+          <span className="logo-wave inline-block text-pink" style={{ animationDelay: "0.36s" }}>.</span>
         </span>
         {tagline && <span className={`mt-0.5 hidden font-script sm:block text-[0.95rem] leading-none ${light ? "text-cream/75" : "text-chocolate/65"}`}>{tagline}</span>}
       </span>

@@ -2,7 +2,7 @@ import "server-only";
 
 import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { FLAVOR_CATEGORIES, FLAVOR_TAGS, SECTION_KEYS } from "../types";
+import { ALLERGENS, FLAVOR_CATEGORIES, FLAVOR_TAGS, SECTION_KEYS } from "../types";
 
 export const TEXT_KEYS = ["hero_title", "hero_subtitle", "cta_flavors", "cta_directions", "flavors_title", "flavors_subtitle", "lab_title", "lab_body", "lab_point_1", "lab_point_2", "lab_point_3", "configurator_title", "configurator_subtitle", "signature_title", "signature_body", "prices_title", "treats_subtitle", "reviews_title", "visit_title", "visit_body", "marquee", "footer_text"] as const;
 
@@ -66,6 +66,7 @@ export const TOOL_DEFS: Anthropic.Beta.BetaTool[] = [
         use_photo: usePhoto,
         color: s("optional #RRGGBB"),
         tags: { type: "array", items: { type: "string", enum: [...FLAVOR_TAGS] } },
+        allergens: { type: "array", items: { type: "string", enum: [...ALLERGENS] }, description: "full confirmed allergen list (replaces the old one)" },
         featured: { type: "boolean" },
       },
       ["flavor"],
@@ -205,7 +206,7 @@ export const TOOL_INPUT = {
   list_gallery: z.object({}),
   set_flavor_availability: z.object({ flavor: z.string().min(1), available: z.boolean() }),
   add_flavor: z.object({ name: z.string().min(1).max(60), description: z.string().max(300).optional(), ingredients: z.string().max(200).optional(), category: z.enum(FLAVOR_CATEGORIES).optional(), use_photo: z.boolean().optional(), color: hexOpt, tags, featured: z.boolean().optional() }),
-  update_flavor: z.object({ flavor: z.string().min(1), new_name: z.string().max(60).optional(), description: z.string().max(300).optional(), ingredients: z.string().max(200).optional(), category: z.enum(FLAVOR_CATEGORIES).optional(), use_photo: z.boolean().optional(), color: hexOpt, tags, featured: z.boolean().optional() }),
+  update_flavor: z.object({ flavor: z.string().min(1), new_name: z.string().max(60).optional(), description: z.string().max(300).optional(), ingredients: z.string().max(200).optional(), category: z.enum(FLAVOR_CATEGORIES).optional(), use_photo: z.boolean().optional(), color: hexOpt, tags, allergens: z.array(z.enum(ALLERGENS)).optional(), featured: z.boolean().optional() }),
   add_menu_item: z.object({ name: z.string().min(1).max(60), description: z.string().max(200).optional(), ingredients: z.string().max(200).optional(), price_eur: z.number().min(0).max(500).optional(), group: z.enum(["delizie", "vaschette", "extra"]).optional(), use_photo: z.boolean().optional() }),
   update_menu_item: z.object({ item: z.string().min(1), new_name: z.string().max(60).optional(), description: z.string().max(200).optional(), ingredients: z.string().max(200).optional(), visible: z.boolean().optional(), use_photo: z.boolean().optional() }),
   add_gallery_photo: z.object({ caption: z.string().max(200).optional() }),

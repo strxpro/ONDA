@@ -30,9 +30,36 @@ export function CursorBlob() {
         { y: e.clientY + 60 + Math.random() * 30, x: e.clientX + 14 + (Math.random() - 0.5) * 30, rotate: "+=120", opacity: 0, duration: 0.9, ease: "power1.in", onComplete: () => s.remove() },
       );
     };
+    // a click: a handful of sprinkles pour out of the cone's opening (bottom-right of the cursor)
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
+      for (let i = 0; i < 12; i++) {
+        const s = document.createElement("span");
+        s.className = "absolute block h-1.5 w-3 rounded-full";
+        s.style.background = SPRINKLE_COLORS[i % SPRINKLE_COLORS.length];
+        trail.current!.appendChild(s);
+        const x0 = e.clientX + 26;
+        const y0 = e.clientY + 34;
+        gsap.fromTo(
+          s,
+          { x: x0, y: y0, rotate: Math.random() * 180, opacity: 1, scale: 0.6 },
+          {
+            keyframes: { x: [x0 + 6 + Math.random() * 30, x0 + 10 + Math.random() * 60], y: [y0 - 10 - Math.random() * 20, y0 + 50 + Math.random() * 60] },
+            rotate: `+=${200 + Math.random() * 200}`,
+            scale: 1,
+            opacity: 0,
+            duration: 0.8 + Math.random() * 0.4,
+            ease: "power1.out",
+            onComplete: () => s.remove(),
+          },
+        );
+      }
+    };
     window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerdown", onDown);
     return () => {
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
       document.documentElement.classList.remove("cone-cursor");
     };
   }, []);

@@ -488,8 +488,18 @@ section.min-h-svh > .mx-auto {
 @keyframes logo-turn {
   to { background-position: 100% 0; }
 }
+/* the wordmark: a wave runs through "onda." once every 7 s */
+.logo-wave {
+  animation: logo-wave 7s cubic-bezier(0.22, 1, 0.36, 1) 2s infinite;
+  transform-origin: 50% 90%;
+}
+@keyframes logo-wave {
+  0%, 9%, 100% { transform: translateY(0) rotate(0) scale(1); }
+  3% { transform: translateY(-0.22em) rotate(-6deg) scale(1.08); }
+  6% { transform: translateY(0.04em) rotate(3deg) scale(0.98); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .logo-spin { animation: none; }
+  .logo-spin, .logo-wave { animation: none; }
 }
 
 /* candy scrollbars: thin, rounded, a pastel rainbow thumb */
@@ -526,14 +536,19 @@ html[data-langswap] [data-nav] {
   transition-duration: 0.18s;
 }
 
-/* the cursor is a real waffle cone (its tip is the hotspot) — a native cursor, so it never lags behind */
+/* the cursors are real gelato: a waffle cone (tip = hotspot), a gelato hand over anything clickable, a gelato "I"
+   for text — native cursors, so they never lag behind; their soft shadow is baked into the images */
 html.cone-cursor,
 html.cone-cursor * {
-  cursor: url("/img/cursor-cone.png") 2 2, auto;
-  cursor: -webkit-image-set(url("/img/cursor-cone.png") 1x, url("/img/cursor-cone@2x.png") 2x) 2 2, auto;
+  cursor: url("/img/cursor-cone.png") 4 4, auto;
+  cursor: -webkit-image-set(url("/img/cursor-cone.png") 1x, url("/img/cursor-cone@2x.png") 2x) 4 4, auto;
 }
-html.cone-cursor input,
-html.cone-cursor textarea,
-html.cone-cursor [contenteditable] {
-  cursor: text;
+html.cone-cursor :is(a, button, [role="button"], label, summary, select, [data-cursor-color]),
+html.cone-cursor :is(a, button, [role="button"], label, summary, select, [data-cursor-color]) * {
+  cursor: url("/img/cursor-hand.png") 15 3, pointer;
+  cursor: -webkit-image-set(url("/img/cursor-hand.png") 1x, url("/img/cursor-hand@2x.png") 2x) 15 3, pointer;
+}
+html.cone-cursor :is(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]), textarea, [contenteditable]) {
+  cursor: url("/img/cursor-text.png") 9 17, text;
+  cursor: -webkit-image-set(url("/img/cursor-text.png") 1x, url("/img/cursor-text@2x.png") 2x) 9 17, text;
 }
