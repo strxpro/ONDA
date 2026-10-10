@@ -27,7 +27,7 @@ async function refreshAdminSession(req: NextRequest) {
 
 export default function middleware(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith("/admin")) return refreshAdminSession(req);
-  if (req.nextUrl.pathname.startsWith("/promo")) return NextResponse.next(); // the presentation film (dev only)
+  if (/^\/(promo|reel)/.test(req.nextUrl.pathname)) return NextResponse.next(); // the presentation film (dev only)
   return intl(req);
 }
 

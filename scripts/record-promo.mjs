@@ -23,7 +23,10 @@ const tmp = mkdtempSync(path.join(".cache-raw", "rec-"));
 const wav = path.join(tmp, "sfx.wav");
 const song = process.env.SONG ?? "media/beyond-possible.mp3";
 
-execFileSync("node", ["scripts/promo-audio.mjs", wav, "29.2"], { stdio: "inherit" });
+// the SFX layer is timed to the presentation film; other routes (ROUTE=/reel) use the music alone
+const route = process.env.ROUTE ?? "/promo";
+const sfx = route === "/promo";
+if (sfx) execFileSync("node", ["scripts/promo-audio.mjs", wav, "29.2"], { stdio: "inherit" });
 
 const browser = await puppeteer.launch({
   executablePath: chrome,
@@ -33,7 +36,7 @@ const browser = await puppeteer.launch({
 });
 const page = await browser.newPage();
 await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
-await page.goto(base + "/promo", { waitUntil: "networkidle0", timeout: 180000 });
+await page.goto(base + route, { waitUntil: "networkidle0", timeout: 180000 });
 await page.waitForFunction("window.__promo && window.__promo.ready === true", { timeout: 120000 });
 const duration = await page.evaluate("window.__promo.duration");
 const frames = Math.round(duration * FPS);
@@ -41,8 +44,9 @@ const cdp = await page.createCDPSession();
 
 const ff = spawn(
   "ffmpeg",
-  ["-v", "error", "-y", "-f", "image2pipe", "-c:v", "png", "-framerate", String(FPS), "-i", "-", "-i", song, "-i", wav,
-   "-filter_complex", "[1:a]aresample=48000,volume=1.0[m];[2:a]volume=0.8[f];[m][f]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.95,afade=t=out:st=28.4:d=0.76[a]",
+  ["-v", "error", "-y", "-f", "image2pipe", "-c:v", "png", "-framerate", String(FPS), "-i", "-", "-i", song,
+   ...(sfx ? ["-i", wav] : []),
+   "-filter_complex", sfx ? "[1:a]aresample=48000,volume=1.0[m];[2:a]volume=0.8[f];[m][f]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.95,afade=t=out:st=28.4:d=0.76[a]" : "[1:a]aresample=48000,alimiter=limit=0.95,afade=t=out:st=28.4:d=0.76[a]",
    "-map", "0:v", "-map", "[a]",
    "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-pix_fmt", "yuv420p", "-profile:v", "high", "-r", String(FPS),
    "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", "-t", String(duration), out],
