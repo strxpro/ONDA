@@ -211,7 +211,9 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
       if (shown === 100 && !leaving) {
         leaving = true;
         gsap.ticker.remove(tick);
-        exit().delay(0.15);
+        // decode the pictures now (off the main thread), not in the middle of the curtain's move — then go
+        const ready = Promise.all(pics.map((img) => img.decode?.().catch(() => {}))).then(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+        Promise.race([ready, new Promise((r) => setTimeout(r, 1200))]).then(() => exit().delay(0.05));
       }
     };
     gsap.ticker.add(tick);
@@ -235,7 +237,7 @@ export function Preloader({ mode = "full" }: { mode?: "full" | "short" }) {
         { c: "#FF8FB8", z: 2 },
         { c: "#FFF7EE", z: 3 },
       ].map(({ c, z }, i) => (
-        <div key={c} className="pl-curtain absolute inset-x-0 top-0 h-full" style={{ zIndex: z }}>
+        <div key={c} className="pl-curtain absolute inset-x-0 top-0 h-full will-change-transform" style={{ zIndex: z }}>
           <div className="h-full w-full" style={{ background: i === 2 ? "radial-gradient(70% 60% at 50% 40%, #FFF7EE, #FFE9DA)" : c }} />
           {i === 2 && (
             <div className="absolute inset-0 overflow-hidden">

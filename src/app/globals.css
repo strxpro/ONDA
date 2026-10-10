@@ -571,3 +571,7 @@ img[data-sk] { color: transparent; border-radius: 1.25rem; }
 @media (prefers-reduced-motion: reduce) {
   .skeleton, img[data-sk], .rainbow-text, .rainbow-bar { animation: none; }
 }
+
+/* the scrollbar's place is always kept: when the preloader lets the page scroll, nothing changes width
+   (no relayout, no scroll-animation refresh in the middle of the curtain's move) */
+html { scrollbar-gutter: stable; }

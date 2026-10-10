@@ -278,11 +278,19 @@ function FilterBar({ filters, counts, value, onChange, noLactose, onNoLactose }:
 function TileGrid({ list, locale, active, onPick, isFresh }: { list: Flavor[]; locale: Locale; active: Flavor | null; onPick: (f: Flavor) => void; isFresh: (f: Flavor) => boolean }) {
   return (
     <ul className="mt-6 grid grid-cols-3 gap-x-3 gap-y-7 sm:grid-cols-4 sm:gap-x-6 lg:grid-cols-5">
-      {list.map((f, i) => (
-        <li key={f.id}>
-          <ScoopTile flavor={f} locale={locale} index={i} selected={active?.id === f.id} onPick={() => onPick(f)} puff={isFresh(f)} />
-        </li>
-      ))}
+      <AnimatePresence initial={false}>
+        {list.map((f, i) => (
+          <motion.li
+            key={f.id}
+            layout="position"
+            transition={{ layout: { type: "spring", stiffness: 260, damping: 28 } }}
+            // a flavor taken off the menu: a little hop, then it melts away into a puff
+            exit={{ scale: [1, 1.12, 0], rotate: [0, -6, 12], opacity: [1, 1, 0], transition: { duration: 0.65, times: [0, 0.35, 1], ease: "easeIn" } }}
+          >
+            <ScoopTile flavor={f} locale={locale} index={i} selected={active?.id === f.id} onPick={() => onPick(f)} puff={isFresh(f)} />
+          </motion.li>
+        ))}
+      </AnimatePresence>
     </ul>
   );
 }
@@ -523,44 +531,74 @@ function PriceStrip() {
 
 /** The filmed scoop (frames from a real clip), played once, in a scoop-shaped frame; the flavor's own scoop lands on top. */
 
+/**
+ * The flavor card's picture, in a loop: the spatula scoops it from the tub (the film, in the flavor's color) → the
+ * appetizing photo of that flavor's tub slowly pushes in → scooping again → the photo… (no photo: the film only).
+ */
 function ScoopClip({ color, photo, tub }: { color: string; photo: string | null; tub: string | null }) {
   const seq = useRef<FrameSequenceHandle>(null);
   const [done, setDone] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [showPhoto, setShowPhoto] = useState(false);
+  const [round, setRound] = useState(0);
   useEffect(() => {
-    if (tub) {
-      const id = window.setTimeout(() => setDone(true), 900);
-      return () => window.clearTimeout(id);
-    }
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       seq.current?.seek(1);
       setDone(true);
+      if (tub) setShowPhoto(true);
       return;
     }
     let raf = 0;
-    const t0 = performance.now();
-    const tick = (now: number) => {
-      const p = Math.min(1, (now - t0) / 2200);
-      seq.current?.seek(p);
-      if (p < 1) raf = requestAnimationFrame(tick);
-      else setDone(true);
+    let timer = 0;
+    let alive = true;
+    const film = () => {
+      setShowPhoto(false);
+      const t0 = performance.now();
+      const tick = (now: number) => {
+        const p = Math.min(1, (now - t0) / 2200);
+        seq.current?.seek(p);
+        if (p < 1) raf = requestAnimationFrame(tick);
+        else {
+          setDone(true);
+          if (!tub || !alive) return;
+          // the photo, then scoop again
+          setShowPhoto(true);
+          setRound((r) => r + 1);
+          timer = window.setTimeout(film, 4200);
+        }
+      };
+      raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
+    film();
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+    };
+  }, [tub]);
   return (
     <div className="relative w-[40%] max-w-[260px] shrink-0">
       <ScoopFrame color={color} className="w-full">
-        {tub ? (
+        <FrameSequence ref={seq} base="/seq/scoop" count={60} fit="cover" className="absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 opacity-55 mix-blend-color" style={{ background: color }} />
+        {tub && (
           <>
-            {/* skeleton shimmer until the photo is in, then a slow push-in */}
-            {!loaded && <span className="skeleton absolute inset-0" />}
-            <motion.img src={tub} alt="" onLoad={() => setLoaded(true)} className="absolute inset-0 h-full w-full object-cover" initial={{ scale: 1.18, opacity: 0 }} animate={loaded ? { scale: 1.02, opacity: 1 } : {}} transition={{ scale: { duration: 3.2, ease: [0.16, 1, 0.3, 1] }, opacity: { duration: 0.5 } }} />
-          </>
-        ) : (
-          <>
-            <FrameSequence ref={seq} base="/seq/scoop" count={60} fit="cover" className="absolute inset-0" />
-            <div className="pointer-events-none absolute inset-0 opacity-55 mix-blend-color" style={{ background: color }} />
+            {showPhoto && !loaded && <span className="skeleton absolute inset-0" />}
+            <AnimatePresence>
+              {showPhoto && (
+                <motion.img
+                  key={round}
+                  src={tub}
+                  alt=""
+                  onLoad={() => setLoaded(true)}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  initial={{ scale: 1.2, opacity: 0 }}
+                  animate={{ scale: 1.02, opacity: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ scale: { duration: 4, ease: [0.16, 1, 0.3, 1] }, opacity: { duration: 0.55 } }}
+                />
+              )}
+            </AnimatePresence>
           </>
         )}
       </ScoopFrame>
@@ -590,8 +628,38 @@ function ScoopTile({ flavor: f, locale, index, selected, onPick, puff = false }:
   const badge = badgeOf(f, ui);
   const plate = (
     <>
-      <span className="absolute inset-x-[6%] top-[8%] bottom-[4%] rounded-full transition-transform duration-500 ease-(--ease-gelato) group-hover:scale-105" style={{ background: `radial-gradient(circle at 50% 35%, #fff, ${lighten(f.color_primary, 0.45)})` }} aria-hidden />
-      <img src={thumb(scoopPhoto(f))!} alt="" loading="lazy" decoding="async" draggable={false} className="absolute bottom-[12%] left-1/2 w-[94%] -translate-x-1/2 transition-transform duration-500 ease-(--ease-gelato) group-hover:-translate-y-[6%]" />
+      <motion.span
+        className="absolute inset-x-[6%] top-[8%] bottom-[4%] rounded-full transition-[scale] duration-500 ease-(--ease-gelato) group-hover:scale-105"
+        style={{ background: `radial-gradient(circle at 50% 35%, #fff, ${lighten(f.color_primary, 0.45)})` }}
+        initial={puff ? { scale: 0 } : false}
+        animate={puff ? { scale: [0, 1.14, 0.96, 1] } : undefined}
+        transition={{ duration: 0.75, times: [0, 0.55, 0.8, 1], ease: "easeOut" }}
+        aria-hidden
+      />
+      {puff &&
+        [0, 1].map((k) => (
+          <motion.span
+            key={k}
+            className="pointer-events-none absolute inset-x-[6%] top-[8%] bottom-[4%] rounded-full border-2"
+            style={{ borderColor: f.color_primary }}
+            initial={{ scale: 0.6, opacity: 0.9 }}
+            animate={{ scale: 1.55, opacity: 0 }}
+            transition={{ duration: 1.1, delay: 0.35 + k * 0.22, ease: [0.16, 1, 0.3, 1] }}
+            aria-hidden
+          />
+        ))}
+      <motion.img
+        src={thumb(scoopPhoto(f))!}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+        className="absolute bottom-[12%] left-1/2 w-[94%] -translate-x-1/2 transition-[translate] duration-500 ease-(--ease-gelato) group-hover:-translate-y-[6%]"
+        style={{ transformOrigin: "50% 100%" }}
+        initial={puff ? { scale: 0.1, y: "30%", opacity: 0 } : false}
+        animate={puff ? { scale: [0.1, 1.16, 0.9, 1.04, 1], scaleY: [0.1, 1.22, 0.86, 1.03, 1], y: ["30%", "-10%", "2%", "-1%", "0%"], opacity: [0, 1, 1, 1, 1] } : undefined}
+        transition={{ duration: 1, delay: 0.45, times: [0, 0.45, 0.7, 0.88, 1], ease: "easeOut" }}
+      />
       {puff && <Puff color={f.color_primary} />}
       {isLactoseFree(f) && (
         <span className="absolute top-[6%] right-[6%] z-10" title="Senza lattosio">
@@ -603,9 +671,15 @@ function ScoopTile({ flavor: f, locale, index, selected, onPick, puff = false }:
           <Sparkle weight="fill" className="size-3 text-lemon" /> {badge}
         </span>
       )}
-      <span className={`absolute bottom-0 left-1/2 max-w-[104%] -translate-x-1/2 translate-y-1/3 truncate rounded-full bg-white/95 px-3 py-1 font-display text-sm leading-tight whitespace-nowrap shadow-[0_6px_14px_-8px_rgba(75,42,32,0.45)] sm:px-4 sm:text-lg ${soldOut ? "line-through" : ""}`} style={{ boxShadow: selected ? `0 0 0 3px ${f.color_primary}` : undefined }}>
+      <motion.span
+        className={`absolute bottom-0 left-1/2 max-w-[104%] -translate-x-1/2 translate-y-1/3 truncate rounded-full bg-white/95 px-3 py-1 font-display text-sm leading-tight whitespace-nowrap shadow-[0_6px_14px_-8px_rgba(75,42,32,0.45)] sm:px-4 sm:text-lg ${soldOut ? "line-through" : ""}`}
+        style={{ boxShadow: selected ? `0 0 0 3px ${f.color_primary}` : undefined }}
+        initial={puff ? { opacity: 0, y: 14, scale: 0.7 } : false}
+        animate={puff ? { opacity: 1, y: 0, scale: 1 } : undefined}
+        transition={{ type: "spring", stiffness: 380, damping: 18, delay: 1.25 }}
+      >
         {t(f.name, locale)}
-      </span>
+      </motion.span>
     </>
   );
   return (
@@ -621,13 +695,7 @@ function ScoopTile({ flavor: f, locale, index, selected, onPick, puff = false }:
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: Math.min(index, 5) * 0.04 }}
       className={`group relative block w-full pb-3 text-center ${soldOut ? "opacity-60 saturate-50" : ""}`}
     >
-      {puff ? (
-        <motion.span className="relative block aspect-square" initial={{ scale: 0, rotate: -12 }} animate={{ scale: [0, 1.18, 0.94, 1], rotate: 0 }} transition={{ duration: 0.9, times: [0, 0.45, 0.75, 1], delay: 0.25 }}>
-          {plate}
-        </motion.span>
-      ) : (
-        <span className="relative block aspect-square">{plate}</span>
-      )}
+      <span className="relative block aspect-square">{plate}</span>
       {soldOut && <span className="mt-2 block text-xs font-bold tracking-wider text-cherry uppercase">{ui("soldOut")}</span>}
     </motion.button>
   );
@@ -646,7 +714,20 @@ function Puff({ color }: { color: string }) {
             style={{ background: i % 3 ? "#fff" : lighten(color, 0.3) }}
             initial={{ x: "-50%", y: "-50%", scale: 0.2, opacity: 0.95 }}
             animate={{ x: `calc(-50% + ${Math.cos(a) * 95}%)`, y: `calc(-50% + ${Math.sin(a) * 95}%)`, scale: 1.4, opacity: 0 }}
-            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.15 + (i % 3) * 0.04 }}
+            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.55 + (i % 3) * 0.04 }}
+          />
+        );
+      })}
+      {Array.from({ length: 12 }, (_, i) => {
+        const a = (i / 12) * Math.PI * 2 + 0.3;
+        return (
+          <motion.span
+            key={`s${i}`}
+            className="absolute top-[45%] left-1/2 block h-1.5 w-3.5 rounded-full"
+            style={{ background: ["#FF8FB8", "#FFE066", "#6FE0C4", "#9B8CFF", "#FFAA5C"][i % 5] }}
+            initial={{ x: "-50%", y: "-50%", rotate: i * 40, opacity: 0, scale: 0.4 }}
+            animate={{ x: `calc(-50% + ${Math.cos(a) * 260}%)`, y: [`-50%`, `calc(-50% + ${Math.sin(a) * 300 - 120}%)`, `calc(-50% + ${Math.sin(a) * 300 + 200}%)`], rotate: i * 40 + 260, opacity: [0, 1, 0], scale: 1 }}
+            transition={{ duration: 1.3, delay: 0.6, ease: "easeOut" }}
           />
         );
       })}
