@@ -8,14 +8,14 @@ gsap.registerPlugin(ScrollTrigger);
 
 /** The page's colors per section: three soft blobs each. The backdrop cross-fades between them while scrolling. */
 const PALETTES: Record<string, [string, string, string]> = {
-  hero: ["#FFB8D0", "#FFE57A", "#A9EDD8"],
-  flavors: ["#FFC2D6", "#FFD3A8", "#FFEFA0"],
-  lab: ["#B5EEDC", "#FFE0B8", "#CFE8FF"],
-  configurator: ["#D8CCFF", "#FFC6DC", "#C2EBFF"],
-  signature: ["#FFE680", "#FFC979", "#D9F2B4"],
-  prices: ["#FFCBA6", "#FFC2D6", "#FFE899"],
-  reviews: ["#FFD99A", "#FFC7B5", "#D2F0BC"],
-  visit: ["#AEEBD9", "#C7E3FF", "#FFE2B5"],
+  hero: ["#7FD3F0", "#A8EEF0", "#5FB4E8"],
+  flavors: ["#8FD8F5", "#B9F0EC", "#6CC3E6"],
+  lab: ["#6FD6D9", "#A6E3F7", "#4FA9E0"],
+  configurator: ["#86C6F2", "#B5E9F5", "#5D9FE0"],
+  signature: ["#9BE3EE", "#7FC8EC", "#C3F1EE"],
+  prices: ["#79CDEB", "#ADE9F3", "#5AAEE3"],
+  reviews: ["#95DDF2", "#BDEFF0", "#6DB9E8"],
+  visit: ["#6CCFE0", "#9FD6F6", "#4E9EDB"],
 };
 
 /** How each section arrives — varied, all transform/opacity (GPU only), all scrubbed with smoothing. */
@@ -78,7 +78,7 @@ export function SceneFlow({ children, keys }: { children: ReactNode; keys: strin
 
 function Backdrop({ active }: { active: string }) {
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-cream" aria-hidden>
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#E6F6FB]" aria-hidden>
       {Object.entries(PALETTES).map(([key, [a, b, c]]) => (
         <div
           key={key}
