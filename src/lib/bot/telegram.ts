@@ -105,7 +105,17 @@ const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /** Only Telegram users listed in admin_users may talk to the bot; everyone else is ignored silently. */
 async function isAdmin(ctx: Context) {
-  return Boolean(ctx.from && (await store().adminByTelegram(ctx.from.id)));
+  if (!ctx.from) return false;
+  try {
+    return Boolean(await store().adminByTelegram(ctx.from.id));
+  } catch (e) {
+    // the database is unreachable (e.g. a free Supabase project paused for inactivity): tell the owner instead of going silent
+    console.error("[telegram] admin check", e);
+    if (String(ctx.from.id) === process.env.ADMIN_TELEGRAM_ID) {
+      await ctx.reply("⚠️ Il database non risponde (probabilmente il progetto Supabase è in pausa). Aprilo su supabase.com e premi «Restore project», poi riscrivimi.").catch(() => {});
+    }
+    return false;
+  }
 }
 
 /** Keep the "typing…" dots on in the owner's chat until `work` is done (Telegram clears them after ~5 s). */
